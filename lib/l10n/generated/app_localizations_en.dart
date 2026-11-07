@@ -348,4 +348,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get glassLabPause => 'Pause';
+
+  @override
+  String get glassLabWater => 'Shiny water';
 }

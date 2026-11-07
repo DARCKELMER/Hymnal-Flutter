@@ -731,6 +731,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pause'**
   String get glassLabPause;
+
+  /// Switch between shiny water glass and the standard iOS 27 Clear glass in the glass lab
+  ///
+  /// In en, this message translates to:
+  /// **'Shiny water'**
+  String get glassLabWater;
 }
 
 class _AppLocalizationsDelegate

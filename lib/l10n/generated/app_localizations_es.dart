@@ -353,4 +353,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get glassLabPause => 'Pausa';
+
+  @override
+  String get glassLabWater => 'Agua brillante';
 }

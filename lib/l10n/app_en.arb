@@ -487,5 +487,9 @@
   "glassLabPause": "Pause",
   "@glassLabPause": {
     "description": "Accessibility label for the pause button"
+  },
+  "glassLabWater": "Shiny water",
+  "@glassLabWater": {
+    "description": "Switch between shiny water glass and the standard iOS 27 Clear glass in the glass lab"
   }
 }

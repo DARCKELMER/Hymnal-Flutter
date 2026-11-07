@@ -348,4 +348,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get glassLabPause => 'Пауза';
+
+  @override
+  String get glassLabWater => 'Блестящая вода';
 }

@@ -3,7 +3,19 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+
+/// Cristal "agua brillante": parte del preset Clear de iOS 27 con un bisel
+/// más ancho y profundo (más refracción en el borde) y un reflejo especular
+/// más intenso, para que se vea como agua sobre el fondo en vez de mate.
+LiquidGlassSettings waterGlassSettings(double tintAmount) =>
+    LiquidGlassSettings.ios27Clear(tintAmount: tintAmount).copyWith(
+      refractionHeight: 26,
+      refractionAmount: 72,
+      highlight: 0.9,
+      contourStrength: 0.45,
+    );
 
 /// Pantalla de depuración para validar el cristal Liquid Glass "Clear"
 /// en un dispositivo real antes de rediseñar la app (Fase 1).
@@ -18,8 +30,8 @@ class GlassLabScreen extends StatefulWidget {
 
 class _GlassLabScreenState extends State<GlassLabScreen>
     with SingleTickerProviderStateMixin {
+  static const Color _accent = Color(0xFF1F4FD1);
   static const Color _accentTint = Color(0xD61F4FD1); // #1F4FD1 al 84 %
-  static const Color _activePill = Color(0x8CFFFFFF); // blanco al 55 %
   static const Color _onGlass = Colors.white;
   static const List<Shadow> _textShadow = [
     Shadow(color: Color(0x66000000), blurRadius: 6),
@@ -28,6 +40,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   late final AnimationController _backgroundController;
 
   double _tint = 0;
+  bool _shinyWater = true;
   bool _forceFake = false;
   bool _animateBackground = false;
   bool _showPerformance = false;
@@ -170,6 +183,11 @@ class _GlassLabScreenState extends State<GlassLabScreen>
                   onChanged: (value) => setState(() => _tint = value),
                 ),
                 _labSwitch(
+                  l10n.glassLabWater,
+                  _shinyWater,
+                  (value) => setState(() => _shinyWater = value),
+                ),
+                _labSwitch(
                   l10n.glassLabForceFake,
                   _forceFake,
                   (value) => setState(() => _forceFake = value),
@@ -211,7 +229,9 @@ class _GlassLabScreenState extends State<GlassLabScreen>
 
   Widget _buildGlassZone(AppLocalizations l10n) {
     return LiquidGlassLayer(
-      settings: LiquidGlassSettings.ios27Clear(tintAmount: _tint),
+      settings: _shinyWater
+          ? waterGlassSettings(_tint)
+          : LiquidGlassSettings.ios27Clear(tintAmount: _tint),
       defaultAppearance: const LiquidGlassAppearance.ios27Clear(),
       fake: _forceFake,
       child: Padding(
@@ -309,36 +329,25 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     );
   }
 
+  /// Barra con indicador de "gota de agua": al tocar o arrastrar, la gota
+  /// crece, recorre la barra estirándose como gelatina con efecto lupa sobre
+  /// los íconos que cruza y rebota al llegar a la pestaña.
   Widget _buildTabBar(AppLocalizations l10n) {
-    final tabs = <(IconData, String)>[
-      (Icons.home_rounded, l10n.home),
-      (Icons.format_list_numbered_rounded, l10n.lists),
-      (Icons.favorite_rounded, l10n.favorites),
-      (Icons.settings_rounded, l10n.settings),
-    ];
-
-    return LiquidGlass.grouped(
-      shape: const LiquidRoundedSuperellipse(borderRadius: 32),
-      child: SizedBox(
-        height: 64,
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Row(
-            children: [
-              for (var i = 0; i < tabs.length; i++)
-                Expanded(
-                  child: _TabItem(
-                    icon: tabs[i].$1,
-                    label: tabs[i].$2,
-                    selected: i == _selectedTab,
-                    activeColor: _activePill,
-                    onTap: () => setState(() => _selectedTab = i),
-                  ),
-                ),
-            ],
-          ),
+    return LoupeTabBar(
+      tabs: [
+        BottomBarTab(icon: Icons.home_rounded, label: l10n.home),
+        BottomBarTab(
+          icon: Icons.format_list_bulleted_rounded,
+          label: l10n.lists,
         ),
-      ),
+        BottomBarTab(icon: Icons.favorite_rounded, label: l10n.favorites),
+        BottomBarTab(icon: Icons.settings_rounded, label: l10n.settings),
+      ],
+      selectedIndex: _selectedTab,
+      onSelected: (index) => setState(() => _selectedTab = index),
+      height: 64,
+      tint: _accent,
+      fake: _forceFake,
     );
   }
 
@@ -354,69 +363,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
           color: _onGlass,
           size: 28,
           shadows: _textShadow,
-        ),
-      ),
-    );
-  }
-}
-
-/// Pestaña de la barra. La activa usa una píldora interior **sin** cristal
-/// propio (blanco al 55 %) para no apilar cristal sobre cristal.
-class _TabItem extends StatelessWidget {
-  const _TabItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.activeColor,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final Color activeColor;
-  final VoidCallback onTap;
-
-  static const Color _accent = Color(0xFF1F4FD1);
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? _accent : Colors.white;
-    final shadows = selected ? null : _GlassLabScreenState._textShadow;
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          decoration: BoxDecoration(
-            color: selected ? activeColor : Colors.transparent,
-            borderRadius: BorderRadius.circular(27),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 22, color: color, shadows: shadows),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: color,
-                  shadows: shadows,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
