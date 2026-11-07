@@ -64,7 +64,7 @@ class _FavoritesScreenState extends _FavoritesController {
               : ReorderableListView.builder(
                   padding: const EdgeInsets.only(bottom: 80),
                   itemCount: favorites.length,
-                  onReorder: _favoritesService.reorderFavorites,
+                  onReorderItem: _favoritesService.reorderFavorites,
                   itemBuilder: (context, index) {
                     final favorite = favorites[index];
                     return Dismissible(

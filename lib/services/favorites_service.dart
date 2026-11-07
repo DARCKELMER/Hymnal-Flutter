@@ -60,11 +60,11 @@ class FavoritesService extends ChangeNotifier {
     }
   }
 
+  /// Mueve el favorito de [oldIndex] a [newIndex].
+  ///
+  /// [newIndex] ya viene ajustado para la lista sin el elemento movido
+  /// (semántica de `ReorderableListView.onReorderItem`).
   Future<void> reorderFavorites(int oldIndex, int newIndex) async {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
-
     final item = _favorites.removeAt(oldIndex);
     _favorites.insert(newIndex, item);
 

@@ -53,8 +53,8 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> updateMediaItem(MediaItem item) async {
-    mediaItem.add(item);
+  Future<void> updateMediaItem(MediaItem mediaItem) async {
+    this.mediaItem.add(mediaItem);
   }
 
   PlaybackState _transformEvent(PlaybackEvent event) {
