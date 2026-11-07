@@ -57,6 +57,9 @@ class LoupeTabBar extends StatefulWidget {
     this.haptics = true,
     this.restingDrop = false,
     this.restingIconScale = 1.06,
+    this.collapse = 0,
+    this.collapsedLabel,
+    this.onCollapsedTap,
     super.key,
   }) : assert(tabs.length > 0, 'A tab bar needs at least one tab.');
 
@@ -115,6 +118,19 @@ class LoupeTabBar extends StatefulWidget {
 
   /// MODIFICADO: aumento leve de ícono y texto bajo la gota en reposo.
   final double restingIconScale;
+
+  /// MODIFICADO: cuánto está encogida la barra (0 = normal, 1 = círculo),
+  /// p. ej. mientras se abre el buscador. Los íconos y la gota se
+  /// desvanecen y aparece el ícono de la pestaña activa; el cristal de la
+  /// barra y el de la gota **no se destruyen**, así el renderizador no
+  /// recalcula la geometría (eso dejaba restos de contorno al cerrar).
+  final double collapse;
+
+  /// MODIFICADO: etiqueta accesible de la barra encogida.
+  final String? collapsedLabel;
+
+  /// MODIFICADO: toque sobre la barra encogida (p. ej. cerrar el buscador).
+  final VoidCallback? onCollapsedTap;
 
   /// A clear, unfrosted lens like the iOS 27 tab bar's: it shows the bar
   /// 14% smaller and bends and splits the colors only in a 3–4 pt band along
@@ -256,7 +272,10 @@ class _LoupeTabBarState extends State<LoupeTabBar>
       ..iconScale = widget.loupeIconScale
       ..restingDrop = widget.restingDrop
       ..restingIconScale = widget.restingIconScale;
-    if (widget.restingDrop != oldWidget.restingDrop) _onPressTick();
+    if (widget.restingDrop != oldWidget.restingDrop ||
+        widget.collapse != oldWidget.collapse) {
+      _onPressTick();
+    }
     if (widget.selectedIndex != oldWidget.selectedIndex) {
       _selected = widget.selectedIndex;
       if (!_held) _moveTo(_selected);
@@ -334,8 +353,10 @@ class _LoupeTabBarState extends State<LoupeTabBar>
   }
 
   void _onPressTick() {
-    // MODIFICADO: con gota en reposo, el cristal queda siempre visible.
-    _loupeVisibility.value = _selection.glassVisibility;
+    // MODIFICADO: con gota en reposo, el cristal queda siempre visible;
+    // al encoger la barra, la gota se desvanece (sin desmontarse).
+    final collapse = widget.collapse.clamp(0.0, 1.0);
+    _loupeVisibility.value = _selection.glassVisibility * (1 - collapse);
     _showLoupe.value =
         widget.restingDrop || _pressTarget == 1 || _press.value > .005;
   }
@@ -524,6 +545,11 @@ class _LoupeTabBarState extends State<LoupeTabBar>
       builder: (context, label, _) => LayoutBuilder(
         builder: (context, constraints) {
           _size = Size(constraints.maxWidth, widget.height);
+          // MODIFICADO: modo encogido.
+          final collapse = widget.collapse.clamp(0.0, 1.0);
+          final collapsed = collapse > 0;
+          final rowsOpacity = (1 - collapse / .55).clamp(0.0, 1.0);
+          final iconOpacity = ((collapse - .55) / .45).clamp(0.0, 1.0);
           final bar = LiquidGlass.grouped(
             shape: LiquidRoundedSuperellipse(borderRadius: widget.height / 2),
             clipBehavior: Clip.none,
@@ -531,30 +557,61 @@ class _LoupeTabBarState extends State<LoupeTabBar>
             shadows: widget.shadows,
             child: SizedBox.fromSize(
               size: _size,
-              child: Padding(
-                padding: _padding,
-                child: RepaintBoundary(
-                  child: _buildRows(
-                    label: label,
-                    tint: tint,
-                    tintBrightness: tintBrightness,
-                    platter: platter,
+              // MODIFICADO: estructura fija; solo cambian opacidades según
+              // [collapse], para no recrear nada durante la transición.
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Padding(
+                    padding: _padding,
+                    child: ExcludeSemantics(
+                      excluding: collapsed,
+                      child: Opacity(
+                        opacity: rowsOpacity,
+                        child: RepaintBoundary(
+                          child: _buildRows(
+                            label: label,
+                            tint: tint,
+                            tintBrightness: tintBrightness,
+                            platter: platter,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  IgnorePointer(
+                    child: Center(
+                      child: Opacity(
+                        opacity: iconOpacity,
+                        child: Icon(
+                          widget.tabs[_selected].icon,
+                          color: tint,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
           final loupe = _buildLoupe();
-          return GestureDetector(
+          // MODIFICADO: encogida, un toque llama a [onCollapsedTap] y no hay
+          // arrastre de la gota.
+          final gestures = GestureDetector(
             behavior: HitTestBehavior.opaque,
-            onTapUp: (details) => _release(_tabAt(details.localPosition)),
-            onHorizontalDragDown: _onDown,
-            onHorizontalDragStart: (details) =>
-                _onDragUpdate(details.localPosition),
-            onHorizontalDragUpdate: (details) =>
-                _onDragUpdate(details.localPosition),
-            onHorizontalDragEnd: _onDragEnd,
-            onHorizontalDragCancel: _onCancel,
+            onTapUp: collapsed
+                ? (_) => widget.onCollapsedTap?.call()
+                : (details) => _release(_tabAt(details.localPosition)),
+            onHorizontalDragDown: collapsed ? null : _onDown,
+            onHorizontalDragStart: collapsed
+                ? null
+                : (details) => _onDragUpdate(details.localPosition),
+            onHorizontalDragUpdate: collapsed
+                ? null
+                : (details) => _onDragUpdate(details.localPosition),
+            onHorizontalDragEnd: collapsed ? null : _onDragEnd,
+            onHorizontalDragCancel: collapsed ? null : _onCancel,
             child: ListenableTransform(
               listenable: _barTransform,
               transform: _barMatrix,
@@ -569,6 +626,12 @@ class _LoupeTabBarState extends State<LoupeTabBar>
                 ],
               ),
             ),
+          );
+          return Semantics(
+            button: collapsed,
+            label: collapsed ? widget.collapsedLabel : null,
+            onTap: collapsed ? widget.onCollapsedTap : null,
+            child: gestures,
           );
         },
       ),

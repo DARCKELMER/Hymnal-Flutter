@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
-import 'package:hymnal_app/widgets/glass/glass_drop.dart';
 import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
@@ -29,7 +28,6 @@ void main() {
       // Layer principal + gota de reposo del menú + play y lupa, que son
       // gotas enteras con lente propia (sin gotas interiores).
       expect(find.byType(LiquidGlassLayer), findsNWidgets(4));
-      expect(find.byType(GlassDrop), findsNothing);
       expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
       expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
       expect(find.byType(LiquidGlass), findsNWidgets(5));
@@ -111,29 +109,33 @@ void main() {
     await tester.pump();
     expect(find.byType(TextField), findsNothing);
 
-    // Abrir: la barra se encoge y aparece el campo.
+    double collapse() =>
+        tester.widget<LoupeTabBar>(find.byType(LoupeTabBar)).collapse;
+    expect(collapse(), 0);
+
+    // Abrir: la barra real se encoge en un círculo (sin desmontarse) y
+    // aparece el campo.
     await tester.tap(find.bySemanticsLabel('Buscar'));
     await tester.pumpAndSettle();
-    expect(find.byType(LoupeTabBar), findsNothing);
+    expect(find.byType(LoupeTabBar), findsOneWidget);
+    expect(collapse(), closeTo(1, .01));
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Buscar himnos...'), findsOneWidget);
 
-    // Abierto: sin gotas interiores; el círculo de la pestaña es la gota.
-    expect(find.byType(GlassDrop), findsNothing);
-
-    // Cerrar con la X: la barra real vuelve en cuanto recupera su ancho,
-    // sin esperar a que el resorte termine de rebotar.
+    // Cerrar con la X: la barra vuelve a su ancho y a mostrar las pestañas.
     await tester.tap(find.bySemanticsLabel('Cancelar').last);
-    var frames = 0;
-    while (find.byType(LoupeTabBar).evaluate().isEmpty && frames < 120) {
-      await tester.pump(const Duration(milliseconds: 16));
-      frames++;
-    }
-    expect(find.byType(LoupeTabBar), findsOneWidget);
-    expect(frames, lessThan(60), reason: 'la barra tardó demasiado');
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing);
-    expect(find.byType(LoupeTabBar), findsOneWidget);
+    expect(collapse(), closeTo(0, .01));
+
+    // Abrir de nuevo y cerrar tocando el círculo de la pestaña.
+    await tester.tap(find.bySemanticsLabel('Buscar'));
+    await tester.pumpAndSettle();
+    final circle = tester.getRect(find.byType(LoupeTabBar));
+    await tester.tapAt(circle.center);
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
+    expect(collapse(), closeTo(0, .01));
   });
 
   testWidgets('El play transforma su ícono y lanza la onda', (tester) async {
@@ -199,7 +201,7 @@ void main() {
     expect(anisotropy(), closeTo(0, 1e-6));
   });
 
-  testWidgets('La lupa y el campo son el mismo cristal (sin reemplazos)', (
+  testWidgets('Ningún cristal de la fila se crea ni se destruye al buscar', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1080, 2400);
@@ -209,30 +211,50 @@ void main() {
     await tester.pumpWidget(_wrap(const GlassLabScreen()));
     await tester.pump();
 
-    // El cristal con lente propia que contiene la lupa.
-    Element searchGlass() => tester.element(
-      find
-          .ancestor(
-            of: find.byIcon(Icons.search_rounded),
+    // Cristales de la fila inferior: los de la barra (cápsula y gota) y el
+    // de la lupa/campo.
+    List<Element> rowGlass() => [
+      ...find
+          .descendant(
+            of: find.byType(LoupeTabBar),
             matching: find.byType(LiquidGlass),
           )
-          .first,
-    );
+          .evaluate(),
+      tester.element(
+        find
+            .ancestor(
+              of: find.byIcon(Icons.search_rounded),
+              matching: find.byType(LiquidGlass),
+            )
+            .first,
+      ),
+    ];
 
-    final before = searchGlass();
+    final before = rowGlass();
+    expect(before, hasLength(3));
+
+    void expectSame(String when) {
+      final now = rowGlass();
+      expect(now, hasLength(before.length), reason: when);
+      for (var i = 0; i < before.length; i++) {
+        expect(identical(now[i], before[i]), isTrue, reason: '$when [$i]');
+      }
+    }
 
     await tester.tap(find.bySemanticsLabel('Buscar'));
-    await tester.pump(const Duration(milliseconds: 120));
-    expect(identical(searchGlass(), before), isTrue, reason: 'al abrir');
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expectSame('abriendo, cuadro $i');
+    }
     await tester.pumpAndSettle();
-    expect(identical(searchGlass(), before), isTrue, reason: 'abierto');
+    expectSame('abierto');
 
     await tester.tap(find.bySemanticsLabel('Cancelar').last);
     for (var i = 0; i < 40; i++) {
       await tester.pump(const Duration(milliseconds: 16));
-      expect(identical(searchGlass(), before), isTrue, reason: 'cuadro $i');
+      expectSame('cerrando, cuadro $i');
     }
     await tester.pumpAndSettle();
-    expect(identical(searchGlass(), before), isTrue, reason: 'cerrado');
+    expectSame('cerrado');
   });
 }

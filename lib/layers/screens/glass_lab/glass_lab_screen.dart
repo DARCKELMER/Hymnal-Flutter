@@ -1,16 +1,13 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
-import 'package:flutter/cupertino.dart' show CupertinoColors;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
-import 'package:hymnal_app/widgets/glass/glass_drop.dart';
 import 'package:hymnal_app/widgets/glass/liquid_glass_button.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
-import 'package:hymnal_app/widgets/glass/loupe_tab_bar/tab_selection.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 
@@ -64,22 +61,11 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   );
   bool _searchOpen = false;
 
-  /// Si ya se volvió a montar la barra de pestañas real. Se activa en
-  /// cuanto la barra recupera casi todo su ancho al cerrar, sin esperar a
-  /// que termine el rebote, y no se desactiva hasta volver a abrir.
-  bool _barRestored = true;
   final _searchText = TextEditingController();
 
   /// Conserva el cristal de la lupa/campo durante toda la transformación.
   final _searchGlassKey = GlobalKey(debugLabel: 'search-glass');
   final _searchFocus = FocusNode();
-
-  static const List<IconData> _tabIcons = [
-    Icons.home_rounded,
-    Icons.format_list_bulleted_rounded,
-    Icons.favorite_rounded,
-    Icons.settings_rounded,
-  ];
 
   @override
   void initState() {
@@ -88,32 +74,12 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       vsync: this,
       duration: const Duration(seconds: 14),
     );
-    _search
-      ..addListener(_onSearchTick)
-      ..addStatusListener(_onSearchStatus);
-  }
-
-  /// Devuelve la barra real en cuanto casi recuperó su ancho.
-  void _onSearchTick() {
-    if (!_searchOpen && !_barRestored && _search.value < 0.03) {
-      setState(() => _barRestored = true);
-    }
-  }
-
-  /// Red de seguridad: si el resorte se detiene antes del umbral.
-  void _onSearchStatus(AnimationStatus status) {
-    if (!_searchOpen && !_barRestored && !_search.isAnimating && mounted) {
-      setState(() => _barRestored = true);
-    }
   }
 
   @override
   void dispose() {
     _backgroundController.dispose();
-    _search
-      ..removeListener(_onSearchTick)
-      ..removeStatusListener(_onSearchStatus)
-      ..dispose();
+    _search.dispose();
     _searchText.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -132,10 +98,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
 
   void _openSearch() {
     if (_searchOpen) return;
-    setState(() {
-      _searchOpen = true;
-      _barRestored = false;
-    });
+    setState(() => _searchOpen = true);
     _search.animateTo(1);
     // Enfoca el campo cuando ya casi terminó de abrirse.
     Future.delayed(const Duration(milliseconds: 280), () {
@@ -410,7 +373,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   /// Barra con indicador de "gota de agua": al tocar o arrastrar, la gota
   /// crece, recorre la barra estirándose como gelatina con efecto lupa sobre
   /// los íconos que cruza y rebota al llegar a la pestaña.
-  Widget _buildTabBar(AppLocalizations l10n) {
+  Widget _buildTabBar(AppLocalizations l10n, {double collapse = 0}) {
     return LoupeTabBar(
       tabs: [
         BottomBarTab(icon: Icons.home_rounded, label: l10n.home),
@@ -428,6 +391,9 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       fake: _forceFake,
       restingDrop: true,
       restingIconScale: 1.06,
+      collapse: collapse,
+      collapsedLabel: l10n.cancel,
+      onCollapsedTap: _closeSearch,
     );
   }
 
@@ -459,7 +425,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
               t,
             )!.clamp(minWidth, width - minWidth - _gap);
             final searchWidth = width - barWidth - _gap;
-            final atRest = _barRestored;
             // 0 = barra encogida en círculo, 1 = barra a lo ancho.
             final widthProgress =
                 ((barWidth - _barHeight) / (fullBar - _barHeight)).clamp(
@@ -471,9 +436,8 @@ class _GlassLabScreenState extends State<GlassLabScreen>
               children: [
                 SizedBox(
                   width: barWidth,
-                  child: atRest
-                      ? _buildTabBar(l10n)
-                      : _buildCollapsedBar(l10n, barWidth, widthProgress),
+                  // La barra real nunca se desmonta: solo se encoge.
+                  child: _buildTabBar(l10n, collapse: 1 - widthProgress),
                 ),
                 const SizedBox(width: _gap),
                 SizedBox(
@@ -485,120 +449,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
           },
         );
       },
-    );
-  }
-
-  /// La barra encogida. Encogida del todo es un círculo con el ícono de la
-  /// pestaña activa bajo una gota 3D; mientras se ensancha (al cerrar) o se
-  /// estrecha (al abrir) cruza a una réplica de la barra real: los 4 íconos
-  /// se desvanecen y la gota de reposo ya está sobre la pestaña activa, así
-  /// que el cambio a la barra real no se nota.
-  Widget _buildCollapsedBar(
-    AppLocalizations l10n,
-    double width,
-    double widthProgress,
-  ) {
-    final circleOpacity = (1 - widthProgress / 0.45).clamp(0.0, 1.0);
-    final ghostOpacity = ((widthProgress - 0.35) / 0.5).clamp(0.0, 1.0);
-
-    return LiquidGlassButton(
-      grouped: true,
-      semanticLabel: l10n.cancel,
-      onTap: _closeSearch,
-      size: Size(width, _barHeight),
-      shape: const LiquidRoundedSuperellipse(borderRadius: _barHeight / 2),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // El círculo entero es la gota (con gelatina al tocarlo); el ícono
-          // va limpio, sin un segundo círculo encima.
-          if (circleOpacity > 0)
-            Opacity(
-              opacity: circleOpacity,
-              child: Icon(_tabIcons[_selectedTab], color: _accent, size: 28),
-            ),
-          if (ghostOpacity > 0) _buildGhostTabs(l10n, width, ghostOpacity),
-        ],
-      ),
-    );
-  }
-
-  /// Réplica de [LoupeTabBar] en reposo (mismo relleno, ranuras, ícono,
-  /// etiqueta y gota) para la transición.
-  Widget _buildGhostTabs(AppLocalizations l10n, double width, double opacity) {
-    const padding = EdgeInsets.symmetric(horizontal: 9, vertical: 4);
-    final labels = [l10n.home, l10n.lists, l10n.favorites, l10n.settings];
-    final slot = (width - padding.horizontal) / labels.length;
-    final labelColor = CupertinoColors.label.resolveFrom(context);
-
-    Widget item(int index, Color color) => Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(_tabIcons[index], size: 24, color: color),
-        const SizedBox(height: 3),
-        Text(
-          labels[index],
-          maxLines: 1,
-          softWrap: false,
-          overflow: TextOverflow.visible,
-          style: TextStyle(
-            color: color,
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-
-    // La gota de LoupeTabBar en reposo muestra el fondo un 14 % más pequeño
-    // y compensa agrandando el contenido; aquí se replica igual.
-    const settings = LoupeTabBar.defaultLoupeSettings;
-    final magnify = 1.06 / (1 - settings.backdropShrink);
-    final dropWidth = slot + 2 * TabSelection.platterOutset;
-    final dropHeight = _barHeight - padding.vertical;
-
-    return SizedBox(
-      width: width,
-      height: _barHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Padding(
-            padding: padding,
-            child: Opacity(
-              opacity: opacity,
-              child: Row(
-                children: [
-                  for (var i = 0; i < labels.length; i++)
-                    Expanded(
-                      child: i == _selectedTab
-                          ? const SizedBox.shrink()
-                          : item(i, labelColor),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            left: padding.left + slot * (_selectedTab + .5) - dropWidth / 2,
-            top: padding.top,
-            width: dropWidth,
-            height: dropHeight,
-            child: GlassDrop(
-              size: Size(dropWidth, dropHeight),
-              shape: LiquidRoundedSuperellipse(borderRadius: dropHeight / 2),
-              settings: settings,
-              magnify: magnify,
-              fake: _forceFake,
-              visibility: opacity,
-              child: Opacity(
-                opacity: opacity,
-                child: item(_selectedTab, _accent),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
