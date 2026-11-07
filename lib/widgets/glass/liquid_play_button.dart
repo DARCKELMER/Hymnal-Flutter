@@ -5,8 +5,8 @@ import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 /// Botón circular de reproducir/pausar con "pulso de gota":
 ///
 /// - El ícono se transforma de ▶ a ⏸ con una animación continua.
-/// - Al pulsar, dos ondas de luz salen del borde del cristal y se
-///   desvanecen, como una gota que cae en el agua.
+/// - Al pulsar, un anillo de luz tenue sale del borde y se desvanece
+///   rápido, sin quitarle protagonismo a la reacción de la gota.
 /// - Hereda la presión de gota y el brillo táctil de [LiquidGlassButton].
 /// - Todo el botón es una gota de agua 3D (lente propia) que se estira
 ///   hacia el dedo y tiembla como gelatina al soltar.
@@ -53,7 +53,7 @@ class _LiquidPlayButtonState extends State<LiquidPlayButton>
 
   late final AnimationController _ripple = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 900),
+    duration: const Duration(milliseconds: 600),
   );
 
   @override
@@ -118,35 +118,34 @@ class _LiquidPlayButtonState extends State<LiquidPlayButton>
   }
 }
 
-/// Dos anillos que nacen en el borde del círculo y se expanden
-/// desvaneciéndose, el segundo con un pequeño retraso.
+/// Un anillo fino y tenue que nace en el borde, se expande poco y se
+/// desvanece rápido: acompaña sin quitarle protagonismo a la gota.
 class _RipplePainter extends CustomPainter {
   _RipplePainter(this.animation, this.color) : super(repaint: animation);
 
   final Animation<double> animation;
   final Color color;
 
+  /// Opacidad máxima del anillo.
+  static const _maxOpacity = .25;
+
+  /// Cuánto se aleja del borde, relativo al radio.
+  static const _spread = .3;
+
   @override
   void paint(Canvas canvas, Size size) {
     final t = animation.value;
     if (t == 0 || t == 1) return;
-    final center = size.center(Offset.zero);
     final base = size.shortestSide / 2;
-    for (final delay in const [0.0, 0.22]) {
-      final local = ((t - delay) / (1 - delay)).clamp(0.0, 1.0);
-      if (local == 0 || local == 1) continue;
-      final eased = Curves.easeOutCubic.transform(local);
-      final radius = base + base * 0.85 * eased;
-      final opacity = (1 - local) * 0.7;
-      canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5 * (1 - local) + 0.5
-          ..color = color.withValues(alpha: opacity),
-      );
-    }
+    final eased = Curves.easeOutCubic.transform(t);
+    canvas.drawCircle(
+      size.center(Offset.zero),
+      base * (1 + _spread * eased),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = color.withValues(alpha: _maxOpacity * (1 - t)),
+    );
   }
 
   @override

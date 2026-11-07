@@ -27,7 +27,7 @@ class LiquidGlassButton extends StatelessWidget {
     this.grouped = false,
     this.lens,
     this.fake = false,
-    this.interactionScale = 1.05,
+    this.interactionScale = 1.10,
     this.jelly = true,
     this.iconMagnify = 1,
     this.glowColor = const Color(0x33FFFFFF),
@@ -70,7 +70,7 @@ class LiquidGlassButton extends StatelessWidget {
   /// FakeGlass para la lente propia, para coincidir con el layer padre.
   final bool fake;
 
-  /// Cuánto crece mientras se presiona (1.05 = 5 %).
+  /// Cuánto crece mientras se presiona (1.10 = 10 %).
   final double interactionScale;
 
   /// Si tiembla como gelatina al soltar.

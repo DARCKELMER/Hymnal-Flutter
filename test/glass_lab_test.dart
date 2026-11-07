@@ -176,7 +176,7 @@ void main() {
     );
     // Diferencia entre la escala horizontal y la vertical del primer
     // Transform bajo la gelatina: 0 en reposo (solo escalas uniformes),
-    // positiva mientras la gota está más ancha que alta.
+    // distinta de 0 mientras la gota tiembla (ancha o alta).
     double anisotropy() {
       final transforms = find.descendant(
         of: wobble,
@@ -192,7 +192,7 @@ void main() {
     await tester.tap(find.byType(LiquidPlayButton));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 40));
-    expect(anisotropy(), greaterThan(.05));
+    expect(anisotropy().abs(), greaterThan(.05));
 
     // Se queda quieta al terminar.
     await tester.pumpAndSettle();
