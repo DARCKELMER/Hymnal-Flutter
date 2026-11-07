@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hymnal_app/widgets/glass/glass_drop.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 /// Botón de cristal líquido suelto con:
@@ -9,6 +10,8 @@ import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 ///    rebota a su forma con un resorte.
 /// 2. **Brillo táctil** ([GlassGlow]): un resplandor suave sigue el dedo por
 ///    dentro del cristal.
+/// 3. Con [drop], una **gota de agua 3D** ([GlassDrop]) sobre el ícono que
+///    tiembla como gelatina al tocarla.
 ///
 /// Debe estar dentro de un [LiquidGlassLayer]; con [grouped] también dentro
 /// de un [LiquidGlassBlendGroup] para fundirse con sus vecinos.
@@ -24,6 +27,9 @@ class LiquidGlassButton extends StatelessWidget {
     this.interactionScale = 1.05,
     this.glowColor = const Color(0x33FFFFFF),
     this.haptics = true,
+    this.drop = false,
+    this.dropFraction = .7,
+    this.fake = false,
     super.key,
   });
 
@@ -47,6 +53,15 @@ class LiquidGlassButton extends StatelessWidget {
   /// Toque háptico ligero al pulsar.
   final bool haptics;
 
+  /// Gota de cristal 3D con gelatina sobre el contenido.
+  final bool drop;
+
+  /// Diámetro de la gota respecto al lado corto del botón.
+  final double dropFraction;
+
+  /// FakeGlass para la gota, para coincidir con el layer padre.
+  final bool fake;
+
   @override
   Widget build(BuildContext context) {
     final content = GlassGlowLayer(
@@ -54,7 +69,15 @@ class LiquidGlassButton extends StatelessWidget {
         glowColor: glowColor,
         child: SizedBox.fromSize(
           size: size,
-          child: Center(child: child),
+          child: Center(
+            child: drop
+                ? GlassDrop(
+                    size: Size.square(size.shortestSide * dropFraction),
+                    fake: fake,
+                    child: child,
+                  )
+                : child,
+          ),
         ),
       ),
     );

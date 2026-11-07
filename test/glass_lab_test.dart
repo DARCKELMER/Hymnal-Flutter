@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
+import 'package:hymnal_app/widgets/glass/glass_drop.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
@@ -24,11 +25,13 @@ void main() {
       await tester.pumpWidget(_wrap(const GlassLabScreen()));
       await tester.pump();
 
-      // Layer principal + layer propio de la gota de reposo (cristal real).
-      expect(find.byType(LiquidGlassLayer), findsNWidgets(2));
+      // Layer principal + gota de reposo del menú + gotas 3D del play y de
+      // la lupa (cada gota es cristal real con layer propio).
+      expect(find.byType(LiquidGlassLayer), findsNWidgets(4));
+      expect(find.byType(GlassDrop), findsNWidgets(2));
       expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
       expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
-      expect(find.byType(LiquidGlass), findsNWidgets(5));
+      expect(find.byType(LiquidGlass), findsNWidgets(7));
       expect(find.text('Inicio'), findsWidgets);
       expect(find.text('Ajustes'), findsWidgets);
     },
@@ -114,8 +117,20 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Buscar himnos...'), findsOneWidget);
 
-    // Cerrar con la X: vuelve la barra de pestañas completa.
+    // Abierto: gota 3D sobre la lupa del campo y sobre el círculo de la
+    // pestaña activa (más la del play).
+    expect(find.byType(GlassDrop), findsNWidgets(3));
+
+    // Cerrar con la X: la barra real vuelve en cuanto recupera su ancho,
+    // sin esperar a que el resorte termine de rebotar.
     await tester.tap(find.bySemanticsLabel('Cancelar').last);
+    var frames = 0;
+    while (find.byType(LoupeTabBar).evaluate().isEmpty && frames < 120) {
+      await tester.pump(const Duration(milliseconds: 16));
+      frames++;
+    }
+    expect(find.byType(LoupeTabBar), findsOneWidget);
+    expect(frames, lessThan(60), reason: 'la barra tardó demasiado');
     await tester.pumpAndSettle();
     expect(find.byType(TextField), findsNothing);
     expect(find.byType(LoupeTabBar), findsOneWidget);
