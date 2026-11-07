@@ -55,6 +55,8 @@ class LoupeTabBar extends StatefulWidget {
     this.loupeSettings = defaultLoupeSettings,
     this.loupeIconScale = 1.1,
     this.haptics = true,
+    this.restingDrop = false,
+    this.restingIconScale = 1.06,
     super.key,
   }) : assert(tabs.length > 0, 'A tab bar needs at least one tab.');
 
@@ -105,6 +107,14 @@ class LoupeTabBar extends StatefulWidget {
 
   /// MODIFICADO: vibración suave al cruzar cada pestaña y al asentarse.
   final bool haptics;
+
+  /// MODIFICADO: en reposo, la pestaña activa lleva una gota de cristal real
+  /// en 3D (refracta y brilla) en lugar de la píldora plana. Mantiene una
+  /// captura de fondo extra mientras la barra está visible.
+  final bool restingDrop;
+
+  /// MODIFICADO: aumento leve de ícono y texto bajo la gota en reposo.
+  final double restingIconScale;
 
   /// A clear, unfrosted lens like the iOS 27 tab bar's: it shows the bar
   /// 14% smaller and bends and splits the colors only in a 3–4 pt band along
@@ -197,6 +207,8 @@ class _LoupeTabBarState extends State<LoupeTabBar>
     tabCount: widget.tabs.length,
     backdropShrink: widget.loupeSettings.backdropShrink,
     iconScale: widget.loupeIconScale,
+    restingDrop: widget.restingDrop,
+    restingIconScale: widget.restingIconScale,
   );
   late final _barTransform = Listenable.merge([_press, _stretch]);
   final _showLoupe = ValueNotifier(false);
@@ -231,6 +243,8 @@ class _LoupeTabBarState extends State<LoupeTabBar>
       ..addListener(_onPositionTick)
       ..addStatusListener(_onPositionStatus);
     _press.addListener(_onPressTick);
+    // MODIFICADO: muestra la gota en reposo desde el primer cuadro.
+    _onPressTick();
   }
 
   @override
@@ -239,7 +253,10 @@ class _LoupeTabBarState extends State<LoupeTabBar>
     _selection
       ..tabCount = widget.tabs.length
       ..backdropShrink = widget.loupeSettings.backdropShrink
-      ..iconScale = widget.loupeIconScale;
+      ..iconScale = widget.loupeIconScale
+      ..restingDrop = widget.restingDrop
+      ..restingIconScale = widget.restingIconScale;
+    if (widget.restingDrop != oldWidget.restingDrop) _onPressTick();
     if (widget.selectedIndex != oldWidget.selectedIndex) {
       _selected = widget.selectedIndex;
       if (!_held) _moveTo(_selected);
@@ -317,8 +334,10 @@ class _LoupeTabBarState extends State<LoupeTabBar>
   }
 
   void _onPressTick() {
-    _loupeVisibility.value = _press.value.clamp(0.0, 1.0);
-    _showLoupe.value = _pressTarget == 1 || _press.value > .005;
+    // MODIFICADO: con gota en reposo, el cristal queda siempre visible.
+    _loupeVisibility.value = _selection.glassVisibility;
+    _showLoupe.value =
+        widget.restingDrop || _pressTarget == 1 || _press.value > .005;
   }
 
   /// Keeps the loupe up while held and until the indicator has nearly

@@ -13,22 +13,25 @@ Widget _wrap(Widget child) => MaterialApp(
 );
 
 void main() {
-  testWidgets('El laboratorio usa un solo LiquidGlassLayer con blend group', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 2.75;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'El laboratorio: layer principal, blend group y gota 3D en reposo',
+    (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.75;
+      addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(_wrap(const GlassLabScreen()));
-    await tester.pump();
+      await tester.pumpWidget(_wrap(const GlassLabScreen()));
+      await tester.pump();
 
-    expect(find.byType(LiquidGlassLayer), findsOneWidget);
-    expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
-    expect(find.byType(LiquidGlass), findsNWidgets(4));
-    expect(find.text('Inicio'), findsWidgets);
-    expect(find.text('Ajustes'), findsWidgets);
-  });
+      // Layer principal + layer propio de la gota de reposo (cristal real).
+      expect(find.byType(LiquidGlassLayer), findsNWidgets(2));
+      expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
+      expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
+      expect(find.byType(LiquidGlass), findsNWidgets(5));
+      expect(find.text('Inicio'), findsWidgets);
+      expect(find.text('Ajustes'), findsWidgets);
+    },
+  );
 
   testWidgets('Los controles de prueba cambian tinte, fake y reproducción', (
     tester,
@@ -41,7 +44,7 @@ void main() {
     await tester.pump();
 
     LiquidGlassLayer layer() =>
-        tester.widget<LiquidGlassLayer>(find.byType(LiquidGlassLayer));
+        tester.widget<LiquidGlassLayer>(find.byType(LiquidGlassLayer).first);
 
     expect(layer().settings.tintAmount, 0);
     expect(layer().fake, isFalse);

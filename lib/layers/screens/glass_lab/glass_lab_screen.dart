@@ -348,6 +348,8 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       height: 64,
       tint: _accent,
       fake: _forceFake,
+      restingDrop: true,
+      restingIconScale: 1.06,
     );
   }
 

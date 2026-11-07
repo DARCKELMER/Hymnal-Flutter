@@ -24,7 +24,23 @@ class TabSelection {
     required this.tabCount,
     required this.backdropShrink,
     this.iconScale = 1,
+    this.restingDrop = false,
+    this.restingIconScale = 1,
   });
+
+  /// MODIFICADO: si en reposo la pestaña activa lleva una gota de cristal
+  /// real (en vez de la píldora plana), del tamaño de la pestaña.
+  bool restingDrop;
+
+  /// MODIFICADO: aumento de los íconos bajo la gota en reposo.
+  double restingIconScale;
+
+  /// MODIFICADO: visibilidad del cristal de la gota: la de la lupa mientras
+  /// se mueve y, con [restingDrop], completa también en reposo.
+  double get glassVisibility {
+    final pressed = press.value.clamp(0.0, 1.0);
+    return restingDrop ? 1.0 : pressed;
+  }
 
   /// Center of the indicator in tab indices, fractional while it moves.
   final SingleMotionController position;
@@ -140,8 +156,8 @@ class TabSelection {
   /// times the distance from its center at visibility `v`.
   double get tintScale {
     final shrink = backdropShrink.clamp(0.0, .75);
-    final visibility = press.value.clamp(0.0, 1.0);
-    return 1 + (1 / (1 - shrink) - 1) * visibility;
+    // MODIFICADO: sigue la visibilidad real del cristal (también en reposo).
+    return 1 + (1 / (1 - shrink) - 1) * glassVisibility;
   }
 
   /// Scale of each tinted icon about its own center, [iconScale] once the
@@ -151,7 +167,9 @@ class TabSelection {
   /// loupe.
   double get iconGrowth {
     final visibility = press.value.clamp(0.0, 1.0);
-    return 1 + (iconScale - 1) * visibility;
+    // MODIFICADO: en reposo parte del aumento leve de la gota.
+    final rest = restingDrop ? restingIconScale : 1.0;
+    return rest + (iconScale - rest) * visibility;
   }
 }
 
@@ -202,6 +220,8 @@ class TabPlatterPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // MODIFICADO: con gota en reposo no se pinta la píldora plana.
+    if (selection.restingDrop) return;
     final opacity = (1 - selection.press.value).clamp(0.0, 1.0);
     if (opacity == 0) return;
     final rSuperellipse = selection.rSuperellipse(size);
