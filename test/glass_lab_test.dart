@@ -198,4 +198,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(anisotropy(), closeTo(0, 1e-6));
   });
+
+  testWidgets('La lupa y el campo son el mismo cristal (sin reemplazos)', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    // El cristal con lente propia que contiene la lupa.
+    Element searchGlass() => tester.element(
+      find
+          .ancestor(
+            of: find.byIcon(Icons.search_rounded),
+            matching: find.byType(LiquidGlass),
+          )
+          .first,
+    );
+
+    final before = searchGlass();
+
+    await tester.tap(find.bySemanticsLabel('Buscar'));
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(identical(searchGlass(), before), isTrue, reason: 'al abrir');
+    await tester.pumpAndSettle();
+    expect(identical(searchGlass(), before), isTrue, reason: 'abierto');
+
+    await tester.tap(find.bySemanticsLabel('Cancelar').last);
+    for (var i = 0; i < 40; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(identical(searchGlass(), before), isTrue, reason: 'cuadro $i');
+    }
+    await tester.pumpAndSettle();
+    expect(identical(searchGlass(), before), isTrue, reason: 'cerrado');
+  });
 }

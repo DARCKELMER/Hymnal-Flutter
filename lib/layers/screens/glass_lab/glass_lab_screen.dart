@@ -69,6 +69,9 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   /// que termine el rebote, y no se desactiva hasta volver a abrir.
   bool _barRestored = true;
   final _searchText = TextEditingController();
+
+  /// Conserva el cristal de la lupa/campo durante toda la transformación.
+  final _searchGlassKey = GlobalKey(debugLabel: 'search-glass');
   final _searchFocus = FocusNode();
 
   static const List<IconData> _tabIcons = [
@@ -475,9 +478,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
                 const SizedBox(width: _gap),
                 SizedBox(
                   width: searchWidth,
-                  child: atRest
-                      ? _buildSearchButton(l10n)
-                      : _buildSearchField(l10n, searchWidth, t),
+                  child: _buildSearch(l10n, searchWidth, t),
                 ),
               ],
             );
@@ -601,42 +602,44 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     );
   }
 
-  Widget _buildSearchButton(AppLocalizations l10n) {
-    // La lupa entera es una gota con lente propia: se estira hacia el dedo
-    // y tiembla como gelatina al soltar.
-    return LiquidGlassButton(
-      semanticLabel: l10n.search,
-      onTap: _openSearch,
-      lens: LiquidGlassButton.dropLens,
-      fake: _forceFake,
-      iconMagnify: 1.06,
-      child: const Icon(
-        Icons.search_rounded,
-        color: _onGlass,
-        size: 28,
-        shadows: _textShadow,
-      ),
-    );
-  }
-
-  /// La lupa estirada en cápsula. El texto y el botón de cerrar aparecen
-  /// cuando ya hay sitio, para que nada se desborde a mitad de animación.
-  Widget _buildSearchField(AppLocalizations l10n, double width, double t) {
+  /// La lupa y el campo de búsqueda son **el mismo elemento de cristal**:
+  /// una gota con lente propia que se estira de círculo a cápsula y vuelve,
+  /// sin destruirse nunca. Así no hay saltos de forma ni de óptica, ni
+  /// restos de contorno al cerrar.
+  ///
+  /// Cerrada: gota que se infla, se estira hacia el dedo y tiembla como
+  /// gelatina. Abierta: campo quieto (sin estirarse ni temblar) con texto y X.
+  Widget _buildSearch(AppLocalizations l10n, double width, double t) {
     final contentOpacity = ((t - 0.35) / 0.65).clamp(0.0, 1.0);
     final roomForField = width > 160;
+    final closed = !_searchOpen;
 
-    return LiquidGlass.grouped(
-      shape: const LiquidRoundedSuperellipse(borderRadius: _barHeight / 2),
+    return LiquidGlassButton(
+      semanticLabel: l10n.search,
+      onTap: closed ? _openSearch : null,
+      lens: LiquidGlassButton.dropLens,
+      glassKey: _searchGlassKey,
+      fake: _forceFake,
+      size: Size(width, _barHeight),
+      // Rectángulo con radio = mitad del alto: círculo perfecto a 64 × 64 y
+      // cápsula al estirarse.
+      shape: const LiquidRoundedRectangle(borderRadius: _barHeight / 2),
+      iconMagnify: closed ? 1.06 : 1,
+      interactionScale: closed ? 1.10 : 1,
+      stretch: closed ? .5 : 0,
+      jelly: closed,
+      wrapSemantics: closed,
       child: SizedBox(
+        width: width,
         height: _barHeight,
         child: Row(
           children: [
             SizedBox(
-              width: roomForField ? 52 : width,
+              width: roomForField ? 56 : width,
               child: const Icon(
                 Icons.search_rounded,
                 color: _onGlass,
-                size: 26,
+                size: 28,
                 shadows: _textShadow,
               ),
             ),

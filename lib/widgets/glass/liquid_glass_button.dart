@@ -28,6 +28,9 @@ class LiquidGlassButton extends StatelessWidget {
     this.lens,
     this.fake = false,
     this.interactionScale = 1.10,
+    this.stretch = .5,
+    this.wrapSemantics = true,
+    this.glassKey,
     this.jelly = true,
     this.iconMagnify = 1,
     this.glowColor = const Color(0x33FFFFFF),
@@ -73,6 +76,19 @@ class LiquidGlassButton extends StatelessWidget {
   /// Cuánto crece mientras se presiona (1.10 = 10 %).
   final double interactionScale;
 
+  /// Cuánto se estira hacia el dedo al arrastrar (0 = nada). Útil desactivarlo
+  /// cuando el botón se transforma en un campo de texto.
+  final double stretch;
+
+  /// Si el botón se anuncia como un único botón con [semanticLabel].
+  /// Desactívalo cuando contiene controles propios (campo de texto, X).
+  final bool wrapSemantics;
+
+  /// Clave del cristal. Con una [GlobalKey] el cristal se conserva (no se
+  /// destruye ni se recrea) aunque cambien el estiramiento o la gelatina,
+  /// p. ej. cuando el botón se transforma en un campo y vuelve.
+  final Key? glassKey;
+
   /// Si tiembla como gelatina al soltar.
   final bool jelly;
 
@@ -91,9 +107,9 @@ class LiquidGlassButton extends StatelessWidget {
         child: SizedBox.fromSize(
           size: size,
           child: Center(
-            child: iconMagnify == 1
-                ? child
-                : Transform.scale(scale: iconMagnify, child: child),
+            // Siempre presente (escala 1 = sin aumento) para no cambiar la
+            // estructura del árbol al variar el aumento.
+            child: Transform.scale(scale: iconMagnify, child: child),
           ),
         ),
       ),
@@ -102,6 +118,7 @@ class LiquidGlassButton extends StatelessWidget {
     final Widget glass;
     if (lens != null) {
       glass = LiquidGlass.withOwnLayer(
+        key: glassKey,
         settings: lens!,
         fake: fake,
         shape: shape,
@@ -110,35 +127,46 @@ class LiquidGlassButton extends StatelessWidget {
       );
     } else if (grouped) {
       glass = LiquidGlass.grouped(
+        key: glassKey,
         shape: shape,
         appearance: appearance,
         child: content,
       );
     } else {
-      glass = LiquidGlass(shape: shape, appearance: appearance, child: content);
+      glass = LiquidGlass(
+        key: glassKey,
+        shape: shape,
+        appearance: appearance,
+        child: content,
+      );
     }
 
-    return Semantics(
-      button: true,
-      enabled: onTap != null,
-      label: semanticLabel,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap == null
-            ? null
-            : () {
-                if (haptics) HapticFeedback.lightImpact();
-                onTap!();
-              },
-        child: JellyWobble(
-          enabled: jelly,
-          child: LiquidStretch(
-            interactionScale: interactionScale,
-            child: glass,
-          ),
+    final button = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap == null
+          ? null
+          : () {
+              if (haptics) HapticFeedback.lightImpact();
+              onTap!();
+            },
+      child: JellyWobble(
+        enabled: jelly,
+        child: LiquidStretch(
+          interactionScale: interactionScale,
+          stretch: stretch,
+          child: glass,
         ),
       ),
+    );
+
+    // Siempre el mismo widget Semantics (solo cambian sus propiedades) para
+    // no reconstruir el cristal cuando el botón pasa a ser un campo.
+    return Semantics(
+      button: wrapSemantics,
+      enabled: wrapSemantics ? onTap != null : null,
+      label: wrapSemantics ? semanticLabel : null,
+      excludeSemantics: wrapSemantics,
+      child: button,
     );
   }
 }
