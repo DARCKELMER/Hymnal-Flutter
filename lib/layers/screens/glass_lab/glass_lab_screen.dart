@@ -77,12 +77,21 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       vsync: this,
       duration: const Duration(seconds: 14),
     );
+    // Reconstruye cuando el resorte se detiene, para devolver la barra
+    // completa aunque el último valor no sea exactamente 0.
+    _search.addStatusListener(_onSearchStatus);
+  }
+
+  void _onSearchStatus(AnimationStatus status) {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
     _backgroundController.dispose();
-    _search.dispose();
+    _search
+      ..removeStatusListener(_onSearchStatus)
+      ..dispose();
     _searchText.dispose();
     _searchFocus.dispose();
     super.dispose();
@@ -121,6 +130,10 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // El panel se oculta con el buscador abierto o mientras el teclado sigue
+    // visible (al cerrar, el teclado tarda en bajar).
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showPanel = !_searchOpen && !keyboardVisible;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -138,19 +151,26 @@ class _GlassLabScreenState extends State<GlassLabScreen>
           SafeArea(
             child: Column(
               children: [
-                // Con el buscador abierto se oculta el panel para dejar sitio
-                // al teclado.
-                if (!_searchOpen)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: _buildControlsPanel(l10n),
+                // Zona superior desplazable: nunca se desborda aunque falte
+                // sitio (teclado, pantalla pequeña o texto grande).
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        if (showPanel)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                            child: _buildControlsPanel(l10n),
+                          ),
+                        if (_showPerformance && showPanel)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                            child: PerformanceOverlay.allEnabled(),
+                          ),
+                      ],
+                    ),
                   ),
-                if (_showPerformance && !_searchOpen)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: PerformanceOverlay.allEnabled(),
-                  ),
-                const Spacer(),
+                ),
                 _buildGlassZone(l10n),
                 const SizedBox(height: 12),
               ],
@@ -413,7 +433,8 @@ class _GlassLabScreenState extends State<GlassLabScreen>
               t,
             )!.clamp(minWidth, width - minWidth - _gap);
             final searchWidth = width - barWidth - _gap;
-            final atRest = !_searchOpen && _search.value.abs() < 0.001;
+            // En reposo cuando está cerrado y el resorte ya se detuvo.
+            final atRest = !_searchOpen && !_search.isAnimating;
 
             return Row(
               children: [
