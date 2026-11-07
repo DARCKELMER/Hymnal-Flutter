@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:hymnal_app/widgets/glass/glass_drop.dart';
+import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
-/// Botón de cristal líquido suelto con:
+/// Botón de cristal líquido suelto, que se comporta como **una gota entera**:
 ///
-/// 1. **Presión de gota** ([LiquidStretch]): al tocar se infla un poco y,
-///    si se arrastra el dedo, se estira hacia él como gelatina; al soltar
-///    rebota a su forma con un resorte.
-/// 2. **Brillo táctil** ([GlassGlow]): un resplandor suave sigue el dedo por
-///    dentro del cristal.
-/// 3. Con [drop], una **gota de agua 3D** ([GlassDrop]) sobre el ícono que
-///    tiembla como gelatina al tocarla.
+/// 1. **Estira** ([LiquidStretch]): al presionar se infla y, si se arrastra
+///    el dedo, se estira hacia él.
+/// 2. **Gelatina** ([JellyWobble]): al soltar tiembla alternando ancho y
+///    alto hasta quedarse quieto.
+/// 3. **Brillo táctil** ([GlassGlow]): un resplandor suave sigue el dedo.
+/// 4. Con [lens], el botón usa su propia óptica de gota (borde más grueso y
+///    brillante, leve prisma) en un layer propio; sin ella, comparte el
+///    cristal del [LiquidGlassLayer] padre.
 ///
-/// Debe estar dentro de un [LiquidGlassLayer]; con [grouped] también dentro
-/// de un [LiquidGlassBlendGroup] para fundirse con sus vecinos.
+/// Con [grouped] (sin [lens]) se funde con sus vecinos dentro de un
+/// [LiquidGlassBlendGroup].
 class LiquidGlassButton extends StatelessWidget {
   const LiquidGlassButton({
     required this.semanticLabel,
@@ -24,14 +25,31 @@ class LiquidGlassButton extends StatelessWidget {
     this.shape = const LiquidOval(),
     this.appearance,
     this.grouped = false,
+    this.lens,
+    this.fake = false,
     this.interactionScale = 1.05,
+    this.jelly = true,
+    this.iconMagnify = 1,
     this.glowColor = const Color(0x33FFFFFF),
     this.haptics = true,
-    this.drop = false,
-    this.dropFraction = .7,
-    this.fake = false,
     super.key,
-  });
+  }) : assert(
+         lens == null || !grouped,
+         'Un botón con lente propia no puede fundirse en un blend group.',
+       );
+
+  /// Óptica de gota para los botones redondos protagonistas.
+  ///
+  /// Pensada para 48–84 dp: el bisel ocupa el borde y dobla el fondo con
+  /// fuerza, como una gota de agua, y separa un poco los colores.
+  static const dropLens = LiquidGlassSettings(
+    refractionHeight: 16,
+    refractionAmount: 22,
+    dispersion: -.25,
+    frost: 0,
+    highlight: .9,
+    contourStrength: .32,
+  );
 
   /// Etiqueta para lectores de pantalla (el botón suele ser solo ícono).
   final String semanticLabel;
@@ -43,24 +61,27 @@ class LiquidGlassButton extends StatelessWidget {
   final LiquidShape shape;
   final LiquidGlassAppearance? appearance;
 
-  /// Si forma parte de un [LiquidGlassBlendGroup].
+  /// Si forma parte de un [LiquidGlassBlendGroup] (solo sin [lens]).
   final bool grouped;
+
+  /// Óptica propia del botón (ej. [dropLens]); `null` = cristal compartido.
+  final LiquidGlassSettings? lens;
+
+  /// FakeGlass para la lente propia, para coincidir con el layer padre.
+  final bool fake;
 
   /// Cuánto crece mientras se presiona (1.05 = 5 %).
   final double interactionScale;
+
+  /// Si tiembla como gelatina al soltar.
+  final bool jelly;
+
+  /// Aumento del contenido, como una gota que agranda lo que tiene debajo.
+  final double iconMagnify;
   final Color glowColor;
 
   /// Toque háptico ligero al pulsar.
   final bool haptics;
-
-  /// Gota de cristal 3D con gelatina sobre el contenido.
-  final bool drop;
-
-  /// Diámetro de la gota respecto al lado corto del botón.
-  final double dropFraction;
-
-  /// FakeGlass para la gota, para coincidir con el layer padre.
-  final bool fake;
 
   @override
   Widget build(BuildContext context) {
@@ -70,25 +91,32 @@ class LiquidGlassButton extends StatelessWidget {
         child: SizedBox.fromSize(
           size: size,
           child: Center(
-            child: drop
-                ? GlassDrop(
-                    size: Size.square(size.shortestSide * dropFraction),
-                    fake: fake,
-                    child: child,
-                  )
-                : child,
+            child: iconMagnify == 1
+                ? child
+                : Transform.scale(scale: iconMagnify, child: child),
           ),
         ),
       ),
     );
 
-    final glass = grouped
-        ? LiquidGlass.grouped(
-            shape: shape,
-            appearance: appearance,
-            child: content,
-          )
-        : LiquidGlass(shape: shape, appearance: appearance, child: content);
+    final Widget glass;
+    if (lens != null) {
+      glass = LiquidGlass.withOwnLayer(
+        settings: lens!,
+        fake: fake,
+        shape: shape,
+        appearance: appearance ?? const LiquidGlassAppearance.ios27Clear(),
+        child: content,
+      );
+    } else if (grouped) {
+      glass = LiquidGlass.grouped(
+        shape: shape,
+        appearance: appearance,
+        child: content,
+      );
+    } else {
+      glass = LiquidGlass(shape: shape, appearance: appearance, child: content);
+    }
 
     return Semantics(
       button: true,
@@ -103,7 +131,13 @@ class LiquidGlassButton extends StatelessWidget {
                 if (haptics) HapticFeedback.lightImpact();
                 onTap!();
               },
-        child: LiquidStretch(interactionScale: interactionScale, child: glass),
+        child: JellyWobble(
+          enabled: jelly,
+          child: LiquidStretch(
+            interactionScale: interactionScale,
+            child: glass,
+          ),
+        ),
       ),
     );
   }

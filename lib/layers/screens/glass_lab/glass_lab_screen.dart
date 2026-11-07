@@ -509,15 +509,12 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // El círculo entero es la gota (con gelatina al tocarlo); el ícono
+          // va limpio, sin un segundo círculo encima.
           if (circleOpacity > 0)
-            GlassDrop(
-              size: const Size.square(46),
-              fake: _forceFake,
-              visibility: circleOpacity,
-              child: Opacity(
-                opacity: circleOpacity,
-                child: Icon(_tabIcons[_selectedTab], color: _accent, size: 26),
-              ),
+            Opacity(
+              opacity: circleOpacity,
+              child: Icon(_tabIcons[_selectedTab], color: _accent, size: 28),
             ),
           if (ghostOpacity > 0) _buildGhostTabs(l10n, width, ghostOpacity),
         ],
@@ -591,7 +588,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
               shape: LiquidRoundedSuperellipse(borderRadius: dropHeight / 2),
               settings: settings,
               magnify: magnify,
-              jelly: false,
               fake: _forceFake,
               visibility: opacity,
               child: Opacity(
@@ -606,12 +602,14 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   }
 
   Widget _buildSearchButton(AppLocalizations l10n) {
+    // La lupa entera es una gota con lente propia: se estira hacia el dedo
+    // y tiembla como gelatina al soltar.
     return LiquidGlassButton(
-      grouped: true,
       semanticLabel: l10n.search,
       onTap: _openSearch,
-      drop: true,
+      lens: LiquidGlassButton.dropLens,
       fake: _forceFake,
+      iconMagnify: 1.06,
       child: const Icon(
         Icons.search_rounded,
         color: _onGlass,
@@ -633,20 +631,13 @@ class _GlassLabScreenState extends State<GlassLabScreen>
         height: _barHeight,
         child: Row(
           children: [
-            // Gota 3D sobre la lupa: la búsqueda está activa.
             SizedBox(
-              width: roomForField ? 60 : width,
-              child: Center(
-                child: GlassDrop(
-                  size: const Size.square(44),
-                  fake: _forceFake,
-                  child: const Icon(
-                    Icons.search_rounded,
-                    color: _onGlass,
-                    size: 26,
-                    shadows: _textShadow,
-                  ),
-                ),
+              width: roomForField ? 52 : width,
+              child: const Icon(
+                Icons.search_rounded,
+                color: _onGlass,
+                size: 26,
+                shadows: _textShadow,
               ),
             ),
             if (roomForField) ...[

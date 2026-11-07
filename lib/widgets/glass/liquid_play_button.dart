@@ -8,8 +8,8 @@ import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 /// - Al pulsar, dos ondas de luz salen del borde del cristal y se
 ///   desvanecen, como una gota que cae en el agua.
 /// - Hereda la presión de gota y el brillo táctil de [LiquidGlassButton].
-/// - Lleva una gota de agua 3D interior sobre el ícono que tiembla como
-///   gelatina al tocarla.
+/// - Todo el botón es una gota de agua 3D (lente propia) que se estira
+///   hacia el dedo y tiembla como gelatina al soltar.
 ///
 /// Las ondas se pintan fuera del cristal (sin geometría de cristal animada),
 /// así que no añaden capturas de fondo.
@@ -36,7 +36,7 @@ class LiquidPlayButton extends StatefulWidget {
   final Color tint;
   final Color rippleColor;
 
-  /// FakeGlass para la gota interior, para coincidir con el layer padre.
+  /// FakeGlass para la lente propia, para coincidir con el layer padre.
   final bool fake;
 
   @override
@@ -103,8 +103,9 @@ class _LiquidPlayButtonState extends State<LiquidPlayButton>
           shape: const LiquidOval(),
           appearance: LiquidGlassAppearance.ios27Clear(tint: widget.tint),
           glowColor: const Color(0x40FFFFFF),
-          drop: true,
+          lens: LiquidGlassButton.dropLens,
           fake: widget.fake,
+          iconMagnify: 1.06,
           child: AnimatedIcon(
             icon: AnimatedIcons.play_pause,
             progress: _icon,

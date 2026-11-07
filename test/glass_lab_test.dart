@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
 import 'package:hymnal_app/widgets/glass/glass_drop.dart';
+import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
@@ -25,13 +26,13 @@ void main() {
       await tester.pumpWidget(_wrap(const GlassLabScreen()));
       await tester.pump();
 
-      // Layer principal + gota de reposo del menú + gotas 3D del play y de
-      // la lupa (cada gota es cristal real con layer propio).
+      // Layer principal + gota de reposo del menú + play y lupa, que son
+      // gotas enteras con lente propia (sin gotas interiores).
       expect(find.byType(LiquidGlassLayer), findsNWidgets(4));
-      expect(find.byType(GlassDrop), findsNWidgets(2));
+      expect(find.byType(GlassDrop), findsNothing);
       expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
       expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
-      expect(find.byType(LiquidGlass), findsNWidgets(7));
+      expect(find.byType(LiquidGlass), findsNWidgets(5));
       expect(find.text('Inicio'), findsWidgets);
       expect(find.text('Ajustes'), findsWidgets);
     },
@@ -117,9 +118,8 @@ void main() {
     expect(find.byType(TextField), findsOneWidget);
     expect(find.text('Buscar himnos...'), findsOneWidget);
 
-    // Abierto: gota 3D sobre la lupa del campo y sobre el círculo de la
-    // pestaña activa (más la del play).
-    expect(find.byType(GlassDrop), findsNWidgets(3));
+    // Abierto: sin gotas interiores; el círculo de la pestaña es la gota.
+    expect(find.byType(GlassDrop), findsNothing);
 
     // Cerrar con la X: la barra real vuelve en cuanto recupera su ancho,
     // sin esperar a que el resorte termine de rebotar.
@@ -158,5 +158,44 @@ void main() {
     expect(mid, greaterThan(0));
     await tester.pumpAndSettle();
     expect(tester.widget<AnimatedIcon>(icon).progress.value, 1);
+  });
+
+  testWidgets('Los botones redondos tiemblan como gelatina al soltar', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    final wobble = find.descendant(
+      of: find.byType(LiquidPlayButton),
+      matching: find.byType(JellyWobble),
+    );
+    // Diferencia entre la escala horizontal y la vertical del primer
+    // Transform bajo la gelatina: 0 en reposo (solo escalas uniformes),
+    // positiva mientras la gota está más ancha que alta.
+    double anisotropy() {
+      final transforms = find.descendant(
+        of: wobble,
+        matching: find.byType(Transform),
+      );
+      if (transforms.evaluate().isEmpty) return 0;
+      final m = tester.widget<Transform>(transforms.first).transform;
+      return m.entry(0, 0) - m.entry(1, 1);
+    }
+
+    expect(anisotropy(), closeTo(0, 1e-6));
+
+    await tester.tap(find.byType(LiquidPlayButton));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 40));
+    expect(anisotropy(), greaterThan(.05));
+
+    // Se queda quieta al terminar.
+    await tester.pumpAndSettle();
+    expect(anisotropy(), closeTo(0, 1e-6));
   });
 }
