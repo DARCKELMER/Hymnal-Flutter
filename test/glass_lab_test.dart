@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
+import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
@@ -93,5 +94,54 @@ void main() {
     await tester.tapAt(Offset(rect.left + rect.width * 0.625, rect.center.dy));
     await tester.pumpAndSettle();
     expect(tester.widget<LoupeTabBar>(bar).selectedIndex, 2);
+  });
+
+  testWidgets('La lupa se transforma en campo de búsqueda y vuelve', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+    expect(find.byType(TextField), findsNothing);
+
+    // Abrir: la barra se encoge y aparece el campo.
+    await tester.tap(find.bySemanticsLabel('Buscar'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LoupeTabBar), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.text('Buscar himnos...'), findsOneWidget);
+
+    // Cerrar con la X: vuelve la barra de pestañas completa.
+    await tester.tap(find.bySemanticsLabel('Cancelar').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(LoupeTabBar), findsOneWidget);
+  });
+
+  testWidgets('El play transforma su ícono y lanza la onda', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    final icon = find.descendant(
+      of: find.byType(LiquidPlayButton),
+      matching: find.byType(AnimatedIcon),
+    );
+    expect(tester.widget<AnimatedIcon>(icon).progress.value, 0);
+
+    await tester.tap(find.byType(LiquidPlayButton));
+    await tester.pump(); // reconstruye y arranca la animación
+    await tester.pump(const Duration(milliseconds: 150));
+    // A mitad de la animación: el ícono va camino de ⏸.
+    final mid = tester.widget<AnimatedIcon>(icon).progress.value;
+    expect(mid, greaterThan(0));
+    await tester.pumpAndSettle();
+    expect(tester.widget<AnimatedIcon>(icon).progress.value, 1);
   });
 }

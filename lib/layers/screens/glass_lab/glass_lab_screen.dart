@@ -1,10 +1,15 @@
 import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/widgets/glass/liquid_glass_button.dart';
+import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+import 'package:motor/motor.dart';
 
 /// Cristal "agua brillante": parte del preset Clear de iOS 27 con un bisel
 /// más ancho y profundo (más refracción en el borde) y un reflejo especular
@@ -29,7 +34,7 @@ class GlassLabScreen extends StatefulWidget {
 }
 
 class _GlassLabScreenState extends State<GlassLabScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const Color _accent = Color(0xFF1F4FD1);
   static const Color _accentTint = Color(0xD61F4FD1); // #1F4FD1 al 84 %
   static const Color _onGlass = Colors.white;
@@ -47,6 +52,24 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   bool _isPlaying = false;
   int _selectedTab = 0;
 
+  /// Transición del buscador: 0 = barra de pestañas + lupa,
+  /// 1 = barra encogida en un círculo + campo de búsqueda.
+  /// Resorte con rebote para que se sienta como líquido.
+  late final SingleMotionController _search = SingleMotionController(
+    motion: const Motion.bouncySpring(snapToEnd: true),
+    vsync: this,
+  );
+  bool _searchOpen = false;
+  final _searchText = TextEditingController();
+  final _searchFocus = FocusNode();
+
+  static const List<IconData> _tabIcons = [
+    Icons.home_rounded,
+    Icons.format_list_bulleted_rounded,
+    Icons.favorite_rounded,
+    Icons.settings_rounded,
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +82,9 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   @override
   void dispose() {
     _backgroundController.dispose();
+    _search.dispose();
+    _searchText.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
@@ -72,6 +98,25 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   }
 
   void _togglePlaying() => setState(() => _isPlaying = !_isPlaying);
+
+  void _openSearch() {
+    if (_searchOpen) return;
+    setState(() => _searchOpen = true);
+    _search.animateTo(1);
+    // Enfoca el campo cuando ya casi terminó de abrirse.
+    Future.delayed(const Duration(milliseconds: 280), () {
+      if (mounted && _searchOpen) _searchFocus.requestFocus();
+    });
+  }
+
+  void _closeSearch() {
+    if (!_searchOpen) return;
+    HapticFeedback.lightImpact();
+    _searchFocus.unfocus();
+    _searchText.clear();
+    setState(() => _searchOpen = false);
+    _search.animateTo(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,11 +138,14 @@ class _GlassLabScreenState extends State<GlassLabScreen>
           SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _buildControlsPanel(l10n),
-                ),
-                if (_showPerformance)
+                // Con el buscador abierto se oculta el panel para dejar sitio
+                // al teclado.
+                if (!_searchOpen)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: _buildControlsPanel(l10n),
+                  ),
+                if (_showPerformance && !_searchOpen)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: PerformanceOverlay.allEnabled(),
@@ -246,16 +294,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
             const SizedBox(height: 16),
             _buildMiniPlayer(l10n),
             const SizedBox(height: 12),
-            LiquidGlassBlendGroup(
-              blend: 20,
-              child: Row(
-                children: [
-                  Expanded(child: _buildTabBar(l10n)),
-                  const SizedBox(width: 12),
-                  _buildSearchButton(l10n),
-                ],
-              ),
-            ),
+            LiquidGlassBlendGroup(blend: 20, child: _buildBottomRow(l10n)),
           ],
         ),
       ),
@@ -263,19 +302,12 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   }
 
   Widget _buildPlayButton(AppLocalizations l10n) {
-    return LiquidGlass(
-      shape: const LiquidOval(),
-      appearance: const LiquidGlassAppearance.ios27Clear(tint: _accentTint),
-      child: _CircleTap(
-        size: 64,
-        semanticLabel: _isPlaying ? l10n.glassLabPause : l10n.glassLabPlay,
-        onTap: _togglePlaying,
-        child: Icon(
-          _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-          color: Colors.white,
-          size: 34,
-        ),
-      ),
+    return LiquidPlayButton(
+      isPlaying: _isPlaying,
+      onPressed: _togglePlaying,
+      playLabel: l10n.glassLabPlay,
+      pauseLabel: l10n.glassLabPause,
+      tint: _accentTint,
     );
   }
 
@@ -353,18 +385,150 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Buscador: "la gota que se derrite en campo"
+  // ---------------------------------------------------------------------------
+
+  static const double _barHeight = 64;
+  static const double _gap = 12;
+
+  /// Fila inferior. Al abrir la búsqueda, la barra de pestañas se encoge en
+  /// un círculo con el ícono de la pestaña activa y la lupa se estira hasta
+  /// ser el campo de búsqueda; el blend group las funde como dos gotas.
+  /// La geometría solo se anima durante esta transición corta.
+  Widget _buildBottomRow(AppLocalizations l10n) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        return AnimatedBuilder(
+          animation: _search,
+          builder: (context, _) {
+            // El resorte se pasa un poco de 0 y 1: ese rebote es el "líquido".
+            final t = _search.value.clamp(-0.05, 1.06);
+            final fullBar = width - _barHeight - _gap;
+            final minWidth = _barHeight * 0.9;
+            final barWidth = lerpDouble(
+              fullBar,
+              _barHeight,
+              t,
+            )!.clamp(minWidth, width - minWidth - _gap);
+            final searchWidth = width - barWidth - _gap;
+            final atRest = !_searchOpen && _search.value.abs() < 0.001;
+
+            return Row(
+              children: [
+                SizedBox(
+                  width: barWidth,
+                  child: atRest
+                      ? _buildTabBar(l10n)
+                      : _buildCollapsedBar(l10n, barWidth),
+                ),
+                const SizedBox(width: _gap),
+                SizedBox(
+                  width: searchWidth,
+                  child: atRest
+                      ? _buildSearchButton(l10n)
+                      : _buildSearchField(l10n, searchWidth, t),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// La barra encogida: un círculo con el ícono de la pestaña activa.
+  /// Tocarla cierra la búsqueda y vuelve a la barra completa.
+  Widget _buildCollapsedBar(AppLocalizations l10n, double width) {
+    return LiquidGlassButton(
+      grouped: true,
+      semanticLabel: l10n.cancel,
+      onTap: _closeSearch,
+      size: Size(width, _barHeight),
+      shape: const LiquidRoundedSuperellipse(borderRadius: _barHeight / 2),
+      child: Icon(_tabIcons[_selectedTab], color: _accent, size: 26),
+    );
+  }
+
   Widget _buildSearchButton(AppLocalizations l10n) {
+    return LiquidGlassButton(
+      grouped: true,
+      semanticLabel: l10n.search,
+      onTap: _openSearch,
+      child: const Icon(
+        Icons.search_rounded,
+        color: _onGlass,
+        size: 28,
+        shadows: _textShadow,
+      ),
+    );
+  }
+
+  /// La lupa estirada en cápsula. El texto y el botón de cerrar aparecen
+  /// cuando ya hay sitio, para que nada se desborde a mitad de animación.
+  Widget _buildSearchField(AppLocalizations l10n, double width, double t) {
+    final contentOpacity = ((t - 0.35) / 0.65).clamp(0.0, 1.0);
+    final roomForField = width > 160;
+
     return LiquidGlass.grouped(
-      shape: const LiquidOval(),
-      child: _CircleTap(
-        size: 64,
-        semanticLabel: l10n.search,
-        onTap: () {},
-        child: const Icon(
-          Icons.search_rounded,
-          color: _onGlass,
-          size: 28,
-          shadows: _textShadow,
+      shape: const LiquidRoundedSuperellipse(borderRadius: _barHeight / 2),
+      child: SizedBox(
+        height: _barHeight,
+        child: Row(
+          children: [
+            SizedBox(
+              width: roomForField ? 52 : width,
+              child: const Icon(
+                Icons.search_rounded,
+                color: _onGlass,
+                size: 26,
+                shadows: _textShadow,
+              ),
+            ),
+            if (roomForField) ...[
+              Expanded(
+                child: Opacity(
+                  opacity: contentOpacity,
+                  child: TextField(
+                    controller: _searchText,
+                    focusNode: _searchFocus,
+                    textInputAction: TextInputAction.search,
+                    cursorColor: _onGlass,
+                    style: const TextStyle(
+                      color: _onGlass,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      shadows: _textShadow,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: l10n.searchHint,
+                      hintStyle: const TextStyle(
+                        color: Color(0xCCFFFFFF),
+                        shadows: _textShadow,
+                      ),
+                      border: InputBorder.none,
+                      isCollapsed: true,
+                    ),
+                  ),
+                ),
+              ),
+              Opacity(
+                opacity: contentOpacity,
+                child: _CircleTap(
+                  size: 48,
+                  semanticLabel: l10n.cancel,
+                  onTap: _closeSearch,
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: _onGlass,
+                    shadows: _textShadow,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+          ],
         ),
       ),
     );
