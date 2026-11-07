@@ -84,19 +84,17 @@ class _GlassLabScreenState extends State<GlassLabScreen>
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: _buildControlsPanel(l10n),
                 ),
+                if (_showPerformance)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: PerformanceOverlay.allEnabled(),
+                  ),
                 const Spacer(),
                 _buildGlassZone(l10n),
                 const SizedBox(height: 12),
               ],
             ),
           ),
-          if (_showPerformance)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: MediaQuery.paddingOf(context).top + kToolbarHeight,
-              child: PerformanceOverlay.allEnabled(),
-            ),
         ],
       ),
     );
