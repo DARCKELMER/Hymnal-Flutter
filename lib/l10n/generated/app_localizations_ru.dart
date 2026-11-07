@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -316,4 +317,35 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get aboutDevelopers =>
       'Создано с преданностью Кэтрин Кастильо и Исааком Ребольедо.';
+
+  @override
+  String get glassLabTitle => 'Лаборатория стекла';
+
+  @override
+  String get glassLabSubtitle =>
+      'Только отладка: проверка эффекта Liquid Glass';
+
+  @override
+  String get glassLabTint => 'Оттенок';
+
+  @override
+  String get glassLabClear => 'Прозрачное';
+
+  @override
+  String get glassLabTinted => 'Тонированное';
+
+  @override
+  String get glassLabForceFake => 'Принудительно FakeGlass';
+
+  @override
+  String get glassLabAnimatedBackground => 'Анимированный фон';
+
+  @override
+  String get glassLabPerformanceOverlay => 'Оверлей производительности';
+
+  @override
+  String get glassLabPlay => 'Воспроизвести';
+
+  @override
+  String get glassLabPause => 'Пауза';
 }

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -317,4 +318,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get aboutDevelopers =>
       'Created with dedication by Katherin Castillo and Isaac Rebolledo.';
+
+  @override
+  String get glassLabTitle => 'Glass lab';
+
+  @override
+  String get glassLabSubtitle => 'Debug only: test the Liquid Glass effect';
+
+  @override
+  String get glassLabTint => 'Tint';
+
+  @override
+  String get glassLabClear => 'Clear';
+
+  @override
+  String get glassLabTinted => 'Tinted';
+
+  @override
+  String get glassLabForceFake => 'Force FakeGlass';
+
+  @override
+  String get glassLabAnimatedBackground => 'Animated background';
+
+  @override
+  String get glassLabPerformanceOverlay => 'Performance overlay';
+
+  @override
+  String get glassLabPlay => 'Play';
+
+  @override
+  String get glassLabPause => 'Pause';
 }

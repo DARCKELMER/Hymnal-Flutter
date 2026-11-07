@@ -115,5 +115,15 @@
       }
     }
   },
-  "aboutDevelopers": "Создано с преданностью Кэтрин Кастильо и Исааком Ребольедо."
+  "aboutDevelopers": "Создано с преданностью Кэтрин Кастильо и Исааком Ребольедо.",
+  "glassLabTitle": "Лаборатория стекла",
+  "glassLabSubtitle": "Только отладка: проверка эффекта Liquid Glass",
+  "glassLabTint": "Оттенок",
+  "glassLabClear": "Прозрачное",
+  "glassLabTinted": "Тонированное",
+  "glassLabForceFake": "Принудительно FakeGlass",
+  "glassLabAnimatedBackground": "Анимированный фон",
+  "glassLabPerformanceOverlay": "Оверлей производительности",
+  "glassLabPlay": "Воспроизвести",
+  "glassLabPause": "Пауза"
 }

@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -321,4 +322,35 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get aboutDevelopers =>
       'Creada con dedicación por Katherin Castillo e Isaac Rebolledo.';
+
+  @override
+  String get glassLabTitle => 'Laboratorio de cristal';
+
+  @override
+  String get glassLabSubtitle =>
+      'Solo depuración: prueba el efecto Liquid Glass';
+
+  @override
+  String get glassLabTint => 'Tinte';
+
+  @override
+  String get glassLabClear => 'Transparente';
+
+  @override
+  String get glassLabTinted => 'Tintado';
+
+  @override
+  String get glassLabForceFake => 'Forzar FakeGlass';
+
+  @override
+  String get glassLabAnimatedBackground => 'Fondo animado';
+
+  @override
+  String get glassLabPerformanceOverlay => 'Superposición de rendimiento';
+
+  @override
+  String get glassLabPlay => 'Reproducir';
+
+  @override
+  String get glassLabPause => 'Pausa';
 }

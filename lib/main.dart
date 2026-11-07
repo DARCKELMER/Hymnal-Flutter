@@ -8,9 +8,21 @@ import 'package:hymnal_app/styles/theme.dart';
 import 'package:hymnal_app/layers/screens/main_tabs_screen.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:hymnal_app/services/audio_handler.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+
+/// Precarga los shaders de Liquid Glass antes de `runApp`.
+///
+/// Evita que el primer cristal se pinte como FakeGlass durante uno o dos
+/// cuadros, a cambio de un arranque algo más lento. Se deja detrás de una
+/// constante para medir con y sin ella.
+const bool kPrecacheLiquidGlass = true;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (kPrecacheLiquidGlass) {
+    await LiquidGlass.precache();
+  }
 
   setupLocator();
 

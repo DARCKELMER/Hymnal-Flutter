@@ -115,5 +115,15 @@
       }
     }
   },
-  "aboutDevelopers": "Criado com dedicação por Katherin Castillo e Isaac Rebolledo."
+  "aboutDevelopers": "Criado com dedicação por Katherin Castillo e Isaac Rebolledo.",
+  "glassLabTitle": "Laboratório de vidro",
+  "glassLabSubtitle": "Somente depuração: teste o efeito Liquid Glass",
+  "glassLabTint": "Tonalidade",
+  "glassLabClear": "Transparente",
+  "glassLabTinted": "Tingido",
+  "glassLabForceFake": "Forçar FakeGlass",
+  "glassLabAnimatedBackground": "Fundo animado",
+  "glassLabPerformanceOverlay": "Sobreposição de desempenho",
+  "glassLabPlay": "Reproduzir",
+  "glassLabPause": "Pausar"
 }

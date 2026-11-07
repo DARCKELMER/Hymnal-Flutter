@@ -8,14 +8,14 @@ This is a Flutter mobile application using Clean Architecture with GetIt for dep
 
 ## Development Environment Setup
 
-**Required Flutter Version:** 3.38.9 (managed via FVM)
+**Required Flutter Version:** 3.47.1 (managed via FVM)
 
 ```bash
 # Install Flutter version specified in .fvmrc
 fvm install
 
 # Set Flutter version for VS Code
-fvm use 3.38.9
+fvm use 3.47.1
 
 # Run the app
 fvm flutter run

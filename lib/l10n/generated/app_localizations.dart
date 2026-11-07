@@ -65,7 +65,7 @@ import 'app_localizations_ru.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -88,18 +88,18 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
     Locale('pt'),
-    Locale('ru')
+    Locale('ru'),
   ];
 
   /// The name of the application
@@ -671,6 +671,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Created with dedication by Katherin Castillo and Isaac Rebolledo.'**
   String get aboutDevelopers;
+
+  /// Debug-only screen to test the Liquid Glass effect
+  ///
+  /// In en, this message translates to:
+  /// **'Glass lab'**
+  String get glassLabTitle;
+
+  /// Subtitle of the glass lab entry in Settings
+  ///
+  /// In en, this message translates to:
+  /// **'Debug only: test the Liquid Glass effect'**
+  String get glassLabSubtitle;
+
+  /// Label for the glass tint slider in the glass lab
+  ///
+  /// In en, this message translates to:
+  /// **'Tint'**
+  String get glassLabTint;
+
+  /// Left end of the glass tint slider
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get glassLabClear;
+
+  /// Right end of the glass tint slider
+  ///
+  /// In en, this message translates to:
+  /// **'Tinted'**
+  String get glassLabTinted;
+
+  /// Switch that forces the fallback glass renderer
+  ///
+  /// In en, this message translates to:
+  /// **'Force FakeGlass'**
+  String get glassLabForceFake;
+
+  /// Switch that slowly moves the background
+  ///
+  /// In en, this message translates to:
+  /// **'Animated background'**
+  String get glassLabAnimatedBackground;
+
+  /// Switch for Flutter's performance overlay
+  ///
+  /// In en, this message translates to:
+  /// **'Performance overlay'**
+  String get glassLabPerformanceOverlay;
+
+  /// Accessibility label for the play button
+  ///
+  /// In en, this message translates to:
+  /// **'Play'**
+  String get glassLabPlay;
+
+  /// Accessibility label for the pause button
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get glassLabPause;
 }
 
 class _AppLocalizationsDelegate
@@ -704,8 +764,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

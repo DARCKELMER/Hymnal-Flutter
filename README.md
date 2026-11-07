@@ -1,6 +1,15 @@
 # Adventist Hymnal
 > New version of the adventist hymnal multi-platform.
 
+## Créditos
+
+Basado en [Hymnal-Flutter](https://github.com/GoGoShift/Hymnal-Flutter) de Isaac R. (GoGoShift).
+Rediseño Liquid Glass por Elmer Calla Huayhua.
+
+Este repositorio parte del commit `42e1263` del proyecto original. El plan del rediseño
+está en [`PLAN_LIQUID_GLASS.md`](PLAN_LIQUID_GLASS.md). El proyecto original no incluye
+un archivo de licencia; su autor conserva los derechos sobre el código base.
+
 If you like this app, help me supporting this project:
 * [<img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Paypal" />](https://www.paypal.me/isax5)
 

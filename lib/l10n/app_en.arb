@@ -447,5 +447,45 @@
   "aboutDevelopers": "Created with dedication by Katherin Castillo and Isaac Rebolledo.",
   "@aboutDevelopers": {
     "description": "Credit text for the app developers"
+  },
+  "glassLabTitle": "Glass lab",
+  "@glassLabTitle": {
+    "description": "Debug-only screen to test the Liquid Glass effect"
+  },
+  "glassLabSubtitle": "Debug only: test the Liquid Glass effect",
+  "@glassLabSubtitle": {
+    "description": "Subtitle of the glass lab entry in Settings"
+  },
+  "glassLabTint": "Tint",
+  "@glassLabTint": {
+    "description": "Label for the glass tint slider in the glass lab"
+  },
+  "glassLabClear": "Clear",
+  "@glassLabClear": {
+    "description": "Left end of the glass tint slider"
+  },
+  "glassLabTinted": "Tinted",
+  "@glassLabTinted": {
+    "description": "Right end of the glass tint slider"
+  },
+  "glassLabForceFake": "Force FakeGlass",
+  "@glassLabForceFake": {
+    "description": "Switch that forces the fallback glass renderer"
+  },
+  "glassLabAnimatedBackground": "Animated background",
+  "@glassLabAnimatedBackground": {
+    "description": "Switch that slowly moves the background"
+  },
+  "glassLabPerformanceOverlay": "Performance overlay",
+  "@glassLabPerformanceOverlay": {
+    "description": "Switch for Flutter's performance overlay"
+  },
+  "glassLabPlay": "Play",
+  "@glassLabPlay": {
+    "description": "Accessibility label for the play button"
+  },
+  "glassLabPause": "Pause",
+  "@glassLabPause": {
+    "description": "Accessibility label for the pause button"
   }
 }
