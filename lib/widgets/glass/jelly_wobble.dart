@@ -113,7 +113,9 @@ class _JellyWobbleState extends State<JellyWobble>
         animation: _motion,
         builder: (context, child) {
           final d = _deformation;
-          if (d == 0) return child!;
+          // Siempre el mismo Transform (identidad en reposo): si se quitara,
+          // el cristal de debajo se volvería a montar y el renderizador
+          // dejaría restos de contorno durante unos cuadros.
           return Transform(
             alignment: JellyWobble.anchor,
             // Conserva el volumen aproximado: lo que gana de ancho lo

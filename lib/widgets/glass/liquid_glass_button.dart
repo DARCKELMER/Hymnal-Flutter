@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
@@ -40,6 +42,9 @@ class LiquidGlassButton extends StatelessWidget {
          lens == null || !grouped,
          'Un botón con lente propia no puede fundirse en un blend group.',
        );
+
+  /// Estiramiento mínimo para que [LiquidStretch] conserve su estructura.
+  static const _minStretch = 1e-4;
 
   /// Óptica de gota para los botones redondos protagonistas.
   ///
@@ -153,7 +158,10 @@ class LiquidGlassButton extends StatelessWidget {
         enabled: jelly,
         child: LiquidStretch(
           interactionScale: interactionScale,
-          stretch: stretch,
+          // LiquidStretch devuelve su hijo sin envoltura cuando no estira ni
+          // escala; ese cambio de estructura volvería a montar el cristal.
+          // Un estiramiento mínimo e imperceptible la mantiene siempre.
+          stretch: math.max(stretch, _minStretch),
           child: glass,
         ),
       ),

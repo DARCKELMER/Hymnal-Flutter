@@ -232,12 +232,21 @@ void main() {
 
     final before = rowGlass();
     expect(before, hasLength(3));
+    // Padre del objeto de render de cada cristal: si cambia, el cristal se
+    // volvió a montar (aunque una GlobalKey conserve el Element) y el
+    // renderizador deja restos de contorno durante unos cuadros.
+    final parents = [for (final e in before) e.renderObject!.parent];
 
     void expectSame(String when) {
       final now = rowGlass();
       expect(now, hasLength(before.length), reason: when);
       for (var i = 0; i < before.length; i++) {
         expect(identical(now[i], before[i]), isTrue, reason: '$when [$i]');
+        expect(
+          identical(now[i].renderObject!.parent, parents[i]),
+          isTrue,
+          reason: '$when [$i]: el cristal cambió de padre (re-montaje)',
+        );
       }
     }
 
@@ -256,5 +265,34 @@ void main() {
     }
     await tester.pumpAndSettle();
     expectSame('cerrado');
+  });
+
+  testWidgets('El temblor de gelatina no vuelve a montar el cristal', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    final glass = find.descendant(
+      of: find.byType(LiquidPlayButton),
+      matching: find.byType(LiquidGlass),
+    );
+    final element = tester.element(glass);
+    final parent = element.renderObject!.parent;
+
+    await tester.tap(find.byType(LiquidPlayButton));
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(identical(tester.element(glass), element), isTrue);
+      expect(
+        identical(tester.element(glass).renderObject!.parent, parent),
+        isTrue,
+        reason: 'cuadro $i: el cristal cambió de padre',
+      );
+    }
   });
 }
