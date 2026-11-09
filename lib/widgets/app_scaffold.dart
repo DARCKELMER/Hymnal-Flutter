@@ -28,6 +28,10 @@ class AppScaffold extends StatefulWidget {
   final bool showPlayer;
   final bool resizeToAvoidBottomInset;
 
+  /// Con el teclado abierto, la zona de cristal sube sobre él en vez de
+  /// apartarse (p. ej. mientras se escribe en la búsqueda de la barra).
+  final bool dockAboveKeyboard;
+
   const AppScaffold({
     super.key,
     required this.body,
@@ -36,6 +40,7 @@ class AppScaffold extends StatefulWidget {
     this.tabBar,
     this.showPlayer = true,
     this.resizeToAvoidBottomInset = true,
+    this.dockAboveKeyboard = false,
   });
 
   /// Margen entre la zona de cristal y el borde inferior.
@@ -76,6 +81,7 @@ class _AppScaffoldState extends State<AppScaffold> {
                 body: _DockedBody(
                   hasTabBar: widget.tabBar != null,
                   hasPlayer: hasPlayer,
+                  dockAboveKeyboard: widget.dockAboveKeyboard,
                   dock: widget.tabBar == null && !widget.showPlayer
                       ? null
                       : GlassDock(
@@ -102,12 +108,14 @@ class _DockedBody extends StatelessWidget {
     required this.dock,
     required this.hasTabBar,
     required this.hasPlayer,
+    required this.dockAboveKeyboard,
   });
 
   final Widget child;
   final Widget? dock;
   final bool hasTabBar;
   final bool hasPlayer;
+  final bool dockAboveKeyboard;
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +128,8 @@ class _DockedBody extends StatelessWidget {
     );
     // Con el teclado abierto la zona de cristal se aparta hacia abajo
     // (sin desmontarse, para no volver a crear el cristal).
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final keyboardOpen =
+        MediaQuery.viewInsetsOf(context).bottom > 0 && !dockAboveKeyboard;
     return Stack(
       children: [
         Positioned.fill(

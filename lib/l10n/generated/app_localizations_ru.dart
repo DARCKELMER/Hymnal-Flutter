@@ -437,4 +437,26 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get playerOpen => 'Открыть плеер';
+
+  @override
+  String get searchEmptyHint => 'Ищите по номеру, названию или тексту';
+
+  @override
+  String get recentSearches => 'Недавние поиски';
+
+  @override
+  String get removeRecentSearch => 'Удалить из недавних';
+
+  @override
+  String searchResultsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count гимна',
+      many: '$count гимнов',
+      few: '$count гимна',
+      one: '1 гимн',
+    );
+    return '$_temp0';
+  }
 }

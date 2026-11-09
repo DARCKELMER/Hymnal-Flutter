@@ -905,6 +905,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open player'**
   String get playerOpen;
+
+  /// Shown in the search results panel when the field is empty and there are no recent searches
+  ///
+  /// In en, this message translates to:
+  /// **'Search by number, title or lyrics'**
+  String get searchEmptyHint;
+
+  /// Section title with the latest searches
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches'**
+  String get recentSearches;
+
+  /// Accessibility label of the button that removes a recent search
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from recent'**
+  String get removeRecentSearch;
+
+  /// Number of search results
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hymn} other{{count} hymns}}'**
+  String searchResultsCount(int count);
 }
 
 class _AppLocalizationsDelegate

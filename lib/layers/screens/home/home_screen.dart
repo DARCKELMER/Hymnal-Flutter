@@ -4,6 +4,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
 import 'package:hymnal_app/layers/data/repository/hymnal_repository.dart';
+import 'package:hymnal_app/layers/screens/search/search_launcher.dart';
 import 'package:hymnal_app/layers/screens/search/search_screen.dart';
 import 'package:hymnal_app/layers/screens/history/history_screen.dart';
 import 'package:hymnal_app/layers/screens/hymn/hymn_screen.dart';
@@ -132,10 +133,17 @@ class _HomeScreenState extends _HomeController {
                           child: ElevatedButton.icon(
                             onPressed: () {
                               _unfocusKeyboard();
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const SearchScreen()),
-                              );
+                              // En la pantalla principal abre la búsqueda de la
+                              // barra de cristal; si no, la pantalla aparte.
+                              final openSearch = SearchLauncher.maybeOf(context);
+                              if (openSearch != null) {
+                                openSearch();
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const SearchScreen()),
+                                );
+                              }
                             },
                             icon: const Icon(Icons.search),
                             label: Text(l10n.search),

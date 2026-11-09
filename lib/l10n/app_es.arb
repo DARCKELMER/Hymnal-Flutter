@@ -161,5 +161,16 @@
   "glassCatalogNavigation": "Navegación",
   "glassCatalogLyrics": "Letra",
   "sheetMusic": "Partitura",
-  "playerOpen": "Abrir reproductor"
+  "playerOpen": "Abrir reproductor",
+  "searchEmptyHint": "Busca por número, título o letra",
+  "recentSearches": "Búsquedas recientes",
+  "removeRecentSearch": "Quitar de recientes",
+  "searchResultsCount": "{count, plural, =1{1 himno} other{{count} himnos}}",
+  "@searchResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

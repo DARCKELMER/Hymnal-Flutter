@@ -161,5 +161,16 @@
   "glassCatalogNavigation": "Навигация",
   "glassCatalogLyrics": "Текст",
   "sheetMusic": "Ноты",
-  "playerOpen": "Открыть плеер"
+  "playerOpen": "Открыть плеер",
+  "searchEmptyHint": "Ищите по номеру, названию или тексту",
+  "recentSearches": "Недавние поиски",
+  "removeRecentSearch": "Удалить из недавних",
+  "searchResultsCount": "{count, plural, =1{1 гимн} few{{count} гимна} many{{count} гимнов} other{{count} гимна}}",
+  "@searchResultsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

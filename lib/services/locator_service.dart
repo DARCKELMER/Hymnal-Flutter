@@ -9,6 +9,7 @@ import 'package:hymnal_app/services/favorites_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
 import 'package:hymnal_app/services/audio_service.dart';
 import 'package:hymnal_app/services/background_accent_service.dart';
+import 'package:hymnal_app/services/recent_searches_service.dart';
 
 final GetIt getIt = GetIt.instance;
 
@@ -27,5 +28,8 @@ void setupLocator() {
   getIt.registerLazySingleton<AudioService>(() => AudioService());
   getIt.registerLazySingleton<BackgroundAccentService>(
     () => BackgroundAccentService(),
+  );
+  getIt.registerLazySingleton<RecentSearchesService>(
+    () => RecentSearchesService(),
   );
 }

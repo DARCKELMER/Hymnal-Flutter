@@ -11,8 +11,9 @@ class StringUtils {
     String normalized = text.toLowerCase();
 
     // Remove common accents/diacritics
-    const accents = 'áàâãäéèêëíìîïóòôõöúùûüçñ';
-    const without = 'aaaaaeeeeiiiiooooouuuucn';
+    // (ё → е: en ruso suele escribirse sin los puntos).
+    const accents = 'áàâãäéèêëíìîïóòôõöúùûüçñё';
+    const without = 'aaaaaeeeeiiiiooooouuuucnе';
     for (int i = 0; i < accents.length; i++) {
       normalized = normalized.replaceAll(accents[i], without[i]);
     }

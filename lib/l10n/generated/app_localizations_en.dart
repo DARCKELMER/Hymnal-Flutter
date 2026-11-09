@@ -437,4 +437,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerOpen => 'Open player';
+
+  @override
+  String get searchEmptyHint => 'Search by number, title or lyrics';
+
+  @override
+  String get recentSearches => 'Recent searches';
+
+  @override
+  String get removeRecentSearch => 'Remove from recent';
+
+  @override
+  String searchResultsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hymns',
+      one: '1 hymn',
+    );
+    return '$_temp0';
+  }
 }

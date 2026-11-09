@@ -1,5 +1,7 @@
 import 'package:hymnal_app/core/utils/string_utils.dart';
+
 import 'dart:convert';
+
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
@@ -40,7 +42,9 @@ class HymnalRepositoryImpl implements HymnalRepository {
     final hymnals = await getHymnals();
     final hymnal = hymnals.firstWhere((h) => h.id == hymnalId);
 
-    final jsonString = await rootBundle.loadString('assets/hymns/${hymnal.hymnsFileName}');
+    final jsonString = await rootBundle.loadString(
+      'assets/hymns/${hymnal.hymnsFileName}',
+    );
     final List<dynamic> jsonList = json.decode(jsonString);
     final hymns = jsonList.map((e) => Hymn.fromJson(e)).toList();
 
@@ -57,9 +61,13 @@ class HymnalRepositoryImpl implements HymnalRepository {
     final hymnals = await getHymnals();
     final hymnal = hymnals.firstWhere((h) => h.id == hymnalId);
 
-    final jsonString = await rootBundle.loadString('assets/hymns/${hymnal.thematicHymnsFileName}');
+    final jsonString = await rootBundle.loadString(
+      'assets/hymns/${hymnal.thematicHymnsFileName}',
+    );
     final List<dynamic> jsonList = json.decode(jsonString);
-    final thematicList = jsonList.map((e) => ThematicCategory.fromJson(e)).toList();
+    final thematicList = jsonList
+        .map((e) => ThematicCategory.fromJson(e))
+        .toList();
 
     _cachedThematicLists[hymnalId] = thematicList;
     return thematicList;
@@ -103,10 +111,40 @@ class HymnalRepositoryImpl implements HymnalRepository {
       }).toList();
     }
 
-    return hymns.where((hymn) {
+    final matches = hymns.where((hymn) {
       return hymn.normalizedTitle.contains(normalizedQuery) ||
           hymn.normalizedContent.contains(normalizedQuery) ||
           hymn.number.toString().contains(normalizedQuery);
     }).toList();
+    return rankSearchResults(matches, normalizedQuery);
   }
+}
+
+/// Ordena los resultados por relevancia (orden estable; a igual relevancia,
+/// por número):
+/// 1. número exacto ("120" → himno 120),
+/// 2. números que empiezan así ("12" → 120, 121…),
+/// 3. títulos que empiezan con lo buscado,
+/// 4. títulos que lo contienen,
+/// 5. números que lo contienen,
+/// 6. el resto (coincide en la letra).
+List<Hymn> rankSearchResults(List<Hymn> hymns, String normalizedQuery) {
+  final q = normalizedQuery;
+  final digits = RegExp(r'^\d+$').hasMatch(q);
+  int rank(Hymn h) {
+    final n = h.number.toString();
+    if (digits && n == q) return 0;
+    if (digits && n.startsWith(q)) return 1;
+    if (h.normalizedTitle.startsWith(q)) return 2;
+    if (h.normalizedTitle.contains(q)) return 3;
+    if (n.contains(q)) return 4;
+    return 5;
+  }
+
+  final ranked = [for (final h in hymns) (rank(h), h)];
+  ranked.sort((a, b) {
+    final byRank = a.$1.compareTo(b.$1);
+    return byRank != 0 ? byRank : a.$2.number.compareTo(b.$2.number);
+  });
+  return [for (final r in ranked) r.$2];
 }
