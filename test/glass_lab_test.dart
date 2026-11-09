@@ -434,7 +434,7 @@ void main() {
     expect(progress(), closeTo(paused, 1e-9));
   });
 
-  testWidgets('La gota ▶ cae, se absorbe en el reproductor y vuelve', (
+  testWidgets('La cápsula alcanza la gota ▶ por el costado y la disuelve', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1080, 2400);
@@ -470,24 +470,28 @@ void main() {
     expect(restCenter.dx, closeTo(search.dx, 1));
     expect(visibility(), 1);
 
-    // Reproducir: cae sobre la cápsula, se funde (mezcla > 0) y desaparece
-    // en el ▶/⏸ del reproductor, sin re-montar su cristal.
+    // Reproducir: la gota no se mueve (ni salta); la cápsula la alcanza,
+    // se forma el puente líquido (mezcla > 0) y la gota se disuelve.
     await tester.tap(play);
     var maxBlend = 0.0;
-    var minY = restCenter.dy;
     for (var i = 0; i < 90; i++) {
       await tester.pump(const Duration(milliseconds: 16));
-      expectSameGlass('cayendo, cuadro $i');
+      expectSameGlass('fundiéndose, cuadro $i');
+      expect(
+        tester.getCenter(play).dy,
+        closeTo(restCenter.dy, .5),
+        reason: 'cuadro $i: la gota no salta',
+      );
+      expect(tester.getCenter(play).dx, closeTo(restCenter.dx, .5));
       maxBlend = math.max(maxBlend, blend());
-      minY = math.min(minY, tester.getCenter(play).dy);
     }
-    expect(minY, lessThan(restCenter.dy - 5), reason: 'da un saltito');
     expect(maxBlend, greaterThan(10));
     expect(visibility(), 0);
+    // El ▶/⏸ de la cápsula queda justo donde estaba la gota.
     final miniPlay = tester.getCenter(
       find.descendant(of: mini, matching: find.byType(AnimatedIcon)),
     );
-    expect(tester.getCenter(play).dx, closeTo(miniPlay.dx, 1));
+    expect(miniPlay.dx, closeTo(restCenter.dx, 1));
     expect(find.semantics.byLabel('Reproducir'), findsNothing);
 
     // Pausar no la saca.
@@ -496,7 +500,7 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(visibility(), 0);
 
-    // Cerrar el reproductor: la gota se desprende y vuelve a su lugar.
+    // Cerrar el reproductor: la gota vuelve a formarse en su lugar.
     tester.semantics.tap(find.semantics.byLabel('Cerrar reproductor'));
     for (var i = 0; i < 90; i++) {
       await tester.pump(const Duration(milliseconds: 16));

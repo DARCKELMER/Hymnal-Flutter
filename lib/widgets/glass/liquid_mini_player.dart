@@ -19,9 +19,12 @@ import 'package:motor/motor.dart';
 ///   barra de pestañas y se ensancha hasta ser la cápsula; de 1 a 0 vuelve a
 ///   fundirse. El padre debe envolver este widget y la barra en un mismo
 ///   [LiquidGlassBlendGroup] y animar su `blend` con [emerge].
-/// - **E. Insignia viva:** el número del himno en un círculo azul con un
-///   ecualizador sutil mientras suena; ▶ ↔ ⏸ se transforma y tiembla como
-///   gelatina al tocarlo.
+/// - **E. Insignia viva:** el número del himno en un círculo de cristal con
+///   un ecualizador sutil mientras suena; ▶ ↔ ⏸ se transforma y tiembla
+///   como gelatina al tocarlo.
+/// - **Teñido:** al ensancharse, la cápsula alcanza por el costado la gota
+///   ▶ del padre, que se disuelve donde queda el ▶/⏸ (extremo derecho) y
+///   deja una mancha lila ([dyeColor]); ver [dyeFor].
 ///
 /// El cristal (`LiquidGlass.grouped`, sin layer propio) **nunca se crea ni
 /// se destruye**: oculto sigue montado con visibilidad 0 dentro de la barra.
@@ -46,6 +49,7 @@ class LiquidMiniPlayer extends StatefulWidget {
     this.liftFromBar = 74,
     this.height = 60,
     this.accent = const Color(0xD61F4FD1),
+    this.dyeColor = const Color(0xFFB08CFF),
     super.key,
   });
 
@@ -79,8 +83,20 @@ class LiquidMiniPlayer extends StatefulWidget {
   final double liftFromBar;
   final double height;
 
-  /// Color del agua de progreso y de la insignia.
+  /// Color del agua de progreso.
   final Color accent;
+
+  /// Tinte lila que la gota ▶ deja en el extremo de la cápsula al fundirse.
+  final Color dyeColor;
+
+  /// Progreso de fusión de la gota ▶ con la cápsula (0–1) según [emerge]:
+  /// empieza cuando la cápsula, al ensancharse, ya alcanzó la gota por el
+  /// costado. El padre usa el mismo valor para disolver la gota.
+  static double dyeFor(double emerge) => ((emerge - .75) / .25).clamp(0.0, 1.0);
+
+  /// Distancia (dp) del centro del ▶/⏸ al borde derecho de la cápsula.
+  static const double playInset = _trailing + 22;
+  static const double _trailing = 10;
 
   /// Tamaño de la gota cuando está fundida en la barra.
   static const Size _seed = Size(56, 40);
@@ -290,6 +306,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     );
     final visibility = (e / .25).clamp(0.0, 1.0);
     final contentOpacity = ((e - .7) / .3).clamp(0.0, 1.0);
+    final dye = LiquidMiniPlayer.dyeFor(e);
 
     // B: estirado hacia el dedo, conservando más o menos el volumen.
     final dx = _dx.value;
@@ -338,6 +355,21 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                               wave: _wave,
                               color: widget.accent,
                               opacity: visibility,
+                            ),
+                          ),
+                          // Teñido lila donde se fundió la gota ▶. Anclado
+                          // al tamaño completo, como el contenido.
+                          OverflowBox(
+                            minWidth: w,
+                            maxWidth: w,
+                            minHeight: h,
+                            maxHeight: h,
+                            child: CustomPaint(
+                              painter: _DyePainter(
+                                amount: dye,
+                                color: widget.dyeColor,
+                                inset: LiquidMiniPlayer.playInset,
+                              ),
                             ),
                           ),
                           Opacity(
@@ -396,12 +428,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     return Row(
       children: [
         const SizedBox(width: 8),
-        _LiveBadge(
-          number: widget.number,
-          color: widget.accent,
-          eq: _eq,
-          wave: _wave,
-        ),
+        _LiveBadge(number: widget.number, eq: _eq, wave: _wave),
         const SizedBox(width: 12),
         Expanded(
           child: ClipRect(
@@ -425,21 +452,6 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
           ),
         ),
         _SmallTap(
-          size: 44,
-          semanticLabel: widget.isPlaying
-              ? widget.pauseLabel
-              : widget.playLabel,
-          onTap: widget.onTogglePlay,
-          child: JellyWobble(
-            child: AnimatedIcon(
-              icon: AnimatedIcons.play_pause,
-              progress: _icon,
-              color: LiquidMiniPlayer._onGlass,
-              size: 26,
-            ),
-          ),
-        ),
-        _SmallTap(
           size: 40,
           semanticLabel: widget.closeLabel,
           onTap: widget.onClose,
@@ -457,24 +469,40 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
             ),
           ),
         ),
-        const SizedBox(width: 6),
+        // ▶/⏸ en el extremo derecho: justo donde estaba la gota ▶ que se
+        // fundió (su centro queda a 10 + 22 = 32 dp del borde, igual que la
+        // gota sobre la lupa).
+        _SmallTap(
+          size: 44,
+          semanticLabel: widget.isPlaying
+              ? widget.pauseLabel
+              : widget.playLabel,
+          onTap: widget.onTogglePlay,
+          child: JellyWobble(
+            child: AnimatedIcon(
+              icon: AnimatedIcons.play_pause,
+              progress: _icon,
+              color: LiquidMiniPlayer._onGlass,
+              size: 26,
+            ),
+          ),
+        ),
+        const SizedBox(width: LiquidMiniPlayer._trailing),
       ],
     );
   }
 }
 
-/// E: el número del himno en un círculo azul; mientras suena, el número
+/// E: el número del himno en un círculo de cristal; mientras suena, el número
 /// sube un poco y aparece debajo un ecualizador de tres barras.
 class _LiveBadge extends StatelessWidget {
   const _LiveBadge({
     required this.number,
-    required this.color,
     required this.eq,
     required this.wave,
   });
 
   final int number;
-  final Color color;
   final Animation<double> eq;
   final Animation<double> wave;
 
@@ -486,9 +514,10 @@ class _LiveBadge extends StatelessWidget {
       dimension: _size,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: color,
+          // Insignia de cristal: el color queda para el agua y el teñido.
+          color: const Color(0x2EFFFFFF),
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0x40FFFFFF)),
+          border: Border.all(color: const Color(0x59FFFFFF)),
         ),
         child: AnimatedBuilder(
           animation: Listenable.merge([eq, wave]),
@@ -559,6 +588,50 @@ class _EqualizerPainter extends CustomPainter {
   @override
   bool shouldRepaint(_EqualizerPainter old) =>
       old.phase != phase || old.amount != amount;
+}
+
+/// Tinta lila que se difunde desde el ▶/⏸ (donde se fundió la gota) y se
+/// queda como una mancha suave que se desvanece hacia la izquierda.
+class _DyePainter extends CustomPainter {
+  _DyePainter({required this.amount, required this.color, required this.inset});
+
+  final double amount;
+  final Color color;
+
+  /// Distancia del centro de la mancha al borde derecho.
+  final double inset;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (amount <= 0) return;
+    final spread = Curves.easeOutCubic.transform(amount);
+    final center = Offset(size.width - inset, size.height / 2);
+    // Se expande como tinta en el agua: más ancha que alta.
+    final radius = 26 + 104 * spread;
+    canvas
+      ..save()
+      ..translate(center.dx, center.dy)
+      ..scale(1.6, 1);
+    final alpha = color.a;
+    canvas.drawCircle(
+      Offset.zero,
+      radius,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            color.withValues(alpha: alpha * .62 * amount),
+            color.withValues(alpha: alpha * .30 * amount),
+            color.withValues(alpha: 0),
+          ],
+          stops: const [0, .45, 1],
+        ).createShader(Rect.fromCircle(center: Offset.zero, radius: radius)),
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_DyePainter old) =>
+      old.amount != amount || old.color != color || old.inset != inset;
 }
 
 /// A: agua tintada que llena la cápsula hasta [progress], con el borde

@@ -72,21 +72,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     vsync: this,
   );
 
-  /// Gota ▶: 0 = suelta sobre la lupa; 1 = absorbida en el botón ▶/⏸
-  /// del mini reproductor. Al reproducir da un saltito, cae sobre la
-  /// cápsula y se funde en ella; al cerrar el reproductor se desprende y
-  /// vuelve a su lugar.
-  late final AnimationController _absorb = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 560),
-    reverseDuration: const Duration(milliseconds: 480),
-  );
-
-  /// Desplazamiento (dp) del centro de la gota al del ▶/⏸ de la cápsula:
-  /// la gota está centrada sobre la lupa (32 dp del borde) y el botón de la
-  /// cápsula a 6 + 40 + 22 = 68 dp.
-  static const double _absorbDx = -(68.0 - 32.0);
-
   /// Comparación: la gota ▶ con su propia lente (no puede fundirse) o con
   /// el cristal compartido (se funde con la cápsula).
   bool _playOwnLens = false;
@@ -125,7 +110,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   void dispose() {
     _backgroundController.dispose();
     _miniEmerge.dispose();
-    _absorb.dispose();
     _hymnProgress.dispose();
     _search.dispose();
     _searchText.dispose();
@@ -148,11 +132,9 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       _hymnProgress.forward();
       if (!_miniShown) {
         setState(() => _miniShown = true);
+        // La cápsula brota de la barra y, al ensancharse, alcanza la gota
+        // ▶ por el costado y la disuelve (ver _buildPlayButton).
         _miniEmerge.animateTo(1);
-        // La gota cae cuando la cápsula ya empezó a brotar.
-        Future.delayed(const Duration(milliseconds: 140), () {
-          if (mounted && _miniShown) _absorb.forward();
-        });
       }
     } else {
       _hymnProgress.stop();
@@ -171,7 +153,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       _miniShown = false;
     });
     _miniEmerge.animateTo(0);
-    _absorb.reverse();
   }
 
   void _changeHymn(int delta) {
@@ -393,11 +374,15 @@ class _GlassLabScreenState extends State<GlassLabScreen>
         // durante las transiciones; en reposo (0) no hay "cuellos" entre
         // cristales cercanos.
         child: AnimatedBuilder(
-          animation: Listenable.merge([_miniEmerge, _absorb]),
+          animation: _miniEmerge,
           builder: (context, child) => LiquidGlassBlendGroup(
             blend: math.max(
               28 * math.sin(math.pi * _miniEmerge.value.clamp(0.0, 1.0)),
-              22 * math.sin(math.pi * _absorb.value),
+              // Puente líquido mientras la gota ▶ se disuelve.
+              24 *
+                  math.sin(
+                    math.pi * LiquidMiniPlayer.dyeFor(_miniEmerge.value),
+                  ),
             ),
             child: child!,
           ),
@@ -422,46 +407,32 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     );
   }
 
-  /// La gota ▶ cae y se absorbe en el ▶/⏸ del mini reproductor: un saltito,
-  /// se encoge mientras viaja hacia el botón de la cápsula, se aplasta al
-  /// tocarla y se funde (visibilidad 0). Al cerrar, el camino inverso. Los
-  /// Transform están siempre presentes para no volver a montar el cristal.
+  /// La gota ▶ no se mueve: la cápsula, al ensancharse, la alcanza por el
+  /// costado, se forma el puente líquido y la gota se disuelve en su sitio,
+  /// justo donde queda el ▶/⏸ de la cápsula (y deja el teñido lila). Al
+  /// cerrar, la cápsula se recoge y la gota vuelve a formarse. Los Transform
+  /// están siempre presentes para no volver a montar el cristal.
   Widget _buildPlayButton(AppLocalizations l10n) {
     return AnimatedBuilder(
-      animation: _absorb,
+      animation: _miniEmerge,
       builder: (context, child) {
-        final a = _absorb.value;
-        final travel = (a / .75).clamp(0.0, 1.0);
-        final hop = -18 * math.sin(math.pi * travel);
-        final dx = _absorbDx * Curves.easeInOut.transform(travel);
-        final shrink = 1 - .45 * Curves.easeIn.transform(a);
-        // Impacto: se aplasta al tocar la cápsula.
-        final impact = math.sin(math.pi * ((a - .6) / .4).clamp(0.0, 1.0));
-        final visibility = 1 - ((a - .7) / .3).clamp(0.0, 1.0);
+        final a = LiquidMiniPlayer.dyeFor(_miniEmerge.value);
         final absorbed = _miniShown;
         return IgnorePointer(
           ignoring: absorbed,
           child: ExcludeSemantics(
             excluding: absorbed,
-            child: Transform.translate(
-              offset: Offset(dx, hop),
-              child: Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.diagonal3Values(
-                  shrink * (1 + .18 * impact),
-                  shrink * (1 - .18 * impact),
-                  1,
-                ),
-                child: LiquidPlayButton(
-                  isPlaying: _isPlaying,
-                  onPressed: _togglePlaying,
-                  playLabel: l10n.glassLabPlay,
-                  pauseLabel: l10n.glassLabPause,
-                  tint: _accentTint,
-                  fake: _forceFake,
-                  ownLens: _playOwnLens,
-                  visibility: visibility,
-                ),
+            child: Transform.scale(
+              scale: 1 - .3 * Curves.easeIn.transform(a),
+              child: LiquidPlayButton(
+                isPlaying: _isPlaying,
+                onPressed: _togglePlaying,
+                playLabel: l10n.glassLabPlay,
+                pauseLabel: l10n.glassLabPause,
+                tint: _accentTint,
+                fake: _forceFake,
+                ownLens: _playOwnLens,
+                visibility: 1 - a,
               ),
             ),
           ),
