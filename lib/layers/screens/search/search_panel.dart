@@ -122,7 +122,11 @@ class _SearchPanelState extends State<SearchPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _Header(
-            text: l10n.searchResultsCount(_results.length),
+            // Mientras llega la primera respuesta, sin un "0 himnos"
+            // engañoso.
+            text: _loading && _results.isEmpty
+                ? ''
+                : l10n.searchResultsCount(_results.length),
             loading: _loading,
           ),
           Expanded(

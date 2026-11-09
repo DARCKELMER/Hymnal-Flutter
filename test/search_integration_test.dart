@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart' as audio;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
@@ -23,7 +24,12 @@ class _SilentAudio extends AudioService {
 
 void main() {
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
+    // rootBundle guarda los archivos cargados; una carga que quedó ligada al
+    // tiempo simulado de la prueba anterior nunca terminaría en esta.
+    rootBundle.clear();
+    // Himnario en español (si no, se elige por el idioma del sistema de
+    // pruebas, que es inglés).
+    SharedPreferences.setMockInitialValues({'selectedHymnal': 'es-newVersion'});
     PackageInfo.setMockInitialValues(
       appName: 'Himnario',
       packageName: 'test',
@@ -55,12 +61,19 @@ void main() {
     await tester.pump();
   }
 
-  /// Avanza hasta que terminen las búsquedas (assets reales).
+  /// Avanza hasta que terminen las búsquedas (assets reales, que tardan
+  /// más con la suite completa en marcha): hasta que aparezca el encabezado
+  /// con la cantidad de himnos, con un límite.
   Future<void> settleSearch(WidgetTester tester) async {
-    for (var i = 0; i < 20; i++) {
-      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    final header = find.textContaining(RegExp(r'^[1-9]\d* HIMNOS?$'));
+    for (var i = 0; i < 100; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
       await tester.pump(const Duration(milliseconds: 100));
+      if (i > 2 && header.evaluate().isNotEmpty) break;
     }
+    await tester.pump();
   }
 
   Finder tabSearch() => find.descendant(
@@ -118,9 +131,9 @@ void main() {
     expect(find.byType(SearchPanel), findsNothing);
   });
 
-  testWidgets('Sin tildes, resalta lo buscado y recuerda la búsqueda',
-      skip: true, // PENDIENTE: revisar qué himnario elige la prueba
-      (tester) async {
+  testWidgets('Sin tildes, resalta lo buscado y recuerda la búsqueda', (
+    tester,
+  ) async {
     await pumpApp(tester);
     await tester.tap(tabSearch());
     await tester.pump();
@@ -130,17 +143,13 @@ void main() {
       matching: find.byType(TextField),
     );
 
-    // "senor" encuentra "Señor" (con tilde) y lo resalta.
-    await tester.enterText(
-      field,
-      'PRAISE',
-    ); // himnario en inglés (idioma del sistema de pruebas)
+    await tester.enterText(field, 'senor');
     await settleSearch(tester);
-    // (El resaltado en sí está probado en search_logic_test.dart.)
+    // "senor" encuentra "Señor" (con tilde).
     expect(
       find.descendant(
         of: find.byType(SearchPanel),
-        matching: find.bySemanticsLabel(RegExp('Praise')),
+        matching: find.textContaining('Señor', findRichText: true),
       ),
       findsWidgets,
     );
