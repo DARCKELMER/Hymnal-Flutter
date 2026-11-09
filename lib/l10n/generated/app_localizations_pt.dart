@@ -347,63 +347,63 @@ class AppLocalizationsPt extends AppLocalizations {
   String get glassLabPerformanceOverlay => 'Sobreposição de desempenho';
 
   @override
-  String get glassLabPlay => 'Reproduzir';
+  String get playerPlay => 'Reproduzir';
 
   @override
-  String get glassLabPause => 'Pausar';
+  String get playerPause => 'Pausar';
 
   @override
   String get glassLabWater => 'Água brilhante';
 
   @override
-  String get glassLabClosePlayer => 'Fechar reprodutor';
+  String get playerClose => 'Fechar reprodutor';
 
   @override
-  String get glassLabNextHymn => 'Próximo hino';
+  String get playerNextHymn => 'Próximo hino';
 
   @override
-  String get glassLabPreviousHymn => 'Hino anterior';
+  String get playerPreviousHymn => 'Hino anterior';
 
   @override
   String get glassLabPlayOwnLens => 'Lente própria na gota ▶';
 
   @override
-  String get glassLabShowControls => 'Mostrar ajustes';
+  String get playerShowControls => 'Mostrar ajustes';
 
   @override
-  String get glassLabHideControls => 'Ocultar ajustes';
+  String get playerHideControls => 'Ocultar ajustes';
 
   @override
-  String get glassLabSeekBack => 'Voltar 10 segundos';
+  String get playerSeekBack => 'Voltar 10 segundos';
 
   @override
-  String get glassLabSeekForward => 'Avançar 10 segundos';
+  String get playerSeekForward => 'Avançar 10 segundos';
 
   @override
-  String get glassLabJumpStart => 'Início';
+  String get playerJumpStart => 'Início';
 
   @override
-  String get glassLabJumpMiddle => 'Meio';
+  String get playerJumpMiddle => 'Meio';
 
   @override
-  String get glassLabJumpEnd => 'Final';
+  String get playerJumpEnd => 'Final';
 
   @override
-  String get glassLabPosition => 'Posição do hino';
+  String get playerPosition => 'Posição do hino';
 
   @override
-  String glassLabSpeed(int value) {
+  String playerSpeed(int value) {
     return 'Velocidade $value×';
   }
 
   @override
-  String get glassLabGoToStart => 'Ir ao início';
+  String get playerGoToStart => 'Ir ao início';
 
   @override
-  String get glassLabGoToMiddle => 'Ir para o meio';
+  String get playerGoToMiddle => 'Ir para o meio';
 
   @override
-  String get glassLabGoToEnd => 'Ir ao final';
+  String get playerGoToEnd => 'Ir ao final';
 
   @override
   String get glassTint => 'Vidro';
@@ -438,4 +438,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get sheetMusic => 'Partitura';
+
+  @override
+  String get playerOpen => 'Abrir reprodutor';
 }

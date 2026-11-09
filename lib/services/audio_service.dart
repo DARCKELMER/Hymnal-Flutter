@@ -21,6 +21,7 @@ class AudioService extends ChangeNotifier {
   bool _continuousPlay = false;
   bool _isDismissing = false;
   int _playRequestId = 0;
+  double _speed = 1;
 
   AudioPlayer get player => _handler.player;
   Hymn? get currentHymn => _currentHymn;
@@ -33,6 +34,9 @@ class AudioService extends ChangeNotifier {
   bool get hasAudio => _currentUrl != null;
   bool get continuousPlay => _continuousPlay;
   bool get isDismissing => _isDismissing;
+
+  /// Velocidad de reproducción (1 = normal).
+  double get speed => _speed;
 
   static final AudioService _instance = AudioService._internal();
 
@@ -203,6 +207,7 @@ class AudioService extends ChangeNotifier {
       }
 
       debugPrint('[AudioService] Audio source set, starting playback...');
+      if (_speed != 1) await _handler.setSpeed(_speed);
       await _handler.play();
 
       if (requestId != _playRequestId) return;
@@ -265,6 +270,51 @@ class AudioService extends ChangeNotifier {
     _currentUrl = null;
     _isPlaying = false;
     notifyListeners();
+  }
+
+  /// Cambia la velocidad de reproducción (se conserva entre himnos).
+  Future<void> setSpeed(double speed) async {
+    _speed = speed;
+    notifyListeners();
+    try {
+      await _handler.setSpeed(speed);
+    } catch (e) {
+      debugPrint('[AudioService] Error setting speed: $e');
+    }
+  }
+
+  /// URL de la versión instrumental o cantada del himno actual (`null` si
+  /// no existe).
+  Future<String?> versionUrl({required bool instrumental}) async {
+    final hymn = _currentHymn;
+    final hymnal = _currentHymnal;
+    if (hymn == null || hymnal == null) return null;
+    try {
+      final settings = await GetIt.I<HymnalRepository>().getMusicSettings(
+        hymnal.id,
+      );
+      return instrumental
+          ? settings?.getInstrumentalUrl(hymn.number)
+          : settings?.getSungUrl(hymn.number);
+    } catch (e) {
+      debugPrint('[AudioService] Error getting version URL: $e');
+      return null;
+    }
+  }
+
+  /// Pasa del audio instrumental al cantado (o al revés) en el mismo punto
+  /// del himno. Devuelve `false` si esa versión no existe.
+  Future<bool> switchVersion({required bool instrumental}) async {
+    if (instrumental == _isInstrumental) return true;
+    final hymn = _currentHymn;
+    final hymnal = _currentHymnal;
+    final url = await versionUrl(instrumental: instrumental);
+    if (hymn == null || hymnal == null || url == null) return false;
+    final position = _position;
+    _currentUrl = null; // que playHymn no lo tome como pausa
+    await playHymn(hymnal, hymn, url, instrumental: instrumental);
+    if (position > Duration.zero) await seek(position);
+    return true;
   }
 
   Future<void> seek(Duration position) async {

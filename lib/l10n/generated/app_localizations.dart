@@ -724,13 +724,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Play'**
-  String get glassLabPlay;
+  String get playerPlay;
 
   /// Accessibility label for the pause button
   ///
   /// In en, this message translates to:
   /// **'Pause'**
-  String get glassLabPause;
+  String get playerPause;
 
   /// Switch between shiny water glass and the standard iOS 27 Clear glass in the glass lab
   ///
@@ -742,19 +742,19 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Close player'**
-  String get glassLabClosePlayer;
+  String get playerClose;
 
   /// Accessibility action to go to the next hymn by swiping the mini player
   ///
   /// In en, this message translates to:
   /// **'Next hymn'**
-  String get glassLabNextHymn;
+  String get playerNextHymn;
 
   /// Accessibility action to go to the previous hymn by swiping the mini player
   ///
   /// In en, this message translates to:
   /// **'Previous hymn'**
-  String get glassLabPreviousHymn;
+  String get playerPreviousHymn;
 
   /// Switch in the glass lab: the play drop uses its own lens (cannot merge) instead of the shared glass
   ///
@@ -766,73 +766,73 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'Show controls'**
-  String get glassLabShowControls;
+  String get playerShowControls;
 
   /// Accessibility action that collapses the mini player controls
   ///
   /// In en, this message translates to:
   /// **'Hide controls'**
-  String get glassLabHideControls;
+  String get playerHideControls;
 
   /// Button that rewinds the hymn 10 seconds
   ///
   /// In en, this message translates to:
   /// **'Back 10 seconds'**
-  String get glassLabSeekBack;
+  String get playerSeekBack;
 
   /// Button that skips the hymn forward 10 seconds
   ///
   /// In en, this message translates to:
   /// **'Forward 10 seconds'**
-  String get glassLabSeekForward;
+  String get playerSeekForward;
 
   /// Chip that jumps to the start of the hymn
   ///
   /// In en, this message translates to:
   /// **'Start'**
-  String get glassLabJumpStart;
+  String get playerJumpStart;
 
   /// Chip that jumps to the middle of the hymn
   ///
   /// In en, this message translates to:
   /// **'Middle'**
-  String get glassLabJumpMiddle;
+  String get playerJumpMiddle;
 
   /// Chip that jumps to the last seconds of the hymn
   ///
   /// In en, this message translates to:
   /// **'End'**
-  String get glassLabJumpEnd;
+  String get playerJumpEnd;
 
   /// Accessibility label of the time slider of the mini player
   ///
   /// In en, this message translates to:
   /// **'Hymn position'**
-  String get glassLabPosition;
+  String get playerPosition;
 
   /// Accessibility label of a playback speed chip
   ///
   /// In en, this message translates to:
   /// **'Speed {value}×'**
-  String glassLabSpeed(int value);
+  String playerSpeed(int value);
 
   /// Accessibility label of the mini player chip that jumps the hymn position
   ///
   /// In en, this message translates to:
   /// **'Go to start'**
-  String get glassLabGoToStart;
+  String get playerGoToStart;
 
   /// Accessibility label of the mini player chip that jumps the hymn position
   ///
   /// In en, this message translates to:
   /// **'Go to middle'**
-  String get glassLabGoToMiddle;
+  String get playerGoToMiddle;
 
   /// Accessibility label of the mini player chip that jumps the hymn position
   ///
   /// In en, this message translates to:
   /// **'Go to end'**
-  String get glassLabGoToEnd;
+  String get playerGoToEnd;
 
   /// Settings slider title: transparency of the liquid glass surfaces
   ///
@@ -899,6 +899,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sheet music'**
   String get sheetMusic;
+
+  /// Accessibility hint: tapping the mini player opens the full player
+  ///
+  /// In en, this message translates to:
+  /// **'Open player'**
+  String get playerOpen;
 }
 
 class _AppLocalizationsDelegate

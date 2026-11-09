@@ -119,7 +119,7 @@ class _GlassCatalogScreenState extends State<GlassCatalogScreen> {
                           ),
                           GlassIconButton(
                             icon: Icons.play_arrow_rounded,
-                            semanticLabel: l10n.glassLabPlay,
+                            semanticLabel: l10n.playerPlay,
                             onPressed: () {},
                             bar: true,
                             prominent: true,

@@ -480,68 +480,68 @@
   "@glassLabPerformanceOverlay": {
     "description": "Switch for Flutter's performance overlay"
   },
-  "glassLabPlay": "Play",
-  "@glassLabPlay": {
+  "playerPlay": "Play",
+  "@playerPlay": {
     "description": "Accessibility label for the play button"
   },
-  "glassLabPause": "Pause",
-  "@glassLabPause": {
+  "playerPause": "Pause",
+  "@playerPause": {
     "description": "Accessibility label for the pause button"
   },
   "glassLabWater": "Shiny water",
   "@glassLabWater": {
     "description": "Switch between shiny water glass and the standard iOS 27 Clear glass in the glass lab"
   },
-  "glassLabClosePlayer": "Close player",
-  "@glassLabClosePlayer": {
+  "playerClose": "Close player",
+  "@playerClose": {
     "description": "Accessibility label of the button that closes the mini player in the glass lab"
   },
-  "glassLabNextHymn": "Next hymn",
-  "@glassLabNextHymn": {
+  "playerNextHymn": "Next hymn",
+  "@playerNextHymn": {
     "description": "Accessibility action to go to the next hymn by swiping the mini player"
   },
-  "glassLabPreviousHymn": "Previous hymn",
-  "@glassLabPreviousHymn": {
+  "playerPreviousHymn": "Previous hymn",
+  "@playerPreviousHymn": {
     "description": "Accessibility action to go to the previous hymn by swiping the mini player"
   },
   "glassLabPlayOwnLens": "Own lens on ▶ drop",
   "@glassLabPlayOwnLens": {
     "description": "Switch in the glass lab: the play drop uses its own lens (cannot merge) instead of the shared glass"
   },
-  "glassLabShowControls": "Show controls",
-  "@glassLabShowControls": {
+  "playerShowControls": "Show controls",
+  "@playerShowControls": {
     "description": "Accessibility action that expands the mini player to show playback controls"
   },
-  "glassLabHideControls": "Hide controls",
-  "@glassLabHideControls": {
+  "playerHideControls": "Hide controls",
+  "@playerHideControls": {
     "description": "Accessibility action that collapses the mini player controls"
   },
-  "glassLabSeekBack": "Back 10 seconds",
-  "@glassLabSeekBack": {
+  "playerSeekBack": "Back 10 seconds",
+  "@playerSeekBack": {
     "description": "Button that rewinds the hymn 10 seconds"
   },
-  "glassLabSeekForward": "Forward 10 seconds",
-  "@glassLabSeekForward": {
+  "playerSeekForward": "Forward 10 seconds",
+  "@playerSeekForward": {
     "description": "Button that skips the hymn forward 10 seconds"
   },
-  "glassLabJumpStart": "Start",
-  "@glassLabJumpStart": {
+  "playerJumpStart": "Start",
+  "@playerJumpStart": {
     "description": "Chip that jumps to the start of the hymn"
   },
-  "glassLabJumpMiddle": "Middle",
-  "@glassLabJumpMiddle": {
+  "playerJumpMiddle": "Middle",
+  "@playerJumpMiddle": {
     "description": "Chip that jumps to the middle of the hymn"
   },
-  "glassLabJumpEnd": "End",
-  "@glassLabJumpEnd": {
+  "playerJumpEnd": "End",
+  "@playerJumpEnd": {
     "description": "Chip that jumps to the last seconds of the hymn"
   },
-  "glassLabPosition": "Hymn position",
-  "@glassLabPosition": {
+  "playerPosition": "Hymn position",
+  "@playerPosition": {
     "description": "Accessibility label of the time slider of the mini player"
   },
-  "glassLabSpeed": "Speed {value}×",
-  "@glassLabSpeed": {
+  "playerSpeed": "Speed {value}×",
+  "@playerSpeed": {
     "description": "Accessibility label of a playback speed chip",
     "placeholders": {
       "value": {
@@ -549,16 +549,16 @@
       }
     }
   },
-  "glassLabGoToStart": "Go to start",
-  "@glassLabGoToStart": {
+  "playerGoToStart": "Go to start",
+  "@playerGoToStart": {
     "description": "Accessibility label of the mini player chip that jumps the hymn position"
   },
-  "glassLabGoToMiddle": "Go to middle",
-  "@glassLabGoToMiddle": {
+  "playerGoToMiddle": "Go to middle",
+  "@playerGoToMiddle": {
     "description": "Accessibility label of the mini player chip that jumps the hymn position"
   },
-  "glassLabGoToEnd": "Go to end",
-  "@glassLabGoToEnd": {
+  "playerGoToEnd": "Go to end",
+  "@playerGoToEnd": {
     "description": "Accessibility label of the mini player chip that jumps the hymn position"
   },
   "glassTint": "Glass",
@@ -604,5 +604,9 @@
   "sheetMusic": "Sheet music",
   "@sheetMusic": {
     "description": "Accessibility label of the sheet music button"
+  },
+  "playerOpen": "Open player",
+  "@playerOpen": {
+    "description": "Accessibility hint: tapping the mini player opens the full player"
   }
 }

@@ -344,63 +344,63 @@ class AppLocalizationsRu extends AppLocalizations {
   String get glassLabPerformanceOverlay => 'Оверлей производительности';
 
   @override
-  String get glassLabPlay => 'Воспроизвести';
+  String get playerPlay => 'Воспроизвести';
 
   @override
-  String get glassLabPause => 'Пауза';
+  String get playerPause => 'Пауза';
 
   @override
   String get glassLabWater => 'Блестящая вода';
 
   @override
-  String get glassLabClosePlayer => 'Закрыть плеер';
+  String get playerClose => 'Закрыть плеер';
 
   @override
-  String get glassLabNextHymn => 'Следующий гимн';
+  String get playerNextHymn => 'Следующий гимн';
 
   @override
-  String get glassLabPreviousHymn => 'Предыдущий гимн';
+  String get playerPreviousHymn => 'Предыдущий гимн';
 
   @override
   String get glassLabPlayOwnLens => 'Своя линза у капли ▶';
 
   @override
-  String get glassLabShowControls => 'Показать настройки';
+  String get playerShowControls => 'Показать настройки';
 
   @override
-  String get glassLabHideControls => 'Скрыть настройки';
+  String get playerHideControls => 'Скрыть настройки';
 
   @override
-  String get glassLabSeekBack => 'Назад на 10 секунд';
+  String get playerSeekBack => 'Назад на 10 секунд';
 
   @override
-  String get glassLabSeekForward => 'Вперёд на 10 секунд';
+  String get playerSeekForward => 'Вперёд на 10 секунд';
 
   @override
-  String get glassLabJumpStart => 'Начало';
+  String get playerJumpStart => 'Начало';
 
   @override
-  String get glassLabJumpMiddle => 'Середина';
+  String get playerJumpMiddle => 'Середина';
 
   @override
-  String get glassLabJumpEnd => 'Конец';
+  String get playerJumpEnd => 'Конец';
 
   @override
-  String get glassLabPosition => 'Позиция гимна';
+  String get playerPosition => 'Позиция гимна';
 
   @override
-  String glassLabSpeed(int value) {
+  String playerSpeed(int value) {
     return 'Скорость $value×';
   }
 
   @override
-  String get glassLabGoToStart => 'Перейти к началу';
+  String get playerGoToStart => 'Перейти к началу';
 
   @override
-  String get glassLabGoToMiddle => 'Перейти к середине';
+  String get playerGoToMiddle => 'Перейти к середине';
 
   @override
-  String get glassLabGoToEnd => 'Перейти к концу';
+  String get playerGoToEnd => 'Перейти к концу';
 
   @override
   String get glassTint => 'Стекло';
@@ -434,4 +434,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sheetMusic => 'Ноты';
+
+  @override
+  String get playerOpen => 'Открыть плеер';
 }

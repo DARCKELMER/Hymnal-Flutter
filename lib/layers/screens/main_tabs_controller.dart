@@ -15,4 +15,11 @@ abstract class _MainTabsController extends State<MainTabsScreen> {
       _currentIndex = index;
     });
   }
+
+  /// La lupa de la barra abre la búsqueda.
+  void _openSearch() {
+    FocusScope.of(context).unfocus();
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const SearchScreen()));
+  }
 }

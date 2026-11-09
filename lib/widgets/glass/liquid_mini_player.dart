@@ -94,7 +94,13 @@ class LiquidMiniPlayer extends StatefulWidget {
     required this.onSeek,
     required this.onSpeedChanged,
     required this.labels,
+    this.onOpen,
+    this.loading = false,
+    this.extraControls,
     this.liftFromBar = 74,
+    this.collapsible = false,
+    this.barGap = 12,
+    this.barHeight = 64,
     this.height = 60,
     this.color = const Color(0xFF1F4FD1),
     super.key,
@@ -131,9 +137,30 @@ class LiquidMiniPlayer extends StatefulWidget {
 
   final LiquidMiniPlayerLabels labels;
 
+  /// Toque en la cápsula (fuera de sus botones): p. ej. abrir el
+  /// reproductor completo.
+  final VoidCallback? onOpen;
+
+  /// Cargando el audio: el ▶/⏸ muestra un indicador de progreso.
+  final bool loading;
+
+  /// Fila extra de controles en el panel de ajustes (p. ej. instrumental/
+  /// cantado, reproducción continua, abrir la letra). Usa [MiniPlayerChip].
+  final List<Widget>? extraControls;
+
   /// Distancia vertical (dp) del centro de la cápsula al de la barra, de
   /// donde brota la gota.
   final double liftFromBar;
+
+  /// Plegable: oculto no ocupa espacio. El hueco crece mientras la gota
+  /// brota y se pliega al fundirse, así la barra queda abajo del todo
+  /// cuando no suena nada. La gota brota del centro de una barra de
+  /// [barHeight] separada [barGap] (que el padre también anima con
+  /// [emerge]); con `barHeight: 0` brota del borde inferior. En este modo
+  /// se ignora [liftFromBar].
+  final bool collapsible;
+  final double barGap;
+  final double barHeight;
 
   /// Alto de la cápsula compacta.
   final double height;
@@ -150,8 +177,15 @@ class LiquidMiniPlayer extends StatefulWidget {
   static const double playInset = _trailing + 22;
   static const double _trailing = 10;
 
-  /// Alto extra del panel de ajustes.
+  /// Alto extra del panel de ajustes (sin fila extra).
   static const double panelHeight = 150;
+
+  /// Alto de la fila extra de controles.
+  static const double extraRowHeight = 46;
+
+  /// Alto del panel de este reproductor.
+  double get effectivePanelHeight =>
+      panelHeight + (extraControls == null ? 0 : extraRowHeight);
 
   /// Tamaño de la gota cuando está fundida en la barra.
   static const Size _seed = Size(56, 40);
@@ -288,7 +322,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     if (open != _expanded) HapticFeedback.selectionClick();
     _expand.animateTo(
       open ? 1 : 0,
-      withVelocity: -velocity / LiquidMiniPlayer.panelHeight,
+      withVelocity: -velocity / widget.effectivePanelHeight,
     );
   }
 
@@ -359,7 +393,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     }
     // Hacia arriba crece; abierta, hacia abajo se recoge. Más allá de los
     // extremos cede poco, como un líquido.
-    final e = _baseExpand - _gestureDy / LiquidMiniPlayer.panelHeight;
+    final e = _baseExpand - _gestureDy / widget.effectivePanelHeight;
     _expand.value = e < 0 ? e * .3 : (e > 1 ? 1 + (e - 1) * .3 : e);
   }
 
@@ -391,12 +425,21 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
           animation: _motion,
           builder: (context, _) {
             final open = math.max(_expand.value, 0.0);
+            final panel = widget.effectivePanelHeight * open;
+            final full = widget.height + panel;
+            final ec = widget.emerge.value.clamp(0.0, 1.0);
             // El hueco crece con el panel: el reproductor sube y todo sigue
             // dentro de su caja (si no, los controles no recibirían toques).
+            // Plegable: además crece y se pliega con el brote.
             return SizedBox(
               width: _width,
-              height: widget.height + LiquidMiniPlayer.panelHeight * open,
-              child: _buildCapsule(open),
+              height: widget.collapsible ? widget.height * ec + panel : full,
+              child: OverflowBox(
+                alignment: Alignment.bottomCenter,
+                minHeight: full,
+                maxHeight: full,
+                child: _buildCapsule(open),
+              ),
             );
           },
         );
@@ -407,7 +450,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
   Widget _buildCapsule(double open) {
     final w = _width;
     final h = widget.height;
-    final panel = LiquidMiniPlayer.panelHeight * open;
+    final panel = widget.effectivePanelHeight * open;
     final e = widget.emerge.value;
     final ec = e.clamp(0.0, 1.0);
 
@@ -436,7 +479,11 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     final sink = (dy / 220).clamp(-0.05, .12);
 
     final radius = math.min(30.0, height / 2);
-    final offset = Offset(dx * .4, widget.liftFromBar * (1 - rise) + dy * .6);
+    // Distancia del centro de la cápsula al punto de donde brota la gota.
+    final lift = widget.collapsible
+        ? h / 2 + widget.barGap * ec + widget.barHeight / 2
+        : widget.liftFromBar;
+    final offset = Offset(dx * .4, lift * (1 - rise) + dy * .6);
     final fullHeight = h + panel;
 
     Widget compactLayer(Widget child) =>
@@ -516,7 +563,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                               left: 0,
                               right: 0,
                               bottom: h,
-                              height: LiquidMiniPlayer.panelHeight,
+                              height: widget.effectivePanelHeight,
                               child: IgnorePointer(
                                 ignoring: !panelActive,
                                 child: ExcludeSemantics(
@@ -551,6 +598,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
       explicitChildNodes: true,
       // Alternativas accesibles a los gestos (TalkBack no puede deslizar
       // igual que un dedo).
+      onTap: widget.onOpen,
       customSemanticsActions: {
         CustomSemanticsAction(label: labels.next): () =>
             _switchHymn(next: true),
@@ -570,6 +618,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
         onVerticalDragStart: _onVerticalStart,
         onVerticalDragUpdate: _onVerticalUpdate,
         onVerticalDragEnd: _onVerticalEnd,
+        onTap: widget.onOpen,
         child: child,
       ),
     );
@@ -615,14 +664,22 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
               ? widget.labels.pause
               : widget.labels.play,
           onTap: widget.onTogglePlay,
-          child: JellyWobble(
-            child: AnimatedIcon(
-              icon: AnimatedIcons.play_pause,
-              progress: _icon,
-              color: LiquidMiniPlayer._onGlass,
-              size: 26,
-            ),
-          ),
+          child: widget.loading
+              ? const SizedBox.square(
+                  dimension: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: LiquidMiniPlayer._onGlass,
+                  ),
+                )
+              : JellyWobble(
+                  child: AnimatedIcon(
+                    icon: AnimatedIcons.play_pause,
+                    progress: _icon,
+                    color: LiquidMiniPlayer._onGlass,
+                    size: 26,
+                  ),
+                ),
         ),
         const SizedBox(width: LiquidMiniPlayer._trailing),
       ],
@@ -708,7 +765,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                   child: Row(
                     children: [
                       Flexible(
-                        child: _GlassChip(
+                        child: MiniPlayerChip(
                           label: labels.jumpStart,
                           semanticLabel: labels.goToStart,
                           color: widget.color,
@@ -717,7 +774,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                       ),
                       const SizedBox(width: 6),
                       Flexible(
-                        child: _GlassChip(
+                        child: MiniPlayerChip(
                           label: labels.jumpMiddle,
                           semanticLabel: labels.goToMiddle,
                           color: widget.color,
@@ -726,7 +783,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                       ),
                       const SizedBox(width: 6),
                       Flexible(
-                        child: _GlassChip(
+                        child: MiniPlayerChip(
                           label: labels.jumpEnd,
                           semanticLabel: labels.goToEnd,
                           color: widget.color,
@@ -739,7 +796,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                 const SizedBox(width: 10),
                 for (final s in const [1, 2, 3]) ...[
                   if (s > 1) const SizedBox(width: 4),
-                  _GlassChip(
+                  MiniPlayerChip(
                     label: '$s×',
                     semanticLabel: labels.speed(s),
                     selected: widget.speed == s,
@@ -750,6 +807,10 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
               ],
             ),
           ),
+          if (widget.extraControls case final extra?) ...[
+            const SizedBox(height: 10),
+            SizedBox(height: 36, child: Row(children: extra)),
+          ],
         ],
       ),
     );
@@ -811,21 +872,27 @@ class _PanelIcon extends StatelessWidget {
   }
 }
 
-/// Píldora de cristal (saltos y velocidad). Seleccionada se tiñe de [color].
-class _GlassChip extends StatelessWidget {
-  const _GlassChip({
+/// Píldora del panel del mini reproductor (saltos, velocidad y controles
+/// extra). Seleccionada se tiñe de [color]. Sin cristal propio: va dentro
+/// del cristal del reproductor.
+class MiniPlayerChip extends StatelessWidget {
+  const MiniPlayerChip({
     required this.label,
     required this.color,
     required this.onTap,
     this.semanticLabel,
     this.selected = false,
+    this.icon,
+    super.key,
   });
 
+  /// Texto visible; vacío para una píldora solo con [icon].
   final String label;
   final String? semanticLabel;
   final bool selected;
   final Color color;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -833,20 +900,24 @@ class _GlassChip extends StatelessWidget {
       container: true,
       button: true,
       selected: selected,
+      enabled: onTap != null,
       label: semanticLabel ?? label,
       onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
+        onTap: onTap == null
+            ? null
+            : () {
+                HapticFeedback.selectionClick();
+                onTap!();
+              },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
+          // Alto fijo y ancho del contenido (con alineación se estiraría a
+          // todo el ancho disponible).
           height: 32,
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: selected
                 ? color.withValues(alpha: .8)
@@ -854,15 +925,34 @@ class _GlassChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0x47FFFFFF)),
           ),
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: LiquidMiniPlayer._onGlass,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              shadows: LiquidMiniPlayer._textShadow,
+          child: Opacity(
+            opacity: onTap == null ? .45 : 1,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null)
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: LiquidMiniPlayer._onGlass,
+                    shadows: LiquidMiniPlayer._textShadow,
+                  ),
+                if (icon != null && label.isNotEmpty) const SizedBox(width: 6),
+                if (label.isNotEmpty)
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: LiquidMiniPlayer._onGlass,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        shadows: LiquidMiniPlayer._textShadow,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

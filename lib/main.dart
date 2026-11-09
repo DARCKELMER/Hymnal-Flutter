@@ -5,6 +5,7 @@ import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/layers/data/repository/remote_settings_repository.dart';
 import 'package:hymnal_app/services/locator_service.dart';
+import 'package:hymnal_app/services/background_accent_service.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/styles/theme.dart';
 import 'package:hymnal_app/layers/screens/main_tabs_screen.dart';
@@ -49,6 +50,9 @@ Future<void> main() async {
   GetIt.I.registerSingleton<AudioHandler>(audioHandler);
 
   runApp(const HymnalApp());
+
+  // Color vivo del fondo para el mini reproductor (en segundo plano).
+  GetIt.I<BackgroundAccentService>().load().ignore();
 }
 
 /// Licencias de las fuentes empaquetadas (aparecen en Ajustes > Licencias).

@@ -344,63 +344,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String get glassLabPerformanceOverlay => 'Performance overlay';
 
   @override
-  String get glassLabPlay => 'Play';
+  String get playerPlay => 'Play';
 
   @override
-  String get glassLabPause => 'Pause';
+  String get playerPause => 'Pause';
 
   @override
   String get glassLabWater => 'Shiny water';
 
   @override
-  String get glassLabClosePlayer => 'Close player';
+  String get playerClose => 'Close player';
 
   @override
-  String get glassLabNextHymn => 'Next hymn';
+  String get playerNextHymn => 'Next hymn';
 
   @override
-  String get glassLabPreviousHymn => 'Previous hymn';
+  String get playerPreviousHymn => 'Previous hymn';
 
   @override
   String get glassLabPlayOwnLens => 'Own lens on ▶ drop';
 
   @override
-  String get glassLabShowControls => 'Show controls';
+  String get playerShowControls => 'Show controls';
 
   @override
-  String get glassLabHideControls => 'Hide controls';
+  String get playerHideControls => 'Hide controls';
 
   @override
-  String get glassLabSeekBack => 'Back 10 seconds';
+  String get playerSeekBack => 'Back 10 seconds';
 
   @override
-  String get glassLabSeekForward => 'Forward 10 seconds';
+  String get playerSeekForward => 'Forward 10 seconds';
 
   @override
-  String get glassLabJumpStart => 'Start';
+  String get playerJumpStart => 'Start';
 
   @override
-  String get glassLabJumpMiddle => 'Middle';
+  String get playerJumpMiddle => 'Middle';
 
   @override
-  String get glassLabJumpEnd => 'End';
+  String get playerJumpEnd => 'End';
 
   @override
-  String get glassLabPosition => 'Hymn position';
+  String get playerPosition => 'Hymn position';
 
   @override
-  String glassLabSpeed(int value) {
+  String playerSpeed(int value) {
     return 'Speed $value×';
   }
 
   @override
-  String get glassLabGoToStart => 'Go to start';
+  String get playerGoToStart => 'Go to start';
 
   @override
-  String get glassLabGoToMiddle => 'Go to middle';
+  String get playerGoToMiddle => 'Go to middle';
 
   @override
-  String get glassLabGoToEnd => 'Go to end';
+  String get playerGoToEnd => 'Go to end';
 
   @override
   String get glassTint => 'Glass';
@@ -434,4 +434,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sheetMusic => 'Sheet music';
+
+  @override
+  String get playerOpen => 'Open player';
 }

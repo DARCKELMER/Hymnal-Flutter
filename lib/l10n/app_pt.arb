@@ -124,32 +124,32 @@
   "glassLabForceFake": "Forçar FakeGlass",
   "glassLabAnimatedBackground": "Fundo animado",
   "glassLabPerformanceOverlay": "Sobreposição de desempenho",
-  "glassLabPlay": "Reproduzir",
-  "glassLabPause": "Pausar",
+  "playerPlay": "Reproduzir",
+  "playerPause": "Pausar",
   "glassLabWater": "Água brilhante",
-  "glassLabClosePlayer": "Fechar reprodutor",
-  "glassLabNextHymn": "Próximo hino",
-  "glassLabPreviousHymn": "Hino anterior",
+  "playerClose": "Fechar reprodutor",
+  "playerNextHymn": "Próximo hino",
+  "playerPreviousHymn": "Hino anterior",
   "glassLabPlayOwnLens": "Lente própria na gota ▶",
-  "glassLabShowControls": "Mostrar ajustes",
-  "glassLabHideControls": "Ocultar ajustes",
-  "glassLabSeekBack": "Voltar 10 segundos",
-  "glassLabSeekForward": "Avançar 10 segundos",
-  "glassLabJumpStart": "Início",
-  "glassLabJumpMiddle": "Meio",
-  "glassLabJumpEnd": "Final",
-  "glassLabPosition": "Posição do hino",
-  "glassLabSpeed": "Velocidade {value}×",
-  "@glassLabSpeed": {
+  "playerShowControls": "Mostrar ajustes",
+  "playerHideControls": "Ocultar ajustes",
+  "playerSeekBack": "Voltar 10 segundos",
+  "playerSeekForward": "Avançar 10 segundos",
+  "playerJumpStart": "Início",
+  "playerJumpMiddle": "Meio",
+  "playerJumpEnd": "Final",
+  "playerPosition": "Posição do hino",
+  "playerSpeed": "Velocidade {value}×",
+  "@playerSpeed": {
     "placeholders": {
       "value": {
         "type": "int"
       }
     }
   },
-  "glassLabGoToStart": "Ir ao início",
-  "glassLabGoToMiddle": "Ir para o meio",
-  "glassLabGoToEnd": "Ir ao final",
+  "playerGoToStart": "Ir ao início",
+  "playerGoToMiddle": "Ir para o meio",
+  "playerGoToEnd": "Ir ao final",
   "glassTint": "Vidro",
   "glassTransparent": "Transparente",
   "glassTinted": "Tingido",
@@ -160,5 +160,6 @@
   "glassCatalogControls": "Controles",
   "glassCatalogNavigation": "Navegação",
   "glassCatalogLyrics": "Letra",
-  "sheetMusic": "Partitura"
+  "sheetMusic": "Partitura",
+  "playerOpen": "Abrir reprodutor"
 }

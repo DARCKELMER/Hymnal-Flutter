@@ -124,32 +124,32 @@
   "glassLabForceFake": "Forzar FakeGlass",
   "glassLabAnimatedBackground": "Fondo animado",
   "glassLabPerformanceOverlay": "Superposición de rendimiento",
-  "glassLabPlay": "Reproducir",
-  "glassLabPause": "Pausa",
+  "playerPlay": "Reproducir",
+  "playerPause": "Pausa",
   "glassLabWater": "Agua brillante",
-  "glassLabClosePlayer": "Cerrar reproductor",
-  "glassLabNextHymn": "Himno siguiente",
-  "glassLabPreviousHymn": "Himno anterior",
+  "playerClose": "Cerrar reproductor",
+  "playerNextHymn": "Himno siguiente",
+  "playerPreviousHymn": "Himno anterior",
   "glassLabPlayOwnLens": "Lente propia en la gota ▶",
-  "glassLabShowControls": "Mostrar ajustes",
-  "glassLabHideControls": "Ocultar ajustes",
-  "glassLabSeekBack": "Retroceder 10 segundos",
-  "glassLabSeekForward": "Avanzar 10 segundos",
-  "glassLabJumpStart": "Inicio",
-  "glassLabJumpMiddle": "Mitad",
-  "glassLabJumpEnd": "Final",
-  "glassLabPosition": "Posición del himno",
-  "glassLabSpeed": "Velocidad {value}×",
-  "@glassLabSpeed": {
+  "playerShowControls": "Mostrar ajustes",
+  "playerHideControls": "Ocultar ajustes",
+  "playerSeekBack": "Retroceder 10 segundos",
+  "playerSeekForward": "Avanzar 10 segundos",
+  "playerJumpStart": "Inicio",
+  "playerJumpMiddle": "Mitad",
+  "playerJumpEnd": "Final",
+  "playerPosition": "Posición del himno",
+  "playerSpeed": "Velocidad {value}×",
+  "@playerSpeed": {
     "placeholders": {
       "value": {
         "type": "int"
       }
     }
   },
-  "glassLabGoToStart": "Ir al inicio",
-  "glassLabGoToMiddle": "Ir a la mitad",
-  "glassLabGoToEnd": "Ir al final",
+  "playerGoToStart": "Ir al inicio",
+  "playerGoToMiddle": "Ir a la mitad",
+  "playerGoToEnd": "Ir al final",
   "glassTint": "Cristal",
   "glassTransparent": "Transparente",
   "glassTinted": "Tintado",
@@ -160,5 +160,6 @@
   "glassCatalogControls": "Controles",
   "glassCatalogNavigation": "Navegación",
   "glassCatalogLyrics": "Letra",
-  "sheetMusic": "Partitura"
+  "sheetMusic": "Partitura",
+  "playerOpen": "Abrir reproductor"
 }
