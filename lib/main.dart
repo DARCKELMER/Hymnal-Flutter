@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/layers/data/repository/remote_settings_repository.dart';
@@ -8,6 +10,7 @@ import 'package:hymnal_app/styles/theme.dart';
 import 'package:hymnal_app/layers/screens/main_tabs_screen.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:hymnal_app/services/audio_handler.dart';
+import 'package:hymnal_app/widgets/glass/glass_scope.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 /// Precarga los shaders de Liquid Glass antes de `runApp`.
@@ -24,6 +27,7 @@ Future<void> main() async {
     await LiquidGlass.precache();
   }
 
+  _registerFontLicenses();
   setupLocator();
 
   // Pre-fetch remote settings (non-blocking — app launches even if offline)
@@ -45,6 +49,16 @@ Future<void> main() async {
   GetIt.I.registerSingleton<AudioHandler>(audioHandler);
 
   runApp(const HymnalApp());
+}
+
+/// Licencias de las fuentes empaquetadas (aparecen en Ajustes > Licencias).
+void _registerFontLicenses() {
+  LicenseRegistry.addLicense(() async* {
+    for (final font in const ['Inter', 'Literata']) {
+      final text = await rootBundle.loadString('assets/fonts/$font-OFL.txt');
+      yield LicenseEntryWithLineBreaks([font], text);
+    }
+  });
 }
 
 class HymnalApp extends StatelessWidget {
@@ -77,6 +91,9 @@ class HymnalApp extends StatelessWidget {
           themeMode: themeMode,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
+          // Configuración de cristal (ajuste "Cristal" y alto contraste)
+          // para toda la app.
+          builder: (context, child) => GlassScope(child: child!),
           home: const MainTabsScreen(),
         );
       },

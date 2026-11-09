@@ -833,6 +833,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Go to end'**
   String get glassLabGoToEnd;
+
+  /// Settings slider title: transparency of the liquid glass surfaces
+  ///
+  /// In en, this message translates to:
+  /// **'Glass'**
+  String get glassTint;
+
+  /// Left end of the glass slider
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent'**
+  String get glassTransparent;
+
+  /// Right end of the glass slider
+  ///
+  /// In en, this message translates to:
+  /// **'Tinted'**
+  String get glassTinted;
+
+  /// Shown under the glass slider when the system high contrast setting forces tinted glass
+  ///
+  /// In en, this message translates to:
+  /// **'Tinted because high contrast is on'**
+  String get glassTintForced;
 }
 
 class _AppLocalizationsDelegate

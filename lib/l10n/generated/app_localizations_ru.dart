@@ -401,4 +401,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get glassLabGoToEnd => 'Перейти к концу';
+
+  @override
+  String get glassTint => 'Стекло';
+
+  @override
+  String get glassTransparent => 'Прозрачное';
+
+  @override
+  String get glassTinted => 'Тонированное';
+
+  @override
+  String get glassTintForced => 'Тонировано: включён высокий контраст';
 }

@@ -32,7 +32,10 @@ class _SettingsScreenState extends _SettingsController {
         return Scaffold(
           backgroundColor: Colors.transparent,
           appBar: AppBar(
-            toolbarHeight: MediaQuery.of(context).orientation == Orientation.landscape ? 40 : null,
+            toolbarHeight:
+                MediaQuery.of(context).orientation == Orientation.landscape
+                ? 40
+                : null,
             backgroundColor: Colors.transparent,
             elevation: 0,
             iconTheme: IconThemeData(
@@ -53,11 +56,13 @@ class _SettingsScreenState extends _SettingsController {
               _buildSection(l10n.sectionAppearance),
               _buildThemeSelector(),
               _buildFontSizeSlider(),
+              _buildGlassTintSlider(),
               SwitchListTile(
                 title: Text(l10n.backgroundImage),
                 subtitle: Text(l10n.backgroundImageSubtitle),
                 value: _settingsService.showBackgroundImage,
-                onChanged: (value) => _settingsService.setShowBackgroundImage(value),
+                onChanged: (value) =>
+                    _settingsService.setShowBackgroundImage(value),
               ),
               _buildSection(l10n.sectionBehavior),
               _buildSwitchTile(
@@ -116,14 +121,22 @@ class _SettingsScreenState extends _SettingsController {
                 title: Text(l10n.licenses),
                 onTap: () => showAboutDialog(
                   context: context,
-                  applicationIcon: Image.asset(AppAssets.appIcon, width: 100, height: 100),
+                  applicationIcon: Image.asset(
+                    AppAssets.appIcon,
+                    width: 100,
+                    height: 100,
+                  ),
                   applicationName: l10n.appName,
                   applicationVersion: '$_appVersion ($_buildNumber)',
                   applicationLegalese: l10n.aboutDevelopers,
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
-                      child: Text(l10n.applicationLegalese(DateTime.now().year.toString())),
+                      child: Text(
+                        l10n.applicationLegalese(
+                          DateTime.now().year.toString(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -135,7 +148,9 @@ class _SettingsScreenState extends _SettingsController {
                   title: Text(l10n.glassLabTitle),
                   subtitle: Text(l10n.glassLabSubtitle),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(builder: (_) => const GlassLabScreen()),
+                    MaterialPageRoute<void>(
+                      builder: (_) => const GlassLabScreen(),
+                    ),
                   ),
                 ),
               ],
@@ -165,9 +180,11 @@ class _SettingsScreenState extends _SettingsController {
     return ListTile(
       leading: const Icon(Icons.book),
       title: Text(l10n.selectedHymnal),
-      subtitle: Text(_settingsService.selectedHymnal != null
-          ? '${_settingsService.selectedHymnal?.name} • ${_settingsService.selectedHymnal?.detail}'
-          : l10n.none),
+      subtitle: Text(
+        _settingsService.selectedHymnal != null
+            ? '${_settingsService.selectedHymnal?.name} • ${_settingsService.selectedHymnal?.detail}'
+            : l10n.none,
+      ),
       trailing: const Icon(Icons.chevron_right),
       onTap: _showHymnalSelector,
     );
@@ -212,7 +229,42 @@ class _SettingsScreenState extends _SettingsController {
     );
   }
 
-  Widget _buildSwitchTile(String title, bool value, ValueChanged<bool> onChanged) {
+  /// "Cristal: Transparente ↔ Tintado". Con alto contraste el cristal va
+  /// siempre tintado y el deslizador queda desactivado.
+  Widget _buildGlassTintSlider() {
+    final l10n = AppLocalizations.of(context)!;
+    final forced = MediaQuery.highContrastOf(context);
+    final caption = Theme.of(context).textTheme.bodySmall;
+    return ListTile(
+      leading: const Icon(Icons.blur_on_rounded),
+      title: Text(l10n.glassTint),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Slider(
+            value: forced ? 1 : _settingsService.glassTint,
+            onChanged: forced ? null : _settingsService.setGlassTint,
+            semanticFormatterCallback: (value) =>
+                '${l10n.glassTint}: ${(value * 100).round()} %',
+          ),
+          Row(
+            children: [
+              Text(l10n.glassTransparent, style: caption),
+              const Spacer(),
+              Text(l10n.glassTinted, style: caption),
+            ],
+          ),
+          if (forced) Text(l10n.glassTintForced, style: caption),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSwitchTile(
+    String title,
+    bool value,
+    ValueChanged<bool> onChanged,
+  ) {
     return SwitchListTile(
       secondary: const Icon(Icons.settings),
       title: Text(title),

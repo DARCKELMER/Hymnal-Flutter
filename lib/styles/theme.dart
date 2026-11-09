@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:hymnal_app/styles/glass/glass_tokens.dart';
+import 'package:hymnal_app/styles/glass/glass_typography.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF1565C0);
@@ -15,18 +16,21 @@ class AppTheme {
         seedColor: primaryColor,
         brightness: Brightness.light,
       ),
-      textTheme: GoogleFonts.openSansTextTheme(),
-      appBarTheme: AppBarTheme(
+      // Inter, empaquetada (funciona sin internet).
+      fontFamily: GlassTypography.ui,
+      extensions: const [GlassTokens.light],
+      appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        systemOverlayStyle: const SystemUiOverlayStyle(
+        systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
           statusBarBrightness: Brightness.light,
         ),
-        titleTextStyle: GoogleFonts.openSans(
+        titleTextStyle: TextStyle(
+          fontFamily: GlassTypography.ui,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -39,9 +43,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryColor,
@@ -60,7 +62,8 @@ class AppTheme {
         primary: accentColor,
         brightness: Brightness.dark,
       ),
-      textTheme: GoogleFonts.openSansTextTheme(ThemeData.dark().textTheme),
+      fontFamily: GlassTypography.ui,
+      extensions: const [GlassTokens.dark],
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -71,7 +74,8 @@ class AppTheme {
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-        titleTextStyle: GoogleFonts.openSans(
+        titleTextStyle: const TextStyle(
+          fontFamily: GlassTypography.ui,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -85,9 +89,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: Colors.grey[850],
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(

@@ -6,6 +6,10 @@ class SettingsRepository {
   static const String _themeModeKey = 'themeMode';
   static const String _keepScreenOnKey = 'keepScreenOn';
   static const String _showBackgroundImageKey = 'showBackgroundImage';
+  static const String _glassTintKey = 'glassTint';
+
+  /// Tinte del cristal por defecto: casi transparente.
+  static const double defaultGlassTint = .1;
 
   Future<String?> getSelectedHymnalId() async {
     final prefs = await SharedPreferences.getInstance();
@@ -55,5 +59,16 @@ class SettingsRepository {
   Future<void> setShowBackgroundImage(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_showBackgroundImageKey, value);
+  }
+
+  /// Tinte del cristal, de 0 (transparente) a 1 (tintado).
+  Future<double> getGlassTint() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_glassTintKey) ?? defaultGlassTint;
+  }
+
+  Future<void> setGlassTint(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_glassTintKey, value);
   }
 }

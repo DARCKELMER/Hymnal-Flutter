@@ -401,4 +401,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get glassLabGoToEnd => 'Go to end';
+
+  @override
+  String get glassTint => 'Glass';
+
+  @override
+  String get glassTransparent => 'Transparent';
+
+  @override
+  String get glassTinted => 'Tinted';
+
+  @override
+  String get glassTintForced => 'Tinted because high contrast is on';
 }

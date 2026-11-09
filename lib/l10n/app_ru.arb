@@ -149,5 +149,9 @@
   },
   "glassLabGoToStart": "Перейти к началу",
   "glassLabGoToMiddle": "Перейти к середине",
-  "glassLabGoToEnd": "Перейти к концу"
+  "glassLabGoToEnd": "Перейти к концу",
+  "glassTint": "Стекло",
+  "glassTransparent": "Прозрачное",
+  "glassTinted": "Тонированное",
+  "glassTintForced": "Тонировано: включён высокий контраст"
 }

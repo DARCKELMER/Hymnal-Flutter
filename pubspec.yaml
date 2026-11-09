@@ -71,24 +71,26 @@ flutter:
     - assets/background_image.png
     - assets/app_icon.png
     - assets/info_constants.json
+    - assets/fonts/Inter-OFL.txt
+    - assets/fonts/Literata-OFL.txt
 
-  # fonts:
-  #   - family: OpenSans
-  #     fonts:
-  #       - asset: assets/fonts/OpenSans-Regular.ttf
-  #       - asset: assets/fonts/OpenSans-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/OpenSans-Light.ttf
-  #         weight: 300
-  #       - asset: assets/fonts/OpenSans-SemiBold.ttf
-  #         weight: 600
-  #   - family: Nunito
-  #     fonts:
-  #       - asset: assets/fonts/Nunito-Regular.ttf
-  #       - asset: assets/fonts/Nunito-Bold.ttf
-  #         weight: 700
-  #       - asset: assets/fonts/Nunito-Light.ttf
-  #         weight: 300
+  # Fuentes del rediseño, empaquetadas para funcionar sin internet
+  # (licencia SIL Open Font License; ver assets/fonts/*-OFL.txt).
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+    - family: Literata
+      fonts:
+        - asset: assets/fonts/Literata-Regular.ttf
+        - asset: assets/fonts/Literata-SemiBold.ttf
+          weight: 600
 
 # The following section configure flutter_launcher_icons
 # After setting up the configuration, all that is left to do is run the package.

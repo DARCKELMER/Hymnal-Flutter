@@ -149,5 +149,9 @@
   },
   "glassLabGoToStart": "Ir ao início",
   "glassLabGoToMiddle": "Ir para o meio",
-  "glassLabGoToEnd": "Ir ao final"
+  "glassLabGoToEnd": "Ir ao final",
+  "glassTint": "Vidro",
+  "glassTransparent": "Transparente",
+  "glassTinted": "Tingido",
+  "glassTintForced": "Tingido porque o alto contraste está ativo"
 }

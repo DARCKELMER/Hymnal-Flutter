@@ -14,6 +14,7 @@ class SettingsService extends ChangeNotifier {
   String _themeMode = 'system';
   bool _keepScreenOn = false;
   bool _showBackgroundImage = false;
+  double _glassTint = SettingsRepository.defaultGlassTint;
   bool _isLoading = true;
 
   List<Hymnal> get hymnals => _hymnals;
@@ -22,6 +23,9 @@ class SettingsService extends ChangeNotifier {
   String get themeMode => _themeMode;
   bool get keepScreenOn => _keepScreenOn;
   bool get showBackgroundImage => _showBackgroundImage;
+
+  /// Tinte del cristal (ajuste "Cristal"), de 0 a 1.
+  double get glassTint => _glassTint;
   bool get isLoading => _isLoading;
 
   Future<void> initialize() async {
@@ -41,11 +45,18 @@ class SettingsService extends ChangeNotifier {
       debugPrint('[SettingsService] First launch detected. Locale: $langCode');
 
       // Selection Rules: Auto-select first hymnbook matching the language code
-      final match = _hymnals.where((h) => h.twoLetterIsoLanguageName == langCode).firstOrNull;
+      final match = _hymnals
+          .where((h) => h.twoLetterIsoLanguageName == langCode)
+          .firstOrNull;
 
-      _selectedHymnal = _hymnals.firstWhere((h) => h.id == match?.id, orElse: () => _hymnals.first);
+      _selectedHymnal = _hymnals.firstWhere(
+        (h) => h.id == match?.id,
+        orElse: () => _hymnals.first,
+      );
 
-      debugPrint('[SettingsService] Auto-selected hymnal: ${_selectedHymnal?.id}');
+      debugPrint(
+        '[SettingsService] Auto-selected hymnal: ${_selectedHymnal?.id}',
+      );
 
       // Persist the auto-selected choice
       if (_selectedHymnal != null) {
@@ -57,6 +68,7 @@ class SettingsService extends ChangeNotifier {
     _themeMode = await _settingsRepository.getThemeMode();
     _keepScreenOn = await _settingsRepository.getKeepScreenOn();
     _showBackgroundImage = await _settingsRepository.getShowBackgroundImage();
+    _glassTint = await _settingsRepository.getGlassTint();
 
     _isLoading = false;
     notifyListeners();
@@ -92,7 +104,16 @@ class SettingsService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setGlassTint(double value) async {
+    _glassTint = value.clamp(0.0, 1.0);
+    // Se avisa antes de guardar para que el deslizador responda al instante.
+    notifyListeners();
+    await _settingsRepository.setGlassTint(_glassTint);
+  }
+
   List<Hymnal> getHymnalsByLanguage(String languageCode) {
-    return _hymnals.where((h) => h.twoLetterIsoLanguageName == languageCode).toList();
+    return _hymnals
+        .where((h) => h.twoLetterIsoLanguageName == languageCode)
+        .toList();
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/styles/glass/glass_settings.dart';
 import 'package:hymnal_app/utils/vivid_color.dart';
 import 'package:hymnal_app/widgets/glass/liquid_glass_button.dart';
 import 'package:hymnal_app/widgets/glass/liquid_mini_player.dart';
@@ -12,17 +13,6 @@ import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
-
-/// Cristal "agua brillante": parte del preset Clear de iOS 27 con un bisel
-/// más ancho y profundo (más refracción en el borde) y un reflejo especular
-/// más intenso, para que se vea como agua sobre el fondo en vez de mate.
-LiquidGlassSettings waterGlassSettings(double tintAmount) =>
-    LiquidGlassSettings.ios27Clear(tintAmount: tintAmount).copyWith(
-      refractionHeight: 26,
-      refractionAmount: 72,
-      highlight: 0.9,
-      contourStrength: 0.45,
-    );
 
 /// Pantalla de depuración para validar el cristal Liquid Glass "Clear"
 /// en un dispositivo real antes de rediseñar la app (Fase 1).

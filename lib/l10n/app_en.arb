@@ -560,5 +560,21 @@
   "glassLabGoToEnd": "Go to end",
   "@glassLabGoToEnd": {
     "description": "Accessibility label of the mini player chip that jumps the hymn position"
+  },
+  "glassTint": "Glass",
+  "@glassTint": {
+    "description": "Settings slider title: transparency of the liquid glass surfaces"
+  },
+  "glassTransparent": "Transparent",
+  "@glassTransparent": {
+    "description": "Left end of the glass slider"
+  },
+  "glassTinted": "Tinted",
+  "@glassTinted": {
+    "description": "Right end of the glass slider"
+  },
+  "glassTintForced": "Tinted because high contrast is on",
+  "@glassTintForced": {
+    "description": "Shown under the glass slider when the system high contrast setting forces tinted glass"
   }
 }
