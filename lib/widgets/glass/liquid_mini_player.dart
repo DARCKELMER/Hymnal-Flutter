@@ -443,11 +443,18 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
           size: 40,
           semanticLabel: widget.closeLabel,
           onTap: widget.onClose,
-          child: const Icon(
-            Icons.close_rounded,
-            size: 20,
-            color: Color(0xD9FFFFFF),
-            shadows: LiquidMiniPlayer._textShadow,
+          // Tiembla al tocarla y gira un cuarto de vuelta mientras la
+          // cápsula se recoge (y al revés al brotar).
+          child: JellyWobble(
+            child: Transform.rotate(
+              angle: (1 - widget.emerge.value.clamp(0.0, 1.0)) * math.pi / 2,
+              child: const Icon(
+                Icons.close_rounded,
+                size: 20,
+                color: Color(0xD9FFFFFF),
+                shadows: LiquidMiniPlayer._textShadow,
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 6),
@@ -652,6 +659,9 @@ class _SmallTap extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel,
+      // La acción va aquí: excludeSemantics oculta la del GestureDetector
+      // y sin ella TalkBack anunciaría el botón sin poder activarlo.
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

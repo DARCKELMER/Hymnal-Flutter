@@ -28,10 +28,10 @@ void main() {
       await tester.pumpWidget(_wrap(const GlassLabScreen()));
       await tester.pump();
 
-      // Layer principal + gota de reposo del menú + play (gota entera con
-      // lente propia). La lupa comparte el layer principal: un layer propio
-      // que cambia de tamaño deja una "media luna" fantasma al cerrar.
-      expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
+      // Layer principal + gota de reposo del menú. La gota ▶ y la lupa
+      // comparten el layer principal (la gota ▶ para fundirse con el mini
+      // reproductor; un layer propio que cambia de tamaño deja destellos).
+      expect(find.byType(LiquidGlassLayer), findsNWidgets(2));
       expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
       expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
       expect(find.byType(LiquidGlass), findsNWidgets(5));
@@ -82,7 +82,8 @@ void main() {
     await tester.tap(find.bySemanticsLabel('Reproducir').first);
     await tester.pump(); // arranca el resorte del mini reproductor
     await tester.pump(const Duration(seconds: 1)); // ya brotó
-    expect(find.bySemanticsLabel('Pausa'), findsNWidgets(2));
+    // La gota ▶ se absorbió en el reproductor: solo queda su ▶/⏸.
+    expect(find.semantics.byLabel('Pausa'), findsOne);
   });
 
   testWidgets('La gota del menú cambia de pestaña al tocar', (tester) async {
@@ -433,7 +434,7 @@ void main() {
     expect(progress(), closeTo(paused, 1e-9));
   });
 
-  testWidgets('El play baja sobre la lupa y sube cuando brota el reproductor', (
+  testWidgets('La gota ▶ cae, se absorbe en el reproductor y vuelve', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1080, 2400);
@@ -446,45 +447,87 @@ void main() {
     final play = find.byType(LiquidPlayButton);
     final mini = find.byType(LiquidMiniPlayer);
     final glass = find.descendant(of: play, matching: find.byType(LiquidGlass));
+    double visibility() =>
+        tester.widget<LiquidGlass>(glass).appearance!.visibility;
+    double blend() => tester
+        .widget<LiquidGlassBlendGroup>(find.byType(LiquidGlassBlendGroup))
+        .blend;
     final element = tester.element(glass);
     final parent = element.renderObject!.parent;
-
-    // Abajo: en el hueco del mini reproductor, alineado con la lupa.
-    final search = tester.getCenter(find.byIcon(Icons.search_rounded));
-    expect(tester.getCenter(play).dy, closeTo(tester.getCenter(mini).dy, 1));
-    expect(tester.getCenter(play).dx, closeTo(search.dx, 1));
-
-    // Reproducir: sube por encima del reproductor, sin re-montar su cristal.
-    await tester.tap(play);
-    var stretched = false;
-    for (var i = 0; i < 90; i++) {
-      await tester.pump(const Duration(milliseconds: 16));
-      expect(identical(tester.element(glass), element), isTrue);
+    void expectSameGlass(String when) {
+      expect(identical(tester.element(glass), element), isTrue, reason: when);
       expect(
         identical(tester.element(glass).renderObject!.parent, parent),
         isTrue,
-        reason: 'subiendo, cuadro $i: el cristal cambió de padre',
+        reason: '$when: el cristal cambió de padre (re-montaje)',
       );
-      final size = tester.getSize(glass);
-      final box = tester.renderObject<RenderBox>(glass);
-      final h =
-          box.localToGlobal(Offset(0, size.height)).dy -
-          box.localToGlobal(Offset.zero).dy;
-      if (h > size.height * 1.05) stretched = true;
     }
-    expect(stretched, isTrue, reason: 'la gota se alarga al viajar');
-    expect(tester.getRect(play).bottom, lessThan(tester.getRect(mini).top));
 
-    // Pausar: se queda arriba.
+    // En reposo: sobre la lupa, en el hueco del mini reproductor, visible.
+    final restCenter = tester.getCenter(play);
+    final search = tester.getCenter(find.byIcon(Icons.search_rounded));
+    expect(restCenter.dy, closeTo(tester.getCenter(mini).dy, 1));
+    expect(restCenter.dx, closeTo(search.dx, 1));
+    expect(visibility(), 1);
+
+    // Reproducir: cae sobre la cápsula, se funde (mezcla > 0) y desaparece
+    // en el ▶/⏸ del reproductor, sin re-montar su cristal.
     await tester.tap(play);
+    var maxBlend = 0.0;
+    var minY = restCenter.dy;
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expectSameGlass('cayendo, cuadro $i');
+      maxBlend = math.max(maxBlend, blend());
+      minY = math.min(minY, tester.getCenter(play).dy);
+    }
+    expect(minY, lessThan(restCenter.dy - 5), reason: 'da un saltito');
+    expect(maxBlend, greaterThan(10));
+    expect(visibility(), 0);
+    final miniPlay = tester.getCenter(
+      find.descendant(of: mini, matching: find.byType(AnimatedIcon)),
+    );
+    expect(tester.getCenter(play).dx, closeTo(miniPlay.dx, 1));
+    expect(find.semantics.byLabel('Reproducir'), findsNothing);
+
+    // Pausar no la saca.
+    tester.semantics.tap(find.semantics.byLabel('Pausa'));
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(tester.getRect(play).bottom, lessThan(tester.getRect(mini).top));
+    expect(visibility(), 0);
 
-    // Cerrar el reproductor: vuelve a bajar sobre la lupa.
-    await tester.tap(find.bySemanticsLabel('Cerrar reproductor'));
+    // Cerrar el reproductor: la gota se desprende y vuelve a su lugar.
+    tester.semantics.tap(find.semantics.byLabel('Cerrar reproductor'));
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expectSameGlass('volviendo, cuadro $i');
+    }
+    expect(visibility(), 1);
+    expect(tester.getCenter(play).dx, closeTo(restCenter.dx, .5));
+    expect(tester.getCenter(play).dy, closeTo(restCenter.dy, .5));
+    expect(find.semantics.byLabel('Reproducir'), findsOne);
+  });
+
+  testWidgets('El interruptor de lente propia separa la gota ▶ en su layer', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
     await tester.pump();
-    await tester.pump(const Duration(seconds: 2));
-    expect(tester.getCenter(play).dy, closeTo(tester.getCenter(mini).dy, 1));
+    expect(find.byType(LiquidGlassLayer), findsNWidgets(2));
+
+    final lensSwitch = find.descendant(
+      of: find.ancestor(
+        of: find.text('Lente propia en la gota ▶'),
+        matching: find.byType(Row),
+      ),
+      matching: find.byType(Switch),
+    );
+    await tester.tap(lensSwitch);
+    await tester.pump();
+    expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
   });
 }

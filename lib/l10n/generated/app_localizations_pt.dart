@@ -363,4 +363,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get glassLabPreviousHymn => 'Hino anterior';
+
+  @override
+  String get glassLabPlayOwnLens => 'Lente própria na gota ▶';
 }

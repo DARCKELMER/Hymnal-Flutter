@@ -72,17 +72,24 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     vsync: this,
   );
 
-  /// Altura del ▶ grande: 0 = abajo, sobre la lupa (en el hueco del mini
-  /// reproductor); 1 = arriba, encima del mini reproductor. Sube cuando
-  /// brota el reproductor y baja solo al cerrarlo (✕ o deslizar hacia abajo).
-  late final SingleMotionController _playLift = SingleMotionController(
-    motion: const Motion.bouncySpring(snapToEnd: true),
+  /// Gota ▶: 0 = suelta sobre la lupa; 1 = absorbida en el botón ▶/⏸
+  /// del mini reproductor. Al reproducir da un saltito, cae sobre la
+  /// cápsula y se funde en ella; al cerrar el reproductor se desprende y
+  /// vuelve a su lugar.
+  late final AnimationController _absorb = AnimationController(
     vsync: this,
+    duration: const Duration(milliseconds: 560),
+    reverseDuration: const Duration(milliseconds: 480),
   );
 
-  /// Distancia que recorre el ▶ (dp): de su centro arriba al centro del
-  /// hueco del mini reproductor.
-  static const double _playTravel = 64 / 2 + 16 + 60 / 2;
+  /// Desplazamiento (dp) del centro de la gota al del ▶/⏸ de la cápsula:
+  /// la gota está centrada sobre la lupa (32 dp del borde) y el botón de la
+  /// cápsula a 6 + 40 + 22 = 68 dp.
+  static const double _absorbDx = -(68.0 - 32.0);
+
+  /// Comparación: la gota ▶ con su propia lente (no puede fundirse) o con
+  /// el cristal compartido (se funde con la cápsula).
+  bool _playOwnLens = false;
 
   /// Avance simulado del himno (30 s); al terminar pasa al siguiente.
   late final AnimationController _hymnProgress = AnimationController(
@@ -118,7 +125,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   void dispose() {
     _backgroundController.dispose();
     _miniEmerge.dispose();
-    _playLift.dispose();
+    _absorb.dispose();
     _hymnProgress.dispose();
     _search.dispose();
     _searchText.dispose();
@@ -142,7 +149,10 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       if (!_miniShown) {
         setState(() => _miniShown = true);
         _miniEmerge.animateTo(1);
-        _playLift.animateTo(1);
+        // La gota cae cuando la cápsula ya empezó a brotar.
+        Future.delayed(const Duration(milliseconds: 140), () {
+          if (mounted && _miniShown) _absorb.forward();
+        });
       }
     } else {
       _hymnProgress.stop();
@@ -161,7 +171,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       _miniShown = false;
     });
     _miniEmerge.animateTo(0);
-    _playLift.animateTo(0);
+    _absorb.reverse();
   }
 
   void _changeHymn(int delta) {
@@ -325,6 +335,11 @@ class _GlassLabScreenState extends State<GlassLabScreen>
                   (value) => setState(() => _shinyWater = value),
                 ),
                 _labSwitch(
+                  l10n.glassLabPlayOwnLens,
+                  _playOwnLens,
+                  (value) => setState(() => _playOwnLens = value),
+                ),
+                _labSwitch(
                   l10n.glassLabForceFake,
                   _forceFake,
                   (value) => setState(() => _forceFake = value),
@@ -373,82 +388,85 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       fake: _forceFake,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        // El ▶ va en un Stack que abarca su lugar arriba y el hueco del mini
-        // reproductor: al bajar sigue dentro de la caja del Stack y por eso
-        // sigue recibiendo toques (fuera de su caja no los recibiría).
-        child: Stack(
-          children: [
-            _buildPlayerColumn(l10n),
-            Positioned(top: 0, right: 0, child: _buildPlayButton(l10n)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlayerColumn(AppLocalizations l10n) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Lugar del ▶ cuando está arriba.
-        const SizedBox(height: 64 + 16),
-        // Mini reproductor y barra en el mismo grupo: la gota brota de
-        // la barra y vuelve a fundirse con ella. La mezcla solo existe
-        // durante la transición; en reposo (0) no hay "cuello" entre
-        // ambos a pesar de estar a 12 dp.
-        AnimatedBuilder(
-          animation: _miniEmerge,
+        // Mini reproductor, gota ▶ y barra en el mismo grupo: el reproductor
+        // brota de la barra y la gota se funde en él. La mezcla solo existe
+        // durante las transiciones; en reposo (0) no hay "cuellos" entre
+        // cristales cercanos.
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_miniEmerge, _absorb]),
           builder: (context, child) => LiquidGlassBlendGroup(
-            blend: 28 * math.sin(math.pi * _miniEmerge.value.clamp(0.0, 1.0)),
+            blend: math.max(
+              28 * math.sin(math.pi * _miniEmerge.value.clamp(0.0, 1.0)),
+              22 * math.sin(math.pi * _absorb.value),
+            ),
             child: child!,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              _buildMiniPlayer(l10n),
-              const SizedBox(height: _gap),
-              _buildBottomRow(l10n),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildMiniPlayer(l10n),
+                  const SizedBox(height: _gap),
+                  _buildBottomRow(l10n),
+                ],
+              ),
+              // La gota ▶ reposa sobre la lupa, centrada en el hueco del
+              // mini reproductor (60 dp de alto, gota de 64).
+              Positioned(top: -2, right: 0, child: _buildPlayButton(l10n)),
             ],
           ),
         ),
-      ],
+      ),
     );
   }
 
-  /// El ▶ viaja como una gota: se alarga en vertical según su velocidad
-  /// mientras sube o baja y, al llegar, el rebote del resorte lo aplasta y
-  /// lo hace temblar. Los Transform están siempre presentes (identidad en
-  /// reposo) para que su cristal no se vuelva a montar.
+  /// La gota ▶ cae y se absorbe en el ▶/⏸ del mini reproductor: un saltito,
+  /// se encoge mientras viaja hacia el botón de la cápsula, se aplasta al
+  /// tocarla y se funde (visibilidad 0). Al cerrar, el camino inverso. Los
+  /// Transform están siempre presentes para no volver a montar el cristal.
   Widget _buildPlayButton(AppLocalizations l10n) {
     return AnimatedBuilder(
-      animation: _playLift,
+      animation: _absorb,
       builder: (context, child) {
-        final lift = _playLift.value;
-        // Velocidad en dp/s → alargamiento (máx. 22 %), con volumen
-        // aproximadamente constante.
-        final speed = (_playLift.velocity * _playTravel).abs();
-        final stretch = 1 + math.min(speed * .00045, .22).toDouble();
-        return Transform.translate(
-          offset: Offset(0, _playTravel * (1 - lift)),
-          child: Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.diagonal3Values(
-              1 / math.sqrt(stretch),
-              stretch,
-              1,
+        final a = _absorb.value;
+        final travel = (a / .75).clamp(0.0, 1.0);
+        final hop = -18 * math.sin(math.pi * travel);
+        final dx = _absorbDx * Curves.easeInOut.transform(travel);
+        final shrink = 1 - .45 * Curves.easeIn.transform(a);
+        // Impacto: se aplasta al tocar la cápsula.
+        final impact = math.sin(math.pi * ((a - .6) / .4).clamp(0.0, 1.0));
+        final visibility = 1 - ((a - .7) / .3).clamp(0.0, 1.0);
+        final absorbed = _miniShown;
+        return IgnorePointer(
+          ignoring: absorbed,
+          child: ExcludeSemantics(
+            excluding: absorbed,
+            child: Transform.translate(
+              offset: Offset(dx, hop),
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.diagonal3Values(
+                  shrink * (1 + .18 * impact),
+                  shrink * (1 - .18 * impact),
+                  1,
+                ),
+                child: LiquidPlayButton(
+                  isPlaying: _isPlaying,
+                  onPressed: _togglePlaying,
+                  playLabel: l10n.glassLabPlay,
+                  pauseLabel: l10n.glassLabPause,
+                  tint: _accentTint,
+                  fake: _forceFake,
+                  ownLens: _playOwnLens,
+                  visibility: visibility,
+                ),
+              ),
             ),
-            child: child,
           ),
         );
       },
-      child: LiquidPlayButton(
-        isPlaying: _isPlaying,
-        onPressed: _togglePlaying,
-        playLabel: l10n.glassLabPlay,
-        pauseLabel: l10n.glassLabPause,
-        tint: _accentTint,
-        fake: _forceFake,
-      ),
     );
   }
 
@@ -672,6 +690,9 @@ class _CircleTap extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel,
+      // La acción va aquí: excludeSemantics oculta la del GestureDetector
+      // y sin ella TalkBack anunciaría el botón sin poder activarlo.
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,

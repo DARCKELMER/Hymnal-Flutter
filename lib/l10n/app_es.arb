@@ -129,5 +129,6 @@
   "glassLabWater": "Agua brillante",
   "glassLabClosePlayer": "Cerrar reproductor",
   "glassLabNextHymn": "Himno siguiente",
-  "glassLabPreviousHymn": "Himno anterior"
+  "glassLabPreviousHymn": "Himno anterior",
+  "glassLabPlayOwnLens": "Lente propia en la gota ▶"
 }

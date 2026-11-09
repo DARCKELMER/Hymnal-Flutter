@@ -129,5 +129,6 @@
   "glassLabWater": "Блестящая вода",
   "glassLabClosePlayer": "Закрыть плеер",
   "glassLabNextHymn": "Следующий гимн",
-  "glassLabPreviousHymn": "Предыдущий гимн"
+  "glassLabPreviousHymn": "Предыдущий гимн",
+  "glassLabPlayOwnLens": "Своя линза у капли ▶"
 }

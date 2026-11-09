@@ -23,6 +23,8 @@ class LiquidPlayButton extends StatefulWidget {
     this.tint = const Color(0xD61F4FD1),
     this.rippleColor = Colors.white,
     this.fake = false,
+    this.ownLens = true,
+    this.visibility = 1,
     super.key,
   });
 
@@ -38,6 +40,15 @@ class LiquidPlayButton extends StatefulWidget {
 
   /// FakeGlass para la lente propia, para coincidir con el layer padre.
   final bool fake;
+
+  /// Con lente propia (layer aparte, óptica de gota) o con el cristal del
+  /// layer padre, agrupado para poder fundirse con sus vecinos en un
+  /// [LiquidGlassBlendGroup] (que entonces debe ser ancestro).
+  final bool ownLens;
+
+  /// Cuánto se ve (0–1): cristal, ícono y onda se desvanecen juntos, p. ej.
+  /// al absorberse en otro cristal.
+  final double visibility;
 
   @override
   State<LiquidPlayButton> createState() => _LiquidPlayButtonState();
@@ -89,8 +100,11 @@ class _LiquidPlayButtonState extends State<LiquidPlayButton>
       children: [
         Positioned.fill(
           child: IgnorePointer(
-            child: CustomPaint(
-              painter: _RipplePainter(_ripple, widget.rippleColor),
+            child: Opacity(
+              opacity: widget.visibility.clamp(0.0, 1.0),
+              child: CustomPaint(
+                painter: _RipplePainter(_ripple, widget.rippleColor),
+              ),
             ),
           ),
         ),
@@ -101,16 +115,23 @@ class _LiquidPlayButtonState extends State<LiquidPlayButton>
           onTap: _onTap,
           size: Size.square(d),
           shape: const LiquidOval(),
-          appearance: LiquidGlassAppearance.ios27Clear(tint: widget.tint),
+          appearance: LiquidGlassAppearance.ios27Clear(
+            tint: widget.tint,
+            visibility: widget.visibility,
+          ),
           glowColor: const Color(0x40FFFFFF),
-          lens: LiquidGlassButton.dropLens,
+          lens: widget.ownLens ? LiquidGlassButton.dropLens : null,
+          grouped: !widget.ownLens,
           fake: widget.fake,
           iconMagnify: 1.06,
-          child: AnimatedIcon(
-            icon: AnimatedIcons.play_pause,
-            progress: _icon,
-            color: Colors.white,
-            size: d * 0.5,
+          child: Opacity(
+            opacity: widget.visibility.clamp(0.0, 1.0),
+            child: AnimatedIcon(
+              icon: AnimatedIcons.play_pause,
+              progress: _icon,
+              color: Colors.white,
+              size: d * 0.5,
+            ),
           ),
         ),
       ],

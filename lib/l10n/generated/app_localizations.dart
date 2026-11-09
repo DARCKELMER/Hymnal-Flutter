@@ -755,6 +755,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Previous hymn'**
   String get glassLabPreviousHymn;
+
+  /// Switch in the glass lab: the play drop uses its own lens (cannot merge) instead of the shared glass
+  ///
+  /// In en, this message translates to:
+  /// **'Own lens on ▶ drop'**
+  String get glassLabPlayOwnLens;
 }
 
 class _AppLocalizationsDelegate

@@ -360,4 +360,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get glassLabPreviousHymn => 'Previous hymn';
+
+  @override
+  String get glassLabPlayOwnLens => 'Own lens on ▶ drop';
 }

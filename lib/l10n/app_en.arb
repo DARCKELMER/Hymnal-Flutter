@@ -503,5 +503,9 @@
   "glassLabPreviousHymn": "Previous hymn",
   "@glassLabPreviousHymn": {
     "description": "Accessibility action to go to the previous hymn by swiping the mini player"
+  },
+  "glassLabPlayOwnLens": "Own lens on ▶ drop",
+  "@glassLabPlayOwnLens": {
+    "description": "Switch in the glass lab: the play drop uses its own lens (cannot merge) instead of the shared glass"
   }
 }
