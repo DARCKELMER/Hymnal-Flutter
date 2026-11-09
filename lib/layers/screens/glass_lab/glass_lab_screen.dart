@@ -72,6 +72,18 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     vsync: this,
   );
 
+  /// Altura del ▶ grande: 0 = abajo, sobre la lupa (en el hueco del mini
+  /// reproductor); 1 = arriba, encima del mini reproductor. Sube cuando
+  /// brota el reproductor y baja solo al cerrarlo (✕ o deslizar hacia abajo).
+  late final SingleMotionController _playLift = SingleMotionController(
+    motion: const Motion.bouncySpring(snapToEnd: true),
+    vsync: this,
+  );
+
+  /// Distancia que recorre el ▶ (dp): de su centro arriba al centro del
+  /// hueco del mini reproductor.
+  static const double _playTravel = 64 / 2 + 16 + 60 / 2;
+
   /// Avance simulado del himno (30 s); al terminar pasa al siguiente.
   late final AnimationController _hymnProgress = AnimationController(
     vsync: this,
@@ -106,6 +118,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   void dispose() {
     _backgroundController.dispose();
     _miniEmerge.dispose();
+    _playLift.dispose();
     _hymnProgress.dispose();
     _search.dispose();
     _searchText.dispose();
@@ -129,6 +142,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       if (!_miniShown) {
         setState(() => _miniShown = true);
         _miniEmerge.animateTo(1);
+        _playLift.animateTo(1);
       }
     } else {
       _hymnProgress.stop();
@@ -147,6 +161,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       _miniShown = false;
     });
     _miniEmerge.animateTo(0);
+    _playLift.animateTo(0);
   }
 
   void _changeHymn(int delta) {
@@ -358,48 +373,82 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       fake: _forceFake,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        // El ▶ va en un Stack que abarca su lugar arriba y el hueco del mini
+        // reproductor: al bajar sigue dentro de la caja del Stack y por eso
+        // sigue recibiendo toques (fuera de su caja no los recibiría).
+        child: Stack(
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: _buildPlayButton(l10n),
-            ),
-            const SizedBox(height: 16),
-            // Mini reproductor y barra en el mismo grupo: la gota brota de
-            // la barra y vuelve a fundirse con ella. La mezcla solo existe
-            // durante la transición; en reposo (0) no hay "cuello" entre
-            // ambos a pesar de estar a 12 dp.
-            AnimatedBuilder(
-              animation: _miniEmerge,
-              builder: (context, child) => LiquidGlassBlendGroup(
-                blend:
-                    28 * math.sin(math.pi * _miniEmerge.value.clamp(0.0, 1.0)),
-                child: child!,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildMiniPlayer(l10n),
-                  const SizedBox(height: _gap),
-                  _buildBottomRow(l10n),
-                ],
-              ),
-            ),
+            _buildPlayerColumn(l10n),
+            Positioned(top: 0, right: 0, child: _buildPlayButton(l10n)),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildPlayerColumn(AppLocalizations l10n) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Lugar del ▶ cuando está arriba.
+        const SizedBox(height: 64 + 16),
+        // Mini reproductor y barra en el mismo grupo: la gota brota de
+        // la barra y vuelve a fundirse con ella. La mezcla solo existe
+        // durante la transición; en reposo (0) no hay "cuello" entre
+        // ambos a pesar de estar a 12 dp.
+        AnimatedBuilder(
+          animation: _miniEmerge,
+          builder: (context, child) => LiquidGlassBlendGroup(
+            blend: 28 * math.sin(math.pi * _miniEmerge.value.clamp(0.0, 1.0)),
+            child: child!,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildMiniPlayer(l10n),
+              const SizedBox(height: _gap),
+              _buildBottomRow(l10n),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// El ▶ viaja como una gota: se alarga en vertical según su velocidad
+  /// mientras sube o baja y, al llegar, el rebote del resorte lo aplasta y
+  /// lo hace temblar. Los Transform están siempre presentes (identidad en
+  /// reposo) para que su cristal no se vuelva a montar.
   Widget _buildPlayButton(AppLocalizations l10n) {
-    return LiquidPlayButton(
-      isPlaying: _isPlaying,
-      onPressed: _togglePlaying,
-      playLabel: l10n.glassLabPlay,
-      pauseLabel: l10n.glassLabPause,
-      tint: _accentTint,
-      fake: _forceFake,
+    return AnimatedBuilder(
+      animation: _playLift,
+      builder: (context, child) {
+        final lift = _playLift.value;
+        // Velocidad en dp/s → alargamiento (máx. 22 %), con volumen
+        // aproximadamente constante.
+        final speed = (_playLift.velocity * _playTravel).abs();
+        final stretch = 1 + math.min(speed * .00045, .22).toDouble();
+        return Transform.translate(
+          offset: Offset(0, _playTravel * (1 - lift)),
+          child: Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.diagonal3Values(
+              1 / math.sqrt(stretch),
+              stretch,
+              1,
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: LiquidPlayButton(
+        isPlaying: _isPlaying,
+        onPressed: _togglePlaying,
+        playLabel: l10n.glassLabPlay,
+        pauseLabel: l10n.glassLabPause,
+        tint: _accentTint,
+        fake: _forceFake,
+      ),
     );
   }
 

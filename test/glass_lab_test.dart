@@ -432,4 +432,59 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     expect(progress(), closeTo(paused, 1e-9));
   });
+
+  testWidgets('El play baja sobre la lupa y sube cuando brota el reproductor', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    final play = find.byType(LiquidPlayButton);
+    final mini = find.byType(LiquidMiniPlayer);
+    final glass = find.descendant(of: play, matching: find.byType(LiquidGlass));
+    final element = tester.element(glass);
+    final parent = element.renderObject!.parent;
+
+    // Abajo: en el hueco del mini reproductor, alineado con la lupa.
+    final search = tester.getCenter(find.byIcon(Icons.search_rounded));
+    expect(tester.getCenter(play).dy, closeTo(tester.getCenter(mini).dy, 1));
+    expect(tester.getCenter(play).dx, closeTo(search.dx, 1));
+
+    // Reproducir: sube por encima del reproductor, sin re-montar su cristal.
+    await tester.tap(play);
+    var stretched = false;
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(identical(tester.element(glass), element), isTrue);
+      expect(
+        identical(tester.element(glass).renderObject!.parent, parent),
+        isTrue,
+        reason: 'subiendo, cuadro $i: el cristal cambió de padre',
+      );
+      final size = tester.getSize(glass);
+      final box = tester.renderObject<RenderBox>(glass);
+      final h =
+          box.localToGlobal(Offset(0, size.height)).dy -
+          box.localToGlobal(Offset.zero).dy;
+      if (h > size.height * 1.05) stretched = true;
+    }
+    expect(stretched, isTrue, reason: 'la gota se alarga al viajar');
+    expect(tester.getRect(play).bottom, lessThan(tester.getRect(mini).top));
+
+    // Pausar: se queda arriba.
+    await tester.tap(play);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(tester.getRect(play).bottom, lessThan(tester.getRect(mini).top));
+
+    // Cerrar el reproductor: vuelve a bajar sobre la lupa.
+    await tester.tap(find.bySemanticsLabel('Cerrar reproductor'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(tester.getCenter(play).dy, closeTo(tester.getCenter(mini).dy, 1));
+  });
 }
