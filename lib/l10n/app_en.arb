@@ -629,5 +629,9 @@
         "type": "int"
       }
     }
+  },
+  "selectHymnPrompt": "Choose a hymn from the list",
+  "@selectHymnPrompt": {
+    "description": "Shown in the tablet detail pane when no hymn is selected"
   }
 }

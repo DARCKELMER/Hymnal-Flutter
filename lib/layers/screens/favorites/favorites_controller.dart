@@ -29,16 +29,11 @@ abstract class _FavoritesController extends State<FavoritesScreen> {
       favorite.title,
     );
     if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/hymn'),
-          builder: (_) => HymnScreen(
-            hymnalId: favorite.hymnalId,
-            hymnNumber: favorite.hymnNumber,
-          ),
-        ),
-      );
+      HymnOpener.open(
+      context,
+      hymnalId: favorite.hymnalId,
+      hymnNumber: favorite.hymnNumber,
+    );
     }
   }
 

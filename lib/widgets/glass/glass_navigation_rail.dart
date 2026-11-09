@@ -25,6 +25,8 @@ class GlassNavigationRail extends StatefulWidget {
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
+    this.header,
+    this.itemHeight = defaultItemHeight,
     super.key,
   });
 
@@ -32,8 +34,17 @@ class GlassNavigationRail extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  /// Alto de cada destino.
-  static const double itemHeight = 72;
+  /// Arriba de los destinos (p. ej. la insignia del himnario).
+  final Widget? header;
+
+  /// Alto de cada destino (menos en pantallas bajas, como un celular
+  /// girado).
+  final double itemHeight;
+
+  static const double defaultItemHeight = 72;
+
+  /// Alto reservado para [header].
+  static const double headerHeight = 60;
 
   @override
   State<GlassNavigationRail> createState() => _GlassNavigationRailState();
@@ -66,8 +77,12 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
     final tokens = GlassTokens.of(context);
     const width = GlassMetrics.navigationRailWidth;
     const inset = 6.0;
-    const itemHeight = GlassNavigationRail.itemHeight;
-    final height = itemHeight * widget.destinations.length + inset * 2;
+    final itemHeight = widget.itemHeight;
+    final headerHeight = widget.header == null
+        ? 0.0
+        : GlassNavigationRail.headerHeight;
+    final height =
+        headerHeight + itemHeight * widget.destinations.length + inset * 2;
     return LiquidGlass(
       shape: const LiquidRoundedSuperellipse(borderRadius: width / 2),
       child: SizedBox(
@@ -80,7 +95,7 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
               builder: (context, _) => Positioned(
                 left: inset,
                 right: inset,
-                top: inset + itemHeight * _position.value,
+                top: inset + headerHeight + itemHeight * _position.value,
                 height: itemHeight,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -96,8 +111,14 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
               padding: const EdgeInsets.all(inset),
               child: Column(
                 children: [
+                  if (widget.header case final header?)
+                    SizedBox(
+                      height: headerHeight,
+                      child: Center(child: header),
+                    ),
                   for (final (i, d) in widget.destinations.indexed)
                     _RailItem(
+                      height: itemHeight,
                       destination: d,
                       selected: i == widget.selectedIndex,
                       onTap: () {
@@ -118,11 +139,13 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
 
 class _RailItem extends StatelessWidget {
   const _RailItem({
+    required this.height,
     required this.destination,
     required this.selected,
     required this.onTap,
   });
 
+  final double height;
   final GlassRailDestination destination;
   final bool selected;
   final VoidCallback onTap;
@@ -143,7 +166,7 @@ class _RailItem extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: SizedBox(
-          height: GlassNavigationRail.itemHeight,
+          height: height,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

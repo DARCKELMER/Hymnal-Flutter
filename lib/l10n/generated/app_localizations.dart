@@ -929,6 +929,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 hymn} other{{count} hymns}}'**
   String searchResultsCount(int count);
+
+  /// Shown in the tablet detail pane when no hymn is selected
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a hymn from the list'**
+  String get selectHymnPrompt;
 }
 
 class _AppLocalizationsDelegate

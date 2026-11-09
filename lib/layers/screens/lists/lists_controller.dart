@@ -142,16 +142,11 @@ abstract class _ListsController extends State<ListsScreen> {
     await _historyService.addToHistory(hymnal.id, hymn.number, hymn.title);
 
     if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/hymn'),
-          builder: (_) => HymnScreen(
-            hymnalId: hymnal.id,
-            hymnNumber: hymn.number,
-          ),
-        ),
-      );
+      HymnOpener.open(
+      context,
+      hymnalId: hymnal.id,
+      hymnNumber: hymn.number,
+    );
     }
   }
 }

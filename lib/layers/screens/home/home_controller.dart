@@ -48,15 +48,10 @@ abstract class _HomeController extends State<HomeScreen> {
     await _historyService.addToHistory(hymnal.id, hymn.number, hymn.title);
     if (!mounted) return;
 
-    Navigator.push(
+    HymnOpener.open(
       context,
-      MaterialPageRoute(
-        settings: const RouteSettings(name: '/hymn'),
-        builder: (_) => HymnScreen(
-          hymnalId: hymnal.id,
-          hymnNumber: hymn.number,
-        ),
-      ),
+      hymnalId: hymnal.id,
+      hymnNumber: hymn.number,
     );
   }
 

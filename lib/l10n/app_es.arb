@@ -172,5 +172,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "selectHymnPrompt": "Elige un himno de la lista"
 }

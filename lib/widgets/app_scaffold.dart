@@ -7,6 +7,7 @@ import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/widgets/glass/glass_background.dart';
 import 'package:hymnal_app/widgets/glass/glass_dock.dart';
 import 'package:hymnal_app/widgets/glass/glass_tab_bar.dart';
+import 'package:hymnal_app/widgets/pane_scope.dart';
 
 /// Estructura común de las pantallas: fondo, contenido y, abajo, la zona
 /// de cristal ([GlassDock]) con el mini reproductor y la barra de
@@ -23,8 +24,18 @@ class AppScaffold extends StatefulWidget {
   /// Barra inferior normal (sin cristal), debajo de la zona de cristal.
   final Widget? bottomNavigationBar;
 
-  /// Barra de pestañas de cristal (pantalla principal).
-  final GlassTabBar? tabBar;
+  /// Barra de cristal bajo el mini reproductor (pantalla principal): la
+  /// de pestañas o, en tableta, la de búsqueda.
+  final Widget? tabBar;
+
+  /// Alto que ocupa [tabBar] en reposo (0 si se pliega, como la búsqueda
+  /// de tableta).
+  final double tabBarHeight;
+
+  /// Márgenes laterales de la zona de cristal (p. ej. para centrarla sobre
+  /// el área del himno en tableta) y su ancho máximo.
+  final EdgeInsets? dockInsets;
+  final double? dockMaxWidth;
   final bool showPlayer;
   final bool resizeToAvoidBottomInset;
 
@@ -38,6 +49,9 @@ class AppScaffold extends StatefulWidget {
     this.appBar,
     this.bottomNavigationBar,
     this.tabBar,
+    this.tabBarHeight = GlassTabBar.height,
+    this.dockInsets,
+    this.dockMaxWidth,
     this.showPlayer = true,
     this.resizeToAvoidBottomInset = true,
     this.dockAboveKeyboard = false,
@@ -53,6 +67,17 @@ class AppScaffold extends StatefulWidget {
 class _AppScaffoldState extends State<AppScaffold> {
   @override
   Widget build(BuildContext context) {
+    // Incrustada en un panel: la pantalla principal ya pone el fondo y la
+    // zona de cristal.
+    if (PaneScope.isEmbedded(context)) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: widget.appBar,
+        body: widget.body,
+        bottomNavigationBar: widget.bottomNavigationBar,
+        resizeToAvoidBottomInset: widget.resizeToAvoidBottomInset,
+      );
+    }
     final settingsService = GetIt.I<SettingsService>();
     final audioService = GetIt.I<AudioService>();
 
@@ -79,13 +104,16 @@ class _AppScaffoldState extends State<AppScaffold> {
                 backgroundColor: Colors.transparent,
                 appBar: widget.appBar,
                 body: _DockedBody(
-                  hasTabBar: widget.tabBar != null,
+                  tabBarHeight: widget.tabBar == null ? 0 : widget.tabBarHeight,
+                  insets: widget.dockInsets,
+                  maxWidth: widget.dockMaxWidth,
                   hasPlayer: hasPlayer,
                   dockAboveKeyboard: widget.dockAboveKeyboard,
                   dock: widget.tabBar == null && !widget.showPlayer
                       ? null
                       : GlassDock(
                           tabBar: widget.tabBar,
+                          tabBarHeight: widget.tabBarHeight,
                           showPlayer: widget.showPlayer,
                         ),
                   child: widget.body,
@@ -106,15 +134,19 @@ class _DockedBody extends StatelessWidget {
   const _DockedBody({
     required this.child,
     required this.dock,
-    required this.hasTabBar,
+    required this.tabBarHeight,
     required this.hasPlayer,
     required this.dockAboveKeyboard,
+    this.insets,
+    this.maxWidth,
   });
 
   final Widget child;
   final Widget? dock;
-  final bool hasTabBar;
+  final double tabBarHeight;
   final bool hasPlayer;
+  final EdgeInsets? insets;
+  final double? maxWidth;
   final bool dockAboveKeyboard;
 
   @override
@@ -123,9 +155,13 @@ class _DockedBody extends StatelessWidget {
     if (dock == null) return child;
     final safeBottom = MediaQuery.paddingOf(context).bottom;
     final reserved = GlassDock.reservedHeight(
-      hasTabBar: hasTabBar,
+      tabBarHeight: tabBarHeight,
       hasPlayer: hasPlayer,
     );
+    final insets =
+        this.insets ??
+        const EdgeInsets.symmetric(horizontal: GlassMetrics.screenMarginPhone);
+    final maxWidth = this.maxWidth;
     // Con el teclado abierto la zona de cristal se aparta hacia abajo
     // (sin desmontarse, para no volver a crear el cristal).
     final keyboardOpen =
@@ -147,14 +183,24 @@ class _DockedBody extends StatelessWidget {
           ),
         ),
         Positioned(
-          left: GlassMetrics.screenMarginPhone,
-          right: GlassMetrics.screenMarginPhone,
+          left: insets.left,
+          right: insets.right,
           bottom: AppScaffold.dockMargin + safeBottom,
           child: AnimatedSlide(
             offset: keyboardOpen ? const Offset(0, 2) : Offset.zero,
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            child: IgnorePointer(ignoring: keyboardOpen, child: dock),
+            child: IgnorePointer(
+              ignoring: keyboardOpen,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: maxWidth ?? double.infinity,
+                  ),
+                  child: dock,
+                ),
+              ),
+            ),
           ),
         ),
       ],

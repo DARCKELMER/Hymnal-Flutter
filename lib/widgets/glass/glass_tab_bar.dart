@@ -116,6 +116,7 @@ class _GlassTabBarState extends State<GlassTabBar>
 
   @override
   Widget build(BuildContext context) {
+    if (widget.tabs.isEmpty) return _buildSearchOnly();
     const h = GlassTabBar.height;
     const gap = GlassTabBar.gap;
     return SizedBox(
@@ -163,6 +164,51 @@ class _GlassTabBarState extends State<GlassTabBar>
     );
   }
 
+  /// Sin pestañas (tableta: las pestañas están en la barra lateral): solo
+  /// la búsqueda. Cerrada no ocupa espacio y es invisible; al abrirla, una
+  /// gota brota abajo al centro y se estira hasta ser el campo.
+  Widget _buildSearchOnly() {
+    const h = GlassTabBar.height;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final full = constraints.maxWidth;
+        return AnimatedBuilder(
+          animation: _morph,
+          builder: (context, _) {
+            final t = _morph.value.clamp(-0.05, 1.06);
+            final appear = t.clamp(0.0, 1.0);
+            final width = lerpDouble(h, full, t)!.clamp(h * .9, full);
+            return SizedBox(
+              width: full,
+              height: h * appear,
+              child: OverflowBox(
+                alignment: Alignment.bottomCenter,
+                minHeight: h,
+                maxHeight: h,
+                child: IgnorePointer(
+                  ignoring: !_open,
+                  child: ExcludeSemantics(
+                    excluding: !_open,
+                    child: Center(
+                      child: SizedBox(
+                        width: width,
+                        child: _searchGlass(
+                          width,
+                          t,
+                          visibility: (appear * 3).clamp(0.0, 1.0),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _tabs({required double collapse}) {
     final tokens = GlassTokens.of(context);
     return LoupeTabBar(
@@ -183,7 +229,7 @@ class _GlassTabBarState extends State<GlassTabBar>
   /// propia: un layer propio que cambia de tamaño deja una "media luna").
   /// Cerrada: se infla, se estira hacia el dedo y tiembla como gelatina.
   /// Abierta: campo quieto con texto y ✕.
-  Widget _searchGlass(double width, double t) {
+  Widget _searchGlass(double width, double t, {double? visibility}) {
     final tokens = GlassTokens.of(context);
     final search = widget.search;
     final closed = !_open;
@@ -196,6 +242,9 @@ class _GlassTabBarState extends State<GlassTabBar>
       semanticLabel: widget.searchLabel,
       onTap: closed ? (search != null ? search.onOpen : widget.onSearch) : null,
       glassKey: _searchGlassKey,
+      appearance: visibility == null
+          ? null
+          : LiquidGlassAppearance.ios27Clear(visibility: visibility),
       size: Size(width, h),
       // Radio = mitad del alto: círculo a 64 × 64 y cápsula al estirarse.
       shape: const LiquidRoundedRectangle(borderRadius: h / 2),

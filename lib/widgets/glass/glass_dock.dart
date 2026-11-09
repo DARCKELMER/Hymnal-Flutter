@@ -19,10 +19,19 @@ import 'package:motor/motor.dart';
 /// - Al cerrarlo (deslizar hacia abajo), se funde de vuelta y entonces se
 ///   libera el himno en [AudioService.finalizeDismiss].
 class GlassDock extends StatefulWidget {
-  const GlassDock({this.tabBar, this.showPlayer = true, super.key});
+  const GlassDock({
+    this.tabBar,
+    this.tabBarHeight = GlassTabBar.height,
+    this.showPlayer = true,
+    super.key,
+  });
 
   /// Barra de pestañas (opcional).
-  final GlassTabBar? tabBar;
+  final Widget? tabBar;
+
+  /// Alto de [tabBar] en reposo; 0 si se pliega (búsqueda de tableta): el
+  /// reproductor brota entonces del borde inferior.
+  final double tabBarHeight;
 
   /// Si muestra el mini reproductor cuando suena un himno.
   final bool showPlayer;
@@ -30,14 +39,13 @@ class GlassDock extends StatefulWidget {
   /// Alto que reserva el dock sin animar (para que el contenido no quede
   /// debajo): barra y/o reproductor compacto.
   static double reservedHeight({
-    required bool hasTabBar,
+    required double tabBarHeight,
     required bool hasPlayer,
   }) {
-    var height = 0.0;
-    if (hasTabBar) height += GlassTabBar.height;
+    var height = tabBarHeight;
     if (hasPlayer) {
       height += GlassMetrics.miniPlayerHeight;
-      if (hasTabBar) height += GlassTabBar.gap;
+      if (tabBarHeight > 0) height += GlassTabBar.gap;
     }
     return height;
   }
@@ -113,8 +121,8 @@ class _GlassDockState extends State<GlassDock> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final tabBar = widget.tabBar;
-    final barHeight = tabBar == null ? 0.0 : GlassTabBar.height;
-    final barGap = tabBar == null ? 0.0 : GlassTabBar.gap;
+    final barHeight = tabBar == null ? 0.0 : widget.tabBarHeight;
+    final barGap = barHeight == 0 ? 0.0 : GlassTabBar.gap;
     return LiquidGlassLayer(
       settings: GlassScope.of(context).settings,
       defaultAppearance: const LiquidGlassAppearance.ios27Clear(),

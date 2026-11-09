@@ -463,4 +463,7 @@ class AppLocalizationsEs extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get selectHymnPrompt => 'Elige un himno de la lista';
 }

@@ -8,16 +8,11 @@ abstract class _AmbitController extends State<AmbitScreen> {
     await _historyService.addToHistory(
         _settingsService.selectedHymnal!.id, hymn.number, hymn.title);
     if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          settings: const RouteSettings(name: '/hymn'),
-          builder: (_) => HymnScreen(
-            hymnalId: _settingsService.selectedHymnal!.id,
-            hymnNumber: hymn.number,
-          ),
-        ),
-      );
+      HymnOpener.open(
+      context,
+      hymnalId: _settingsService.selectedHymnal!.id,
+      hymnNumber: hymn.number,
+    );
     }
   }
 }

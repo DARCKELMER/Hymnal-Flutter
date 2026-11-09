@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
 import 'package:hymnal_app/layers/screens/hymn/hymn_screen.dart';
 import 'package:hymnal_app/layers/screens/player/player_screen.dart';
 import 'package:hymnal_app/services/audio_service.dart';
@@ -113,6 +114,12 @@ class _GlassMiniPlayerState extends State<GlassMiniPlayer>
     final hymn = _audio.currentHymn;
     final hymnal = _audio.currentHymnal;
     if (hymn == null || hymnal == null) return;
+    // En tableta (vista expandida) se muestra a la derecha, sin navegar.
+    final onOpen = context.getInheritedWidgetOfExactType<HymnOpener>()?.onOpen;
+    if (onOpen != null) {
+      onOpen(hymnal.id, hymn.number, skipHistory: true);
+      return;
+    }
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(
         settings: const RouteSettings(name: '/hymn'),
