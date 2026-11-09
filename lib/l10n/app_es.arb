@@ -130,5 +130,24 @@
   "glassLabClosePlayer": "Cerrar reproductor",
   "glassLabNextHymn": "Himno siguiente",
   "glassLabPreviousHymn": "Himno anterior",
-  "glassLabPlayOwnLens": "Lente propia en la gota ▶"
+  "glassLabPlayOwnLens": "Lente propia en la gota ▶",
+  "glassLabShowControls": "Mostrar ajustes",
+  "glassLabHideControls": "Ocultar ajustes",
+  "glassLabSeekBack": "Retroceder 10 segundos",
+  "glassLabSeekForward": "Avanzar 10 segundos",
+  "glassLabJumpStart": "Inicio",
+  "glassLabJumpMiddle": "Mitad",
+  "glassLabJumpEnd": "Final",
+  "glassLabPosition": "Posición del himno",
+  "glassLabSpeed": "Velocidad {value}×",
+  "@glassLabSpeed": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "glassLabGoToStart": "Ir al inicio",
+  "glassLabGoToMiddle": "Ir a la mitad",
+  "glassLabGoToEnd": "Ir al final"
 }

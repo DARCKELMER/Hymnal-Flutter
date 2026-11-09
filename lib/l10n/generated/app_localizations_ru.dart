@@ -363,4 +363,42 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get glassLabPlayOwnLens => 'Своя линза у капли ▶';
+
+  @override
+  String get glassLabShowControls => 'Показать настройки';
+
+  @override
+  String get glassLabHideControls => 'Скрыть настройки';
+
+  @override
+  String get glassLabSeekBack => 'Назад на 10 секунд';
+
+  @override
+  String get glassLabSeekForward => 'Вперёд на 10 секунд';
+
+  @override
+  String get glassLabJumpStart => 'Начало';
+
+  @override
+  String get glassLabJumpMiddle => 'Середина';
+
+  @override
+  String get glassLabJumpEnd => 'Конец';
+
+  @override
+  String get glassLabPosition => 'Позиция гимна';
+
+  @override
+  String glassLabSpeed(int value) {
+    return 'Скорость $value×';
+  }
+
+  @override
+  String get glassLabGoToStart => 'Перейти к началу';
+
+  @override
+  String get glassLabGoToMiddle => 'Перейти к середине';
+
+  @override
+  String get glassLabGoToEnd => 'Перейти к концу';
 }

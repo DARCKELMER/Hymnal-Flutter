@@ -1,9 +1,12 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
+import 'package:hymnal_app/utils/vivid_color.dart';
 import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
 import 'package:hymnal_app/widgets/glass/liquid_mini_player.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
@@ -57,7 +60,7 @@ void main() {
     expect(layer().fake, isFalse);
 
     // Deslizador al extremo derecho → tintado.
-    await tester.drag(find.byType(Slider), const Offset(2000, 0));
+    await tester.drag(find.byType(Slider).first, const Offset(2000, 0));
     await tester.pump();
     expect(layer().settings.tintAmount, closeTo(1, 0.001));
 
@@ -326,7 +329,7 @@ void main() {
     // Oculto: sigue montado, invisible y fuera del lector de pantalla.
     expect(visibility(), 0);
     expect(blend(), 0);
-    expect(find.semantics.byLabel('Cerrar reproductor'), findsNothing);
+    expect(find.semantics.byLabel('Pausa'), findsNothing);
     final element = tester.element(glass);
     final parent = element.renderObject!.parent;
 
@@ -350,22 +353,21 @@ void main() {
     expect(maxBlend, greaterThan(10));
     expect(visibility(), 1);
     expect(blend(), closeTo(0, .5));
-    expect(find.bySemanticsLabel('Cerrar reproductor'), findsOneWidget);
+    expect(find.semantics.byLabel('Pausa'), findsOne);
 
     // Pausar no lo oculta.
     await tester.tap(find.bySemanticsLabel('Pausa').first);
     await tester.pump(const Duration(seconds: 1));
     expect(visibility(), 1);
 
-    // Cerrar con la ✕: se funde con la barra y deja de sonar.
-    await tester.tap(find.bySemanticsLabel('Cerrar reproductor'));
+    // Deslizar hacia abajo: se funde con la barra y deja de sonar.
+    await tester.drag(find.byType(LiquidMiniPlayer), const Offset(0, 120));
     for (var i = 0; i < 90; i++) {
       await tester.pump(const Duration(milliseconds: 16));
       expectSameGlass('fundiéndose, cuadro $i');
     }
     expect(visibility(), 0);
     expect(find.semantics.byLabel('Pausa'), findsNothing);
-    expect(find.semantics.byLabel('Cerrar reproductor'), findsNothing);
   });
 
   testWidgets('Deslizar el mini reproductor cambia de himno o lo cierra', (
@@ -403,7 +405,6 @@ void main() {
     // Hacia abajo: se cierra.
     await tester.drag(mini, const Offset(0, 120));
     await tester.pump(const Duration(seconds: 2));
-    expect(find.semantics.byLabel('Cerrar reproductor'), findsNothing);
     expect(find.semantics.byLabel('Pausa'), findsNothing);
   });
 
@@ -424,7 +425,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 3));
     final playing = progress();
-    expect(playing, greaterThan(.05));
+    expect(playing, greaterThan(.02)); // 3 s de 90 s
 
     // En pausa se detiene.
     await tester.tap(find.bySemanticsLabel('Pausa').first);
@@ -500,8 +501,9 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
     expect(visibility(), 0);
 
-    // Cerrar el reproductor: la gota vuelve a formarse en su lugar.
-    tester.semantics.tap(find.semantics.byLabel('Cerrar reproductor'));
+    // Cerrar el reproductor (deslizar hacia abajo): la gota vuelve a
+    // formarse en su lugar.
+    await tester.drag(mini, const Offset(0, 120));
     for (var i = 0; i < 90; i++) {
       await tester.pump(const Duration(milliseconds: 16));
       expectSameGlass('volviendo, cuadro $i');
@@ -533,5 +535,166 @@ void main() {
     await tester.tap(lensSwitch);
     await tester.pump();
     expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
+  });
+
+  testWidgets('Deslizar hacia arriba muestra los ajustes y abajo los oculta', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Reproducir').first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+
+    final mini = find.byType(LiquidMiniPlayer);
+    final glass = find.descendant(of: mini, matching: find.byType(LiquidGlass));
+    final element = tester.element(glass);
+    final parent = element.renderObject!.parent;
+    LiquidMiniPlayer widget() => tester.widget<LiquidMiniPlayer>(mini);
+    final compactHeight = tester.getSize(mini).height;
+    expect(find.semantics.byLabel('Ir a la mitad'), findsNothing);
+
+    // Hacia arriba: el mismo cristal crece (sin re-montarse) y aparecen
+    // los ajustes.
+    await tester.drag(mini, const Offset(0, -120));
+    for (var i = 0; i < 60; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(identical(tester.element(glass), element), isTrue);
+      expect(
+        identical(tester.element(glass).renderObject!.parent, parent),
+        isTrue,
+        reason: 'creciendo, cuadro $i: el cristal cambió de padre',
+      );
+    }
+    expect(tester.getSize(mini).height, greaterThan(compactHeight + 100));
+    expect(find.semantics.byLabel(RegExp('Posición del himno')), findsOne);
+    for (final label in [
+      'Retroceder 10 segundos',
+      'Avanzar 10 segundos',
+      'Himno anterior',
+      'Himno siguiente',
+      'Ir al inicio',
+      'Ir a la mitad',
+      'Ir al final',
+      'Velocidad 2×',
+    ]) {
+      expect(find.semantics.byLabel(label), findsOne, reason: label);
+    }
+
+    // Saltos y velocidad.
+    tester.semantics.tap(find.semantics.byLabel('Ir a la mitad'));
+    await tester.pump();
+    expect(widget().progress.value, closeTo(.5, .01));
+    tester.semantics.tap(find.semantics.byLabel('Retroceder 10 segundos'));
+    await tester.pump();
+    expect(widget().progress.value, closeTo(.5 - 10 / 90, .01));
+    tester.semantics.tap(find.semantics.byLabel('Ir al inicio'));
+    await tester.pump();
+    expect(widget().progress.value, closeTo(0, .01));
+    tester.semantics.tap(find.semantics.byLabel('Velocidad 3×'));
+    await tester.pump();
+    expect(widget().speed, 3);
+    tester.semantics.tap(find.semantics.byLabel('Himno siguiente'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Da gloria al Señor'), findsOneWidget);
+
+    // Hacia abajo: se ocultan los ajustes, el reproductor sigue.
+    await tester.drag(mini, const Offset(0, 120));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.semantics.byLabel('Ir a la mitad'), findsNothing);
+    expect(tester.getSize(mini).height, closeTo(compactHeight, .5));
+    expect(find.semantics.byLabel('Pausa'), findsOne);
+
+    // Otra vez hacia abajo: se oculta el reproductor.
+    await tester.drag(mini, const Offset(0, 120));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.semantics.byLabel('Pausa'), findsNothing);
+  });
+
+  testWidgets('Las acciones accesibles reemplazan a los gestos', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Reproducir').first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+
+    SemanticsFinder withAction(String label) {
+      final id = CustomSemanticsAction.getIdentifier(
+        CustomSemanticsAction(label: label),
+      );
+      return find.semantics.byPredicate(
+        (node) =>
+            node.getSemanticsData().customSemanticsActionIds?.contains(id) ??
+            false,
+      );
+    }
+
+    // Mostrar ajustes.
+    tester.semantics.customAction(
+      withAction('Mostrar ajustes'),
+      const CustomSemanticsAction(label: 'Mostrar ajustes'),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.semantics.byLabel('Ir a la mitad'), findsOne);
+
+    // Himno siguiente sin deslizar.
+    tester.semantics.customAction(
+      withAction('Himno siguiente'),
+      const CustomSemanticsAction(label: 'Himno siguiente'),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Da gloria al Señor'), findsOneWidget);
+
+    // Cerrar sin la ✕ ni el gesto.
+    tester.semantics.customAction(
+      withAction('Cerrar reproductor'),
+      const CustomSemanticsAction(label: 'Cerrar reproductor'),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.semantics.byLabel('Pausa'), findsNothing);
+    expect(find.semantics.byLabel('Reproducir'), findsOne);
+  });
+
+  test('El color de la gota es el más vivo del fondo', () async {
+    // Imagen 40×40: tres cuartos gris y un cuarto turquesa.
+    final recorder = ui.PictureRecorder();
+    Canvas(recorder)
+      ..drawRect(
+        const Rect.fromLTWH(0, 0, 40, 30),
+        Paint()..color = const Color(0xFF808080),
+      )
+      ..drawRect(
+        const Rect.fromLTWH(0, 30, 40, 10),
+        Paint()..color = const Color(0xFF1FB5C9),
+      );
+    final image = await recorder.endRecording().toImage(40, 40);
+    final vivid = await vividColorFromUiImage(image);
+    image.dispose();
+
+    expect(vivid, isNotNull);
+    // Gana el turquesa aunque ocupe menos: el gris no tiene croma.
+    expect(vivid!.b, greaterThan(vivid.r));
+    expect(vivid.g, greaterThan(vivid.r));
+
+    // Ajustado para la gota: mismo matiz, tono medio.
+    final drop = dropColorFrom(vivid);
+    final hue = HSVColor.fromColor(drop).hue;
+    expect(hue, closeTo(HSVColor.fromColor(vivid).hue, 12));
   });
 }

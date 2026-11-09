@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/utils/vivid_color.dart';
 import 'package:hymnal_app/widgets/glass/liquid_glass_button.dart';
 import 'package:hymnal_app/widgets/glass/liquid_mini_player.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
@@ -37,7 +38,10 @@ class GlassLabScreen extends StatefulWidget {
 class _GlassLabScreenState extends State<GlassLabScreen>
     with TickerProviderStateMixin {
   static const Color _accent = Color(0xFF1F4FD1);
-  static const Color _accentTint = Color(0xD61F4FD1); // #1F4FD1 al 84 %
+
+  /// Color de la gota ▶ (y de su agua y teñido): el color más vivo del
+  /// fondo. Mientras se calcula, el azul de la marca.
+  Color _dropColor = _accent;
   static const Color _onGlass = Colors.white;
   static const List<Shadow> _textShadow = [
     Shadow(color: Color(0x66000000), blurRadius: 6),
@@ -76,10 +80,16 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   /// el cristal compartido (se funde con la cápsula).
   bool _playOwnLens = false;
 
-  /// Avance simulado del himno (30 s); al terminar pasa al siguiente.
+  /// Duración simulada de cada himno.
+  static const Duration _hymnLength = Duration(seconds: 90);
+
+  /// Velocidad de reproducción (1×, 2× o 3×).
+  int _speed = 1;
+
+  /// Avance simulado del himno; al terminar pasa al siguiente.
   late final AnimationController _hymnProgress = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: 30),
+    duration: _hymnLength,
   )..addStatusListener(_onHymnProgressStatus);
 
   /// Transición del buscador: 0 = barra de pestañas + lupa,
@@ -104,6 +114,29 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       vsync: this,
       duration: const Duration(seconds: 14),
     );
+    _loadDropColor();
+  }
+
+  /// Toma el color más vivo del fondo para la gota ▶.
+  Future<void> _loadDropColor() async {
+    final color = await vividColorFromImage(
+      const AssetImage(AppAssets.backgroundImage),
+    );
+    if (!mounted || color == null) return;
+    setState(() => _dropColor = dropColorFrom(color));
+  }
+
+  /// Ir a una posición del himno (0–1), sin perder la reproducción.
+  void _seek(double position) {
+    _hymnProgress.value = position;
+    if (_isPlaying) _hymnProgress.forward();
+  }
+
+  void _setSpeed(int speed) {
+    setState(() => _speed = speed);
+    _hymnProgress.duration = _hymnLength ~/ speed;
+    // Sigue desde el mismo punto con la nueva duración.
+    if (_isPlaying) _hymnProgress.forward();
   }
 
   @override
@@ -397,9 +430,14 @@ class _GlassLabScreenState extends State<GlassLabScreen>
                   _buildBottomRow(l10n),
                 ],
               ),
-              // La gota ▶ reposa sobre la lupa, centrada en el hueco del
-              // mini reproductor (60 dp de alto, gota de 64).
-              Positioned(top: -2, right: 0, child: _buildPlayButton(l10n)),
+              // La gota ▶ reposa sobre la lupa, centrada en la fila compacta
+              // del mini reproductor (60 dp de alto, gota de 64). Anclada
+              // desde abajo: el reproductor crece hacia arriba con el panel.
+              Positioned(
+                bottom: _barHeight + _gap - 2,
+                right: 0,
+                child: _buildPlayButton(l10n),
+              ),
             ],
           ),
         ),
@@ -429,7 +467,7 @@ class _GlassLabScreenState extends State<GlassLabScreen>
                 onPressed: _togglePlaying,
                 playLabel: l10n.glassLabPlay,
                 pauseLabel: l10n.glassLabPause,
-                tint: _accentTint,
+                tint: _dropColor.withValues(alpha: .84),
                 fake: _forceFake,
                 ownLens: _playOwnLens,
                 visibility: 1 - a,
@@ -450,17 +488,35 @@ class _GlassLabScreenState extends State<GlassLabScreen>
       title: title,
       isPlaying: _isPlaying,
       progress: _hymnProgress,
+      duration: _hymnLength,
+      speed: _speed,
       onTogglePlay: _togglePlaying,
       onNext: () => _changeHymn(1),
       onPrevious: () => _changeHymn(-1),
       onClose: _closeMiniPlayer,
-      playLabel: l10n.glassLabPlay,
-      pauseLabel: l10n.glassLabPause,
-      closeLabel: l10n.glassLabClosePlayer,
-      nextLabel: l10n.glassLabNextHymn,
-      previousLabel: l10n.glassLabPreviousHymn,
+      onSeek: _seek,
+      onSpeedChanged: _setSpeed,
+      labels: LiquidMiniPlayerLabels(
+        play: l10n.glassLabPlay,
+        pause: l10n.glassLabPause,
+        close: l10n.glassLabClosePlayer,
+        next: l10n.glassLabNextHymn,
+        previous: l10n.glassLabPreviousHymn,
+        showControls: l10n.glassLabShowControls,
+        hideControls: l10n.glassLabHideControls,
+        seekBack: l10n.glassLabSeekBack,
+        seekForward: l10n.glassLabSeekForward,
+        jumpStart: l10n.glassLabJumpStart,
+        jumpMiddle: l10n.glassLabJumpMiddle,
+        jumpEnd: l10n.glassLabJumpEnd,
+        goToStart: l10n.glassLabGoToStart,
+        goToMiddle: l10n.glassLabGoToMiddle,
+        goToEnd: l10n.glassLabGoToEnd,
+        position: l10n.glassLabPosition,
+        speed: l10n.glassLabSpeed,
+      ),
       liftFromBar: 60 / 2 + _gap + _barHeight / 2,
-      accent: _accentTint,
+      color: _dropColor,
     );
   }
 

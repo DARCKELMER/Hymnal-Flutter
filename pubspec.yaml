@@ -40,6 +40,8 @@ dependencies:
   google_fonts: ^8.0.1
   liquid_glass_renderer: 1.0.0-dev.2
   motor: ^1.1.0
+  # Extrae el color más vivo del fondo (la misma lógica que Material You).
+  material_color_utilities: any
 
   # Localization
   flutter_localizations:

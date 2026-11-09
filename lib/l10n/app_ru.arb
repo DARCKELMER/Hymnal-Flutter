@@ -130,5 +130,24 @@
   "glassLabClosePlayer": "Закрыть плеер",
   "glassLabNextHymn": "Следующий гимн",
   "glassLabPreviousHymn": "Предыдущий гимн",
-  "glassLabPlayOwnLens": "Своя линза у капли ▶"
+  "glassLabPlayOwnLens": "Своя линза у капли ▶",
+  "glassLabShowControls": "Показать настройки",
+  "glassLabHideControls": "Скрыть настройки",
+  "glassLabSeekBack": "Назад на 10 секунд",
+  "glassLabSeekForward": "Вперёд на 10 секунд",
+  "glassLabJumpStart": "Начало",
+  "glassLabJumpMiddle": "Середина",
+  "glassLabJumpEnd": "Конец",
+  "glassLabPosition": "Позиция гимна",
+  "glassLabSpeed": "Скорость {value}×",
+  "@glassLabSpeed": {
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "glassLabGoToStart": "Перейти к началу",
+  "glassLabGoToMiddle": "Перейти к середине",
+  "glassLabGoToEnd": "Перейти к концу"
 }

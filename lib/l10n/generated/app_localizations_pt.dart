@@ -366,4 +366,42 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get glassLabPlayOwnLens => 'Lente própria na gota ▶';
+
+  @override
+  String get glassLabShowControls => 'Mostrar ajustes';
+
+  @override
+  String get glassLabHideControls => 'Ocultar ajustes';
+
+  @override
+  String get glassLabSeekBack => 'Voltar 10 segundos';
+
+  @override
+  String get glassLabSeekForward => 'Avançar 10 segundos';
+
+  @override
+  String get glassLabJumpStart => 'Início';
+
+  @override
+  String get glassLabJumpMiddle => 'Meio';
+
+  @override
+  String get glassLabJumpEnd => 'Final';
+
+  @override
+  String get glassLabPosition => 'Posição do hino';
+
+  @override
+  String glassLabSpeed(int value) {
+    return 'Velocidade $value×';
+  }
+
+  @override
+  String get glassLabGoToStart => 'Ir ao início';
+
+  @override
+  String get glassLabGoToMiddle => 'Ir para o meio';
+
+  @override
+  String get glassLabGoToEnd => 'Ir ao final';
 }

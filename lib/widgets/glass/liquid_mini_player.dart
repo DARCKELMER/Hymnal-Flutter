@@ -7,14 +7,58 @@ import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 
-/// Mini reproductor de cristal líquido con cuatro animaciones:
+/// Textos del mini reproductor (lector de pantalla y controles).
+class LiquidMiniPlayerLabels {
+  const LiquidMiniPlayerLabels({
+    required this.play,
+    required this.pause,
+    required this.close,
+    required this.next,
+    required this.previous,
+    required this.showControls,
+    required this.hideControls,
+    required this.seekBack,
+    required this.seekForward,
+    required this.jumpStart,
+    required this.jumpMiddle,
+    required this.jumpEnd,
+    required this.goToStart,
+    required this.goToMiddle,
+    required this.goToEnd,
+    required this.position,
+    required this.speed,
+  });
+
+  final String play;
+  final String pause;
+  final String close;
+  final String next;
+  final String previous;
+  final String showControls;
+  final String hideControls;
+  final String seekBack;
+  final String seekForward;
+  final String jumpStart;
+  final String jumpMiddle;
+  final String jumpEnd;
+
+  /// Etiquetas accesibles de los saltos (más claras que el texto corto).
+  final String goToStart;
+  final String goToMiddle;
+  final String goToEnd;
+  final String position;
+
+  /// Etiqueta accesible de un botón de velocidad (p. ej. "Velocidad 2×").
+  final String Function(int value) speed;
+}
+
+/// Mini reproductor de cristal líquido:
 ///
-/// - **A. Progreso de agua:** la cápsula se llena de agua tintada de
+/// - **A. Progreso de agua:** la cápsula se llena de agua de [color] de
 ///   izquierda a derecha según el avance, con el borde ondulado mientras
 ///   suena.
-/// - **B. Deslizar para cambiar de himno:** a la izquierda pasa al
-///   siguiente y a la derecha al anterior; la cápsula se estira hacia el
-///   dedo y vuelve con rebote de gelatina. Hacia abajo, se cierra.
+/// - **B. Deslizar a los lados:** a la izquierda pasa al siguiente himno y a
+///   la derecha al anterior, con estiramiento y rebote de gelatina.
 /// - **C. Brota de la barra:** con [emerge] de 0 a 1 la gota sale de la
 ///   barra de pestañas y se ensancha hasta ser la cápsula; de 1 a 0 vuelve a
 ///   fundirse. El padre debe envolver este widget y la barra en un mismo
@@ -24,7 +68,11 @@ import 'package:motor/motor.dart';
 ///   como gelatina al tocarlo.
 /// - **Teñido:** al ensancharse, la cápsula alcanza por el costado la gota
 ///   ▶ del padre, que se disuelve donde queda el ▶/⏸ (extremo derecho) y
-///   deja una mancha lila ([dyeColor]); ver [dyeFor].
+///   deja una mancha de [color]; ver [dyeFor].
+/// - **Ajustes:** deslizar hacia arriba hace crecer el mismo cristal hacia
+///   arriba con la barra de tiempo, saltos (inicio/mitad/final), ±10 s,
+///   himno anterior/siguiente y velocidad. Hacia abajo se ocultan, y otro
+///   deslizamiento hacia abajo oculta el reproductor.
 ///
 /// El cristal (`LiquidGlass.grouped`, sin layer propio) **nunca se crea ni
 /// se destruye**: oculto sigue montado con visibilidad 0 dentro de la barra.
@@ -37,19 +85,18 @@ class LiquidMiniPlayer extends StatefulWidget {
     required this.title,
     required this.isPlaying,
     required this.progress,
+    required this.duration,
+    required this.speed,
     required this.onTogglePlay,
     required this.onNext,
     required this.onPrevious,
     required this.onClose,
-    required this.playLabel,
-    required this.pauseLabel,
-    required this.closeLabel,
-    required this.nextLabel,
-    required this.previousLabel,
+    required this.onSeek,
+    required this.onSpeedChanged,
+    required this.labels,
     this.liftFromBar = 74,
     this.height = 60,
-    this.accent = const Color(0xD61F4FD1),
-    this.dyeColor = const Color(0xFFB08CFF),
+    this.color = const Color(0xFF1F4FD1),
     super.key,
   });
 
@@ -67,27 +114,32 @@ class LiquidMiniPlayer extends StatefulWidget {
   /// Avance del himno actual, de 0 a 1 (A).
   final Animation<double> progress;
 
+  /// Duración del himno (para los tiempos y los saltos de 10 s).
+  final Duration duration;
+
+  /// Velocidad actual (1, 2 o 3).
+  final int speed;
+
   final VoidCallback onTogglePlay;
   final VoidCallback onNext;
   final VoidCallback onPrevious;
   final VoidCallback onClose;
 
-  final String playLabel;
-  final String pauseLabel;
-  final String closeLabel;
-  final String nextLabel;
-  final String previousLabel;
+  /// Ir a una posición del himno, de 0 a 1.
+  final ValueChanged<double> onSeek;
+  final ValueChanged<int> onSpeedChanged;
 
-  /// Distancia vertical (dp) del centro del reproductor al de la barra, de
+  final LiquidMiniPlayerLabels labels;
+
+  /// Distancia vertical (dp) del centro de la cápsula al de la barra, de
   /// donde brota la gota.
   final double liftFromBar;
+
+  /// Alto de la cápsula compacta.
   final double height;
 
-  /// Color del agua de progreso.
-  final Color accent;
-
-  /// Tinte lila que la gota ▶ deja en el extremo de la cápsula al fundirse.
-  final Color dyeColor;
+  /// Color de la gota ▶: agua de progreso, teñido y controles activos.
+  final Color color;
 
   /// Progreso de fusión de la gota ▶ con la cápsula (0–1) según [emerge]:
   /// empieza cuando la cápsula, al ensancharse, ya alcanzó la gota por el
@@ -97,6 +149,9 @@ class LiquidMiniPlayer extends StatefulWidget {
   /// Distancia (dp) del centro del ▶/⏸ al borde derecho de la cápsula.
   static const double playInset = _trailing + 22;
   static const double _trailing = 10;
+
+  /// Alto extra del panel de ajustes.
+  static const double panelHeight = 150;
 
   /// Tamaño de la gota cuando está fundida en la barra.
   static const Size _seed = Size(56, 40);
@@ -124,9 +179,15 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     vsync: this,
   );
 
-  /// Arrastre hacia abajo para cerrar.
+  /// Hundimiento al arrastrar hacia abajo la cápsula compacta (cerrar).
   late final SingleMotionController _dy = SingleMotionController(
     motion: const Motion.bouncySpring(),
+    vsync: this,
+  );
+
+  /// Panel de ajustes: 0 = cápsula compacta, 1 = crecida hacia arriba.
+  late final SingleMotionController _expand = SingleMotionController(
+    motion: const Motion.bouncySpring(snapToEnd: true),
     vsync: this,
   );
 
@@ -155,9 +216,12 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     _dx,
     _titleDx,
     _dy,
+    _expand,
   ]);
 
   double _width = 0;
+
+  bool get _expanded => _expand.value > .5;
 
   @override
   void initState() {
@@ -177,6 +241,8 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
         _eq.reverse();
       }
     }
+    // Al ocultarse se recoge también el panel.
+    if (!widget.shown && oldWidget.shown) _expand.animateTo(0);
     _syncWave();
   }
 
@@ -195,6 +261,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     _dx.dispose();
     _titleDx.dispose();
     _dy.dispose();
+    _expand.dispose();
     _wave.dispose();
     _eq.dispose();
     _icon.dispose();
@@ -202,7 +269,44 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
   }
 
   // ---------------------------------------------------------------------------
-  // Gestos (B)
+  // Acciones
+  // ---------------------------------------------------------------------------
+
+  /// Cambia de himno con el título entrando por el lado contrario.
+  void _switchHymn({required bool next}) {
+    HapticFeedback.selectionClick();
+    if (next) {
+      widget.onNext();
+    } else {
+      widget.onPrevious();
+    }
+    _titleDx.value = (next ? 1 : -1) * math.max(_width, 1) * .45;
+    _titleDx.animateTo(0);
+  }
+
+  void _setExpanded(bool open, {double velocity = 0}) {
+    if (open != _expanded) HapticFeedback.selectionClick();
+    _expand.animateTo(
+      open ? 1 : 0,
+      withVelocity: -velocity / LiquidMiniPlayer.panelHeight,
+    );
+  }
+
+  void _seekBy(int seconds) {
+    final total = math.max(widget.duration.inMilliseconds, 1);
+    final next = widget.progress.value + seconds * 1000 / total;
+    widget.onSeek(next.clamp(0.0, 1.0));
+  }
+
+  /// "Final": los últimos 5 segundos (ir al final exacto saltaría ya al
+  /// siguiente himno).
+  double get _endPosition {
+    final total = math.max(widget.duration.inMilliseconds, 1);
+    return (1 - 5000 / total).clamp(0.0, 1.0);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Gestos
   // ---------------------------------------------------------------------------
 
   /// Desplazamiento del gesto en curso (independiente de dónde estaba la
@@ -211,6 +315,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
   double _gestureDy = 0;
   double _baseDx = 0;
   double _baseDy = 0;
+  double _baseExpand = 0;
 
   void _onHorizontalStart(DragStartDetails d) {
     _gestureDx = 0;
@@ -230,15 +335,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     final next = dx < -w * .22 || v < -650;
     final previous = !next && (dx > w * .22 || v > 650);
     if (next || previous) {
-      HapticFeedback.selectionClick();
-      if (next) {
-        widget.onNext();
-      } else {
-        widget.onPrevious();
-      }
-      // El título nuevo entra por el lado contrario al deslizamiento.
-      _titleDx.value = (next ? 1 : -1) * w * .45;
-      _titleDx.animateTo(0);
+      _switchHymn(next: next);
     } else {
       _titleDx.animateTo(0);
     }
@@ -249,18 +346,34 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
   void _onVerticalStart(DragStartDetails d) {
     _gestureDy = 0;
     _baseDy = _dy.value;
+    _baseExpand = _expand.value;
   }
 
   void _onVerticalUpdate(DragUpdateDetails d) {
     _gestureDy += d.delta.dy;
-    // Hacia arriba apenas cede; hacia abajo sigue al dedo.
-    _dy.value = _baseDy + (_gestureDy < 0 ? _gestureDy * .3 : _gestureDy);
+    final wasOpen = _baseExpand > .5;
+    if (!wasOpen && _gestureDy > 0) {
+      // Compacta y hacia abajo: se hunde siguiendo al dedo (para cerrar).
+      _dy.value = _baseDy + _gestureDy;
+      return;
+    }
+    // Hacia arriba crece; abierta, hacia abajo se recoge. Más allá de los
+    // extremos cede poco, como un líquido.
+    final e = _baseExpand - _gestureDy / LiquidMiniPlayer.panelHeight;
+    _expand.value = e < 0 ? e * .3 : (e > 1 ? 1 + (e - 1) * .3 : e);
   }
 
   void _onVerticalEnd(DragEndDetails d) {
     final v = d.velocity.pixelsPerSecond.dy;
-    if (_gestureDy > 36 || v > 500) {
-      widget.onClose();
+    final wasOpen = _baseExpand > .5;
+    if (wasOpen) {
+      // Abierta: hacia abajo oculta los ajustes; si no, vuelve a abrirse.
+      _setExpanded(!(_gestureDy > 30 || v > 500), velocity: v);
+    } else if (_gestureDy < -30 || v < -500) {
+      _setExpanded(true, velocity: v);
+    } else {
+      if (_gestureDy > 36 || v > 500) widget.onClose();
+      _expand.animateTo(0);
     }
     _dy.animateTo(0, withVelocity: v);
   }
@@ -274,21 +387,27 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     return LayoutBuilder(
       builder: (context, constraints) {
         _width = constraints.maxWidth;
-        return SizedBox(
-          width: _width,
-          height: widget.height,
-          child: AnimatedBuilder(
-            animation: _motion,
-            builder: (context, _) => _buildCapsule(),
-          ),
+        return AnimatedBuilder(
+          animation: _motion,
+          builder: (context, _) {
+            final open = math.max(_expand.value, 0.0);
+            // El hueco crece con el panel: el reproductor sube y todo sigue
+            // dentro de su caja (si no, los controles no recibirían toques).
+            return SizedBox(
+              width: _width,
+              height: widget.height + LiquidMiniPlayer.panelHeight * open,
+              child: _buildCapsule(open),
+            );
+          },
         );
       },
     );
   }
 
-  Widget _buildCapsule() {
+  Widget _buildCapsule(double open) {
     final w = _width;
     final h = widget.height;
+    final panel = LiquidMiniPlayer.panelHeight * open;
     final e = widget.emerge.value;
     final ec = e.clamp(0.0, 1.0);
 
@@ -300,13 +419,14 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
       seed.width * .9,
       w * 1.03,
     );
-    final height = (seed.height + (h - seed.height) * ec).clamp(
-      seed.height,
-      h * 1.04,
-    );
+    final height =
+        (seed.height + (h - seed.height) * ec).clamp(seed.height, h * 1.04) +
+        panel;
     final visibility = (e / .25).clamp(0.0, 1.0);
     final contentOpacity = ((e - .7) / .3).clamp(0.0, 1.0);
     final dye = LiquidMiniPlayer.dyeFor(e);
+    final panelOpacity = ((open - .25) / .75).clamp(0.0, 1.0);
+    final panelActive = open > .5;
 
     // B: estirado hacia el dedo, conservando más o menos el volumen.
     final dx = _dx.value;
@@ -317,6 +437,10 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
 
     final radius = math.min(30.0, height / 2);
     final offset = Offset(dx * .4, widget.liftFromBar * (1 - rise) + dy * .6);
+    final fullHeight = h + panel;
+
+    Widget compactLayer(Widget child) =>
+        Positioned(left: 0, right: 0, bottom: 0, height: h, child: child);
 
     return IgnorePointer(
       ignoring: !widget.shown,
@@ -335,6 +459,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                 1,
               ),
               child: _gestures(
+                panelActive,
                 SizedBox(
                   width: width,
                   height: height,
@@ -345,49 +470,66 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
                     ),
                     child: ClipRSuperellipse(
                       borderRadius: BorderRadius.circular(radius),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // A: agua de progreso.
-                          CustomPaint(
-                            painter: _WaterProgressPainter(
-                              progress: widget.progress,
-                              wave: _wave,
-                              color: widget.accent,
-                              opacity: visibility,
-                            ),
-                          ),
-                          // Teñido lila donde se fundió la gota ▶. Anclado
-                          // al tamaño completo, como el contenido.
-                          OverflowBox(
-                            minWidth: w,
-                            maxWidth: w,
-                            minHeight: h,
-                            maxHeight: h,
-                            child: CustomPaint(
-                              painter: _DyePainter(
-                                amount: dye,
-                                color: widget.dyeColor,
-                                inset: LiquidMiniPlayer.playInset,
+                      // El contenido siempre mide lo del reproductor completo
+                      // y se ancla abajo: mientras brota o crece, el recorte
+                      // lo va revelando.
+                      child: OverflowBox(
+                        alignment: Alignment.bottomCenter,
+                        minWidth: w,
+                        maxWidth: w,
+                        minHeight: fullHeight,
+                        maxHeight: fullHeight,
+                        child: Stack(
+                          children: [
+                            // A: agua de progreso.
+                            compactLayer(
+                              CustomPaint(
+                                painter: _WaterProgressPainter(
+                                  progress: widget.progress,
+                                  wave: _wave,
+                                  color: widget.color,
+                                  opacity: visibility,
+                                ),
                               ),
                             ),
-                          ),
-                          Opacity(
-                            opacity: contentOpacity,
-                            // Los controles se anuncian desde que se
-                            // muestra, aunque aún no terminen de aparecer.
-                            alwaysIncludeSemantics: true,
-                            // El contenido siempre mide lo de la cápsula
-                            // completa; mientras brota, el recorte lo revela.
-                            child: OverflowBox(
-                              minWidth: w,
-                              maxWidth: w,
-                              minHeight: h,
-                              maxHeight: h,
-                              child: _buildContent(),
+                            // Teñido donde se fundió la gota ▶.
+                            compactLayer(
+                              CustomPaint(
+                                painter: _DyePainter(
+                                  amount: dye,
+                                  color: widget.color,
+                                  inset: LiquidMiniPlayer.playInset,
+                                ),
+                              ),
                             ),
-                          ),
-                        ],
+                            compactLayer(
+                              Opacity(
+                                opacity: contentOpacity,
+                                // Los controles se anuncian desde que se
+                                // muestra, aunque aún no terminen de aparecer.
+                                alwaysIncludeSemantics: true,
+                                child: _buildCompactRow(),
+                              ),
+                            ),
+                            // Ajustes, encima de la fila compacta.
+                            Positioned(
+                              left: 0,
+                              right: 0,
+                              bottom: h,
+                              height: LiquidMiniPlayer.panelHeight,
+                              child: IgnorePointer(
+                                ignoring: !panelActive,
+                                child: ExcludeSemantics(
+                                  excluding: !panelActive,
+                                  child: Opacity(
+                                    opacity: panelOpacity,
+                                    child: _buildPanel(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -400,12 +542,25 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     );
   }
 
-  Widget _gestures(Widget child) {
+  Widget _gestures(bool panelActive, Widget child) {
+    final labels = widget.labels;
     return Semantics(
       container: true,
+      // Cada control es su propio nodo (si no, TalkBack leería toda la
+      // cápsula como un solo bloque y no podría activar sus botones).
+      explicitChildNodes: true,
+      // Alternativas accesibles a los gestos (TalkBack no puede deslizar
+      // igual que un dedo).
       customSemanticsActions: {
-        CustomSemanticsAction(label: widget.nextLabel): widget.onNext,
-        CustomSemanticsAction(label: widget.previousLabel): widget.onPrevious,
+        CustomSemanticsAction(label: labels.next): () =>
+            _switchHymn(next: true),
+        CustomSemanticsAction(label: labels.previous): () =>
+            _switchHymn(next: false),
+        CustomSemanticsAction(
+          label: panelActive ? labels.hideControls : labels.showControls,
+        ): () =>
+            _setExpanded(!panelActive),
+        CustomSemanticsAction(label: labels.close): widget.onClose,
       },
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -420,7 +575,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildCompactRow() {
     final w = math.max(_width, 1.0);
     final titleDx = _titleDx.value;
     final titleOpacity = (1 - titleDx.abs() / (w * .5)).clamp(0.0, 1.0);
@@ -451,32 +606,14 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
             ),
           ),
         ),
-        _SmallTap(
-          size: 40,
-          semanticLabel: widget.closeLabel,
-          onTap: widget.onClose,
-          // Tiembla al tocarla y gira un cuarto de vuelta mientras la
-          // cápsula se recoge (y al revés al brotar).
-          child: JellyWobble(
-            child: Transform.rotate(
-              angle: (1 - widget.emerge.value.clamp(0.0, 1.0)) * math.pi / 2,
-              child: const Icon(
-                Icons.close_rounded,
-                size: 20,
-                color: Color(0xD9FFFFFF),
-                shadows: LiquidMiniPlayer._textShadow,
-              ),
-            ),
-          ),
-        ),
         // ▶/⏸ en el extremo derecho: justo donde estaba la gota ▶ que se
         // fundió (su centro queda a 10 + 22 = 32 dp del borde, igual que la
         // gota sobre la lupa).
         _SmallTap(
           size: 44,
           semanticLabel: widget.isPlaying
-              ? widget.pauseLabel
-              : widget.playLabel,
+              ? widget.labels.pause
+              : widget.labels.play,
           onTap: widget.onTogglePlay,
           child: JellyWobble(
             child: AnimatedIcon(
@@ -489,6 +626,247 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
         ),
         const SizedBox(width: LiquidMiniPlayer._trailing),
       ],
+    );
+  }
+
+  /// Panel de ajustes: barra de tiempo, himno anterior/siguiente, ±10 s,
+  /// saltos y velocidad.
+  Widget _buildPanel() {
+    final labels = widget.labels;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 36,
+            child: AnimatedBuilder(
+              animation: widget.progress,
+              builder: (context, _) {
+                final p = widget.progress.value.clamp(0.0, 1.0);
+                return Row(
+                  children: [
+                    _TimeText(widget.duration * p),
+                    Expanded(
+                      child: Semantics(
+                        label: labels.position,
+                        child: SliderTheme(
+                          data: SliderThemeData(
+                            trackHeight: 6,
+                            activeTrackColor: widget.color,
+                            inactiveTrackColor: const Color(0x4DFFFFFF),
+                            thumbColor: Colors.white,
+                            overlayColor: const Color(0x33FFFFFF),
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 8,
+                            ),
+                          ),
+                          child: Slider(value: p, onChanged: widget.onSeek),
+                        ),
+                      ),
+                    ),
+                    _TimeText(widget.duration),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 48,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _PanelIcon(
+                  icon: Icons.skip_previous_rounded,
+                  label: labels.previous,
+                  onTap: () => _switchHymn(next: false),
+                ),
+                _PanelIcon(
+                  icon: Icons.replay_10_rounded,
+                  label: labels.seekBack,
+                  onTap: () => _seekBy(-10),
+                ),
+                _PanelIcon(
+                  icon: Icons.forward_10_rounded,
+                  label: labels.seekForward,
+                  onTap: () => _seekBy(10),
+                ),
+                _PanelIcon(
+                  icon: Icons.skip_next_rounded,
+                  label: labels.next,
+                  onTap: () => _switchHymn(next: true),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 32,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
+                        child: _GlassChip(
+                          label: labels.jumpStart,
+                          semanticLabel: labels.goToStart,
+                          color: widget.color,
+                          onTap: () => widget.onSeek(0),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: _GlassChip(
+                          label: labels.jumpMiddle,
+                          semanticLabel: labels.goToMiddle,
+                          color: widget.color,
+                          onTap: () => widget.onSeek(.5),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: _GlassChip(
+                          label: labels.jumpEnd,
+                          semanticLabel: labels.goToEnd,
+                          color: widget.color,
+                          onTap: () => widget.onSeek(_endPosition),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                for (final s in const [1, 2, 3]) ...[
+                  if (s > 1) const SizedBox(width: 4),
+                  _GlassChip(
+                    label: '$s×',
+                    semanticLabel: labels.speed(s),
+                    selected: widget.speed == s,
+                    color: widget.color,
+                    onTap: () => widget.onSpeedChanged(s),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimeText extends StatelessWidget {
+  const _TimeText(this.time);
+
+  final Duration time;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = time.inMinutes;
+    final s = (time.inSeconds % 60).toString().padLeft(2, '0');
+    return SizedBox(
+      width: 38,
+      child: Text(
+        '$m:$s',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: LiquidMiniPlayer._onGlass,
+          fontSize: 12,
+          fontFeatures: [FontFeature.tabularFigures()],
+          shadows: LiquidMiniPlayer._textShadow,
+        ),
+      ),
+    );
+  }
+}
+
+/// Botón de ícono del panel: tiembla como gelatina al tocarlo.
+class _PanelIcon extends StatelessWidget {
+  const _PanelIcon({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SmallTap(
+      size: 48,
+      semanticLabel: label,
+      onTap: onTap,
+      child: JellyWobble(
+        child: Icon(
+          icon,
+          size: 28,
+          color: LiquidMiniPlayer._onGlass,
+          shadows: LiquidMiniPlayer._textShadow,
+        ),
+      ),
+    );
+  }
+}
+
+/// Píldora de cristal (saltos y velocidad). Seleccionada se tiñe de [color].
+class _GlassChip extends StatelessWidget {
+  const _GlassChip({
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.semanticLabel,
+    this.selected = false,
+  });
+
+  final String label;
+  final String? semanticLabel;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      button: true,
+      selected: selected,
+      label: semanticLabel ?? label,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap();
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected
+                ? color.withValues(alpha: .8)
+                : const Color(0x29FFFFFF),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x47FFFFFF)),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: LiquidMiniPlayer._onGlass,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              shadows: LiquidMiniPlayer._textShadow,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -590,7 +968,7 @@ class _EqualizerPainter extends CustomPainter {
       old.phase != phase || old.amount != amount;
 }
 
-/// Tinta lila que se difunde desde el ▶/⏸ (donde se fundió la gota) y se
+/// Tinta del color de la gota que se difunde desde el ▶/⏸ (donde se fundió la gota) y se
 /// queda como una mancha suave que se desvanece hacia la izquierda.
 class _DyePainter extends CustomPainter {
   _DyePainter({required this.amount, required this.color, required this.inset});
@@ -730,6 +1108,7 @@ class _SmallTap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
+      container: true,
       button: true,
       label: semanticLabel,
       // La acción va aquí: excludeSemantics oculta la del GestureDetector

@@ -761,6 +761,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Own lens on ▶ drop'**
   String get glassLabPlayOwnLens;
+
+  /// Accessibility action that expands the mini player to show playback controls
+  ///
+  /// In en, this message translates to:
+  /// **'Show controls'**
+  String get glassLabShowControls;
+
+  /// Accessibility action that collapses the mini player controls
+  ///
+  /// In en, this message translates to:
+  /// **'Hide controls'**
+  String get glassLabHideControls;
+
+  /// Button that rewinds the hymn 10 seconds
+  ///
+  /// In en, this message translates to:
+  /// **'Back 10 seconds'**
+  String get glassLabSeekBack;
+
+  /// Button that skips the hymn forward 10 seconds
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 10 seconds'**
+  String get glassLabSeekForward;
+
+  /// Chip that jumps to the start of the hymn
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get glassLabJumpStart;
+
+  /// Chip that jumps to the middle of the hymn
+  ///
+  /// In en, this message translates to:
+  /// **'Middle'**
+  String get glassLabJumpMiddle;
+
+  /// Chip that jumps to the last seconds of the hymn
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get glassLabJumpEnd;
+
+  /// Accessibility label of the time slider of the mini player
+  ///
+  /// In en, this message translates to:
+  /// **'Hymn position'**
+  String get glassLabPosition;
+
+  /// Accessibility label of a playback speed chip
+  ///
+  /// In en, this message translates to:
+  /// **'Speed {value}×'**
+  String glassLabSpeed(int value);
+
+  /// Accessibility label of the mini player chip that jumps the hymn position
+  ///
+  /// In en, this message translates to:
+  /// **'Go to start'**
+  String get glassLabGoToStart;
+
+  /// Accessibility label of the mini player chip that jumps the hymn position
+  ///
+  /// In en, this message translates to:
+  /// **'Go to middle'**
+  String get glassLabGoToMiddle;
+
+  /// Accessibility label of the mini player chip that jumps the hymn position
+  ///
+  /// In en, this message translates to:
+  /// **'Go to end'**
+  String get glassLabGoToEnd;
 }
 
 class _AppLocalizationsDelegate

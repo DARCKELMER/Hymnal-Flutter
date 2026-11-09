@@ -507,5 +507,58 @@
   "glassLabPlayOwnLens": "Own lens on ▶ drop",
   "@glassLabPlayOwnLens": {
     "description": "Switch in the glass lab: the play drop uses its own lens (cannot merge) instead of the shared glass"
+  },
+  "glassLabShowControls": "Show controls",
+  "@glassLabShowControls": {
+    "description": "Accessibility action that expands the mini player to show playback controls"
+  },
+  "glassLabHideControls": "Hide controls",
+  "@glassLabHideControls": {
+    "description": "Accessibility action that collapses the mini player controls"
+  },
+  "glassLabSeekBack": "Back 10 seconds",
+  "@glassLabSeekBack": {
+    "description": "Button that rewinds the hymn 10 seconds"
+  },
+  "glassLabSeekForward": "Forward 10 seconds",
+  "@glassLabSeekForward": {
+    "description": "Button that skips the hymn forward 10 seconds"
+  },
+  "glassLabJumpStart": "Start",
+  "@glassLabJumpStart": {
+    "description": "Chip that jumps to the start of the hymn"
+  },
+  "glassLabJumpMiddle": "Middle",
+  "@glassLabJumpMiddle": {
+    "description": "Chip that jumps to the middle of the hymn"
+  },
+  "glassLabJumpEnd": "End",
+  "@glassLabJumpEnd": {
+    "description": "Chip that jumps to the last seconds of the hymn"
+  },
+  "glassLabPosition": "Hymn position",
+  "@glassLabPosition": {
+    "description": "Accessibility label of the time slider of the mini player"
+  },
+  "glassLabSpeed": "Speed {value}×",
+  "@glassLabSpeed": {
+    "description": "Accessibility label of a playback speed chip",
+    "placeholders": {
+      "value": {
+        "type": "int"
+      }
+    }
+  },
+  "glassLabGoToStart": "Go to start",
+  "@glassLabGoToStart": {
+    "description": "Accessibility label of the mini player chip that jumps the hymn position"
+  },
+  "glassLabGoToMiddle": "Go to middle",
+  "@glassLabGoToMiddle": {
+    "description": "Accessibility label of the mini player chip that jumps the hymn position"
+  },
+  "glassLabGoToEnd": "Go to end",
+  "@glassLabGoToEnd": {
+    "description": "Accessibility label of the mini player chip that jumps the hymn position"
   }
 }
