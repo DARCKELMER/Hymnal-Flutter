@@ -453,9 +453,16 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   }
 
   /// La lupa y el campo de búsqueda son **el mismo elemento de cristal**:
-  /// una gota con lente propia que se estira de círculo a cápsula y vuelve,
-  /// sin destruirse nunca. Así no hay saltos de forma ni de óptica, ni
-  /// restos de contorno al cerrar.
+  /// una gota que se estira de círculo a cápsula y vuelve, sin destruirse
+  /// nunca. Así no hay saltos de forma ni de óptica, ni restos de contorno
+  /// al cerrar.
+  ///
+  /// Usa el cristal de agua del layer principal, **no una lente propia**:
+  /// un layer propio que cambia de tamaño rápido (al cerrar) hace que el
+  /// renderizador dibuje durante 1–2 cuadros un trozo de su forma anterior
+  /// fuera del botón (la "media luna" a su derecha). Medido en el S24 Ultra:
+  /// 7 destellos en 12 cierres con lente propia, 0 en 12 sin ella. Las
+  /// lentes propias quedan para botones que no cambian de tamaño (play).
   ///
   /// Cerrada: gota que se infla, se estira hacia el dedo y tiembla como
   /// gelatina. Abierta: campo quieto (sin estirarse ni temblar) con texto y X.
@@ -467,7 +474,6 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     return LiquidGlassButton(
       semanticLabel: l10n.search,
       onTap: closed ? _openSearch : null,
-      lens: LiquidGlassButton.dropLens,
       glassKey: _searchGlassKey,
       fake: _forceFake,
       size: Size(width, _barHeight),

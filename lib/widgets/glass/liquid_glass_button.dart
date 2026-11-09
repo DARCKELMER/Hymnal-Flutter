@@ -73,6 +73,10 @@ class LiquidGlassButton extends StatelessWidget {
   final bool grouped;
 
   /// Óptica propia del botón (ej. [dropLens]); `null` = cristal compartido.
+  ///
+  /// Solo para botones de tamaño fijo: si un layer propio cambia de tamaño
+  /// rápido, el renderizador dibuja 1–2 cuadros de su forma anterior fuera
+  /// del botón.
   final LiquidGlassSettings? lens;
 
   /// FakeGlass para la lente propia, para coincidir con el layer padre.

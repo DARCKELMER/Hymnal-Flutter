@@ -25,9 +25,10 @@ void main() {
       await tester.pumpWidget(_wrap(const GlassLabScreen()));
       await tester.pump();
 
-      // Layer principal + gota de reposo del menú + play y lupa, que son
-      // gotas enteras con lente propia (sin gotas interiores).
-      expect(find.byType(LiquidGlassLayer), findsNWidgets(4));
+      // Layer principal + gota de reposo del menú + play (gota entera con
+      // lente propia). La lupa comparte el layer principal: un layer propio
+      // que cambia de tamaño deja una "media luna" fantasma al cerrar.
+      expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
       expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
       expect(find.byType(LiquidGlassBlendGroup), findsOneWidget);
       expect(find.byType(LiquidGlass), findsNWidgets(5));
