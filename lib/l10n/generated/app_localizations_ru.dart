@@ -413,4 +413,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get glassTintForced => 'Тонировано: включён высокий контраст';
+
+  @override
+  String get glassCatalogTitle => 'Каталог стекла';
+
+  @override
+  String get glassCatalogSubtitle => 'Только отладка: компоненты редизайна';
+
+  @override
+  String get glassCatalogButtons => 'Кнопки';
+
+  @override
+  String get glassCatalogControls => 'Элементы управления';
+
+  @override
+  String get glassCatalogNavigation => 'Навигация';
+
+  @override
+  String get glassCatalogLyrics => 'Текст';
+
+  @override
+  String get sheetMusic => 'Ноты';
 }

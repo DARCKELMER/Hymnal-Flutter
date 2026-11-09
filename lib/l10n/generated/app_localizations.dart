@@ -857,6 +857,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tinted because high contrast is on'**
   String get glassTintForced;
+
+  /// Debug-only screen title showing the glass design system components
+  ///
+  /// In en, this message translates to:
+  /// **'Glass catalog'**
+  String get glassCatalogTitle;
+
+  /// Subtitle of the glass catalog entry in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Debug only: redesign components'**
+  String get glassCatalogSubtitle;
+
+  /// Glass catalog section
+  ///
+  /// In en, this message translates to:
+  /// **'Buttons'**
+  String get glassCatalogButtons;
+
+  /// Glass catalog section
+  ///
+  /// In en, this message translates to:
+  /// **'Controls'**
+  String get glassCatalogControls;
+
+  /// Glass catalog section
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation'**
+  String get glassCatalogNavigation;
+
+  /// Glass catalog section with the lyrics card
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics'**
+  String get glassCatalogLyrics;
+
+  /// Accessibility label of the sheet music button
+  ///
+  /// In en, this message translates to:
+  /// **'Sheet music'**
+  String get sheetMusic;
 }
 
 class _AppLocalizationsDelegate

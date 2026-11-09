@@ -153,5 +153,12 @@
   "glassTint": "Cristal",
   "glassTransparent": "Transparente",
   "glassTinted": "Tintado",
-  "glassTintForced": "Tintado porque el alto contraste está activo"
+  "glassTintForced": "Tintado porque el alto contraste está activo",
+  "glassCatalogTitle": "Catálogo de cristal",
+  "glassCatalogSubtitle": "Solo depuración: componentes del rediseño",
+  "glassCatalogButtons": "Botones",
+  "glassCatalogControls": "Controles",
+  "glassCatalogNavigation": "Navegación",
+  "glassCatalogLyrics": "Letra",
+  "sheetMusic": "Partitura"
 }

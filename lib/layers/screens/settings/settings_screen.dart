@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:hymnal_app/constants/app_links.dart';
+import 'package:hymnal_app/layers/screens/glass_lab/glass_catalog_screen.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
@@ -150,6 +151,16 @@ class _SettingsScreenState extends _SettingsController {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const GlassLabScreen(),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.widgets_outlined),
+                  title: Text(l10n.glassCatalogTitle),
+                  subtitle: Text(l10n.glassCatalogSubtitle),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const GlassCatalogScreen(),
                     ),
                   ),
                 ),

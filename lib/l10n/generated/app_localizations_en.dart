@@ -413,4 +413,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get glassTintForced => 'Tinted because high contrast is on';
+
+  @override
+  String get glassCatalogTitle => 'Glass catalog';
+
+  @override
+  String get glassCatalogSubtitle => 'Debug only: redesign components';
+
+  @override
+  String get glassCatalogButtons => 'Buttons';
+
+  @override
+  String get glassCatalogControls => 'Controls';
+
+  @override
+  String get glassCatalogNavigation => 'Navigation';
+
+  @override
+  String get glassCatalogLyrics => 'Lyrics';
+
+  @override
+  String get sheetMusic => 'Sheet music';
 }

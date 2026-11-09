@@ -153,5 +153,12 @@
   "glassTint": "Vidro",
   "glassTransparent": "Transparente",
   "glassTinted": "Tingido",
-  "glassTintForced": "Tingido porque o alto contraste está ativo"
+  "glassTintForced": "Tingido porque o alto contraste está ativo",
+  "glassCatalogTitle": "Catálogo de vidro",
+  "glassCatalogSubtitle": "Somente depuração: componentes do redesenho",
+  "glassCatalogButtons": "Botões",
+  "glassCatalogControls": "Controles",
+  "glassCatalogNavigation": "Navegação",
+  "glassCatalogLyrics": "Letra",
+  "sheetMusic": "Partitura"
 }

@@ -153,5 +153,12 @@
   "glassTint": "Стекло",
   "glassTransparent": "Прозрачное",
   "glassTinted": "Тонированное",
-  "glassTintForced": "Тонировано: включён высокий контраст"
+  "glassTintForced": "Тонировано: включён высокий контраст",
+  "glassCatalogTitle": "Каталог стекла",
+  "glassCatalogSubtitle": "Только отладка: компоненты редизайна",
+  "glassCatalogButtons": "Кнопки",
+  "glassCatalogControls": "Элементы управления",
+  "glassCatalogNavigation": "Навигация",
+  "glassCatalogLyrics": "Текст",
+  "sheetMusic": "Ноты"
 }
