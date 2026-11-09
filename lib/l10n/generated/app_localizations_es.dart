@@ -356,4 +356,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get glassLabWater => 'Agua brillante';
+
+  @override
+  String get glassLabClosePlayer => 'Cerrar reproductor';
+
+  @override
+  String get glassLabNextHymn => 'Himno siguiente';
+
+  @override
+  String get glassLabPreviousHymn => 'Himno anterior';
 }

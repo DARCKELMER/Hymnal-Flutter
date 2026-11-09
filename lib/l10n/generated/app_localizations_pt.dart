@@ -354,4 +354,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get glassLabWater => 'Água brilhante';
+
+  @override
+  String get glassLabClosePlayer => 'Fechar reprodutor';
+
+  @override
+  String get glassLabNextHymn => 'Próximo hino';
+
+  @override
+  String get glassLabPreviousHymn => 'Hino anterior';
 }

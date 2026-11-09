@@ -737,6 +737,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shiny water'**
   String get glassLabWater;
+
+  /// Accessibility label of the button that closes the mini player in the glass lab
+  ///
+  /// In en, this message translates to:
+  /// **'Close player'**
+  String get glassLabClosePlayer;
+
+  /// Accessibility action to go to the next hymn by swiping the mini player
+  ///
+  /// In en, this message translates to:
+  /// **'Next hymn'**
+  String get glassLabNextHymn;
+
+  /// Accessibility action to go to the previous hymn by swiping the mini player
+  ///
+  /// In en, this message translates to:
+  /// **'Previous hymn'**
+  String get glassLabPreviousHymn;
 }
 
 class _AppLocalizationsDelegate

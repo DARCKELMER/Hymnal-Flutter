@@ -1,8 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
 import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
+import 'package:hymnal_app/widgets/glass/liquid_mini_player.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
@@ -75,9 +78,10 @@ void main() {
     expect(layer().fake, isTrue);
 
     // Reproducir ↔ pausa (botón grande y mini reproductor comparten estado).
-    expect(find.bySemanticsLabel('Pausa'), findsNothing);
+    expect(find.semantics.byLabel('Pausa'), findsNothing);
     await tester.tap(find.bySemanticsLabel('Reproducir').first);
-    await tester.pump();
+    await tester.pump(); // arranca el resorte del mini reproductor
+    await tester.pump(const Duration(seconds: 1)); // ya brotó
     expect(find.bySemanticsLabel('Pausa'), findsNWidgets(2));
   });
 
@@ -159,7 +163,8 @@ void main() {
     // A mitad de la animación: el ícono va camino de ⏸.
     final mid = tester.widget<AnimatedIcon>(icon).progress.value;
     expect(mid, greaterThan(0));
-    await tester.pumpAndSettle();
+    // Sonando, la onda del agua corre en bucle: se avanza un tiempo fijo.
+    await tester.pump(const Duration(seconds: 1));
     expect(tester.widget<AnimatedIcon>(icon).progress.value, 1);
   });
 
@@ -197,8 +202,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 40));
     expect(anisotropy().abs(), greaterThan(.05));
 
-    // Se queda quieta al terminar.
-    await tester.pumpAndSettle();
+    // Se queda quieta al terminar (sonando nunca hay "settle").
+    await tester.pump(const Duration(seconds: 2));
     expect(anisotropy(), closeTo(0, 1e-6));
   });
 
@@ -295,5 +300,136 @@ void main() {
         reason: 'cuadro $i: el cristal cambió de padre',
       );
     }
+  });
+
+  testWidgets('El mini reproductor brota de la barra y se funde al cerrarlo', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    final glass = find.descendant(
+      of: find.byType(LiquidMiniPlayer),
+      matching: find.byType(LiquidGlass),
+    );
+    double visibility() =>
+        tester.widget<LiquidGlass>(glass).appearance!.visibility;
+    double blend() => tester
+        .widget<LiquidGlassBlendGroup>(find.byType(LiquidGlassBlendGroup))
+        .blend;
+
+    // Oculto: sigue montado, invisible y fuera del lector de pantalla.
+    expect(visibility(), 0);
+    expect(blend(), 0);
+    expect(find.semantics.byLabel('Cerrar reproductor'), findsNothing);
+    final element = tester.element(glass);
+    final parent = element.renderObject!.parent;
+
+    void expectSameGlass(String when) {
+      expect(identical(tester.element(glass), element), isTrue, reason: when);
+      expect(
+        identical(tester.element(glass).renderObject!.parent, parent),
+        isTrue,
+        reason: '$when: el cristal cambió de padre (re-montaje)',
+      );
+    }
+
+    // Reproducir: brota, y a mitad del brote la gota se mezcla con la barra.
+    await tester.tap(find.bySemanticsLabel('Reproducir').first);
+    var maxBlend = 0.0;
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expectSameGlass('brotando, cuadro $i');
+      maxBlend = math.max(maxBlend, blend());
+    }
+    expect(maxBlend, greaterThan(10));
+    expect(visibility(), 1);
+    expect(blend(), closeTo(0, .5));
+    expect(find.bySemanticsLabel('Cerrar reproductor'), findsOneWidget);
+
+    // Pausar no lo oculta.
+    await tester.tap(find.bySemanticsLabel('Pausa').first);
+    await tester.pump(const Duration(seconds: 1));
+    expect(visibility(), 1);
+
+    // Cerrar con la ✕: se funde con la barra y deja de sonar.
+    await tester.tap(find.bySemanticsLabel('Cerrar reproductor'));
+    for (var i = 0; i < 90; i++) {
+      await tester.pump(const Duration(milliseconds: 16));
+      expectSameGlass('fundiéndose, cuadro $i');
+    }
+    expect(visibility(), 0);
+    expect(find.semantics.byLabel('Pausa'), findsNothing);
+    expect(find.semantics.byLabel('Cerrar reproductor'), findsNothing);
+  });
+
+  testWidgets('Deslizar el mini reproductor cambia de himno o lo cierra', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+    await tester.tap(find.bySemanticsLabel('Reproducir').first);
+    await tester.pump(); // arranca el resorte
+    await tester.pump(const Duration(seconds: 2));
+
+    final mini = find.byType(LiquidMiniPlayer);
+    expect(find.text('Cantad alegres al Señor'), findsOneWidget);
+
+    // A la izquierda: siguiente himno; la insignia muestra su número.
+    await tester.drag(mini, const Offset(-200, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Da gloria al Señor'), findsOneWidget);
+    expect(find.descendant(of: mini, matching: find.text('2')), findsOneWidget);
+
+    // A la derecha: vuelve al anterior.
+    await tester.drag(mini, const Offset(200, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Cantad alegres al Señor'), findsOneWidget);
+
+    // Un toque corto no cambia de himno.
+    await tester.drag(mini, const Offset(-20, 0));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('Cantad alegres al Señor'), findsOneWidget);
+
+    // Hacia abajo: se cierra.
+    await tester.drag(mini, const Offset(0, 120));
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.semantics.byLabel('Cerrar reproductor'), findsNothing);
+    expect(find.semantics.byLabel('Pausa'), findsNothing);
+  });
+
+  testWidgets('El agua de progreso avanza solo mientras suena', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.75;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(_wrap(const GlassLabScreen()));
+    await tester.pump();
+
+    double progress() => tester
+        .widget<LiquidMiniPlayer>(find.byType(LiquidMiniPlayer))
+        .progress
+        .value;
+
+    await tester.tap(find.bySemanticsLabel('Reproducir').first);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    final playing = progress();
+    expect(playing, greaterThan(.05));
+
+    // En pausa se detiene.
+    await tester.tap(find.bySemanticsLabel('Pausa').first);
+    await tester.pump();
+    final paused = progress();
+    await tester.pump(const Duration(seconds: 3));
+    expect(progress(), closeTo(paused, 1e-9));
   });
 }

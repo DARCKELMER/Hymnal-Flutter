@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/widgets/glass/liquid_glass_button.dart';
+import 'package:hymnal_app/widgets/glass/liquid_mini_player.dart';
 import 'package:hymnal_app/widgets/glass/liquid_play_button.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
@@ -52,6 +53,31 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   bool _isPlaying = false;
   int _selectedTab = 0;
 
+  /// Himnos de prueba (los primeros del himnario nuevo en español) para
+  /// deslizar el mini reproductor.
+  static const List<(int, String)> _hymns = [
+    (1, 'Cantad alegres al Señor'),
+    (2, 'Da gloria al Señor'),
+    (3, 'Unidos en espíritu'),
+    (4, 'Alabanzas sin cesar'),
+    (5, 'A ti, glorioso Dios'),
+  ];
+  int _hymnIndex = 0;
+
+  /// Mini reproductor: brota de la barra al reproducir y se funde al
+  /// cerrarlo (✕ o deslizándolo hacia abajo). Pausar no lo oculta.
+  bool _miniShown = false;
+  late final SingleMotionController _miniEmerge = SingleMotionController(
+    motion: const Motion.bouncySpring(snapToEnd: true),
+    vsync: this,
+  );
+
+  /// Avance simulado del himno (30 s); al terminar pasa al siguiente.
+  late final AnimationController _hymnProgress = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 30),
+  )..addStatusListener(_onHymnProgressStatus);
+
   /// Transición del buscador: 0 = barra de pestañas + lupa,
   /// 1 = barra encogida en un círculo + campo de búsqueda.
   /// Resorte con rebote para que se sienta como líquido.
@@ -79,6 +105,8 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   @override
   void dispose() {
     _backgroundController.dispose();
+    _miniEmerge.dispose();
+    _hymnProgress.dispose();
     _search.dispose();
     _searchText.dispose();
     _searchFocus.dispose();
@@ -94,7 +122,45 @@ class _GlassLabScreenState extends State<GlassLabScreen>
     }
   }
 
-  void _togglePlaying() => setState(() => _isPlaying = !_isPlaying);
+  void _togglePlaying() {
+    setState(() => _isPlaying = !_isPlaying);
+    if (_isPlaying) {
+      _hymnProgress.forward();
+      if (!_miniShown) {
+        setState(() => _miniShown = true);
+        _miniEmerge.animateTo(1);
+      }
+    } else {
+      _hymnProgress.stop();
+    }
+  }
+
+  /// Cerrar el mini reproductor detiene el himno y lo funde con la barra.
+  void _closeMiniPlayer() {
+    if (!_miniShown) return;
+    HapticFeedback.lightImpact();
+    _hymnProgress
+      ..stop()
+      ..value = 0;
+    setState(() {
+      _isPlaying = false;
+      _miniShown = false;
+    });
+    _miniEmerge.animateTo(0);
+  }
+
+  void _changeHymn(int delta) {
+    setState(() {
+      _hymnIndex = (_hymnIndex + delta) % _hymns.length;
+    });
+    _hymnProgress.value = 0;
+    if (_isPlaying) _hymnProgress.forward();
+  }
+
+  /// Reproducción continua simulada: al terminar, sigue el próximo himno.
+  void _onHymnProgressStatus(AnimationStatus status) {
+    if (status == AnimationStatus.completed && mounted) _changeHymn(1);
+  }
 
   void _openSearch() {
     if (_searchOpen) return;
@@ -300,9 +366,26 @@ class _GlassLabScreenState extends State<GlassLabScreen>
               child: _buildPlayButton(l10n),
             ),
             const SizedBox(height: 16),
-            _buildMiniPlayer(l10n),
-            const SizedBox(height: 12),
-            LiquidGlassBlendGroup(blend: 20, child: _buildBottomRow(l10n)),
+            // Mini reproductor y barra en el mismo grupo: la gota brota de
+            // la barra y vuelve a fundirse con ella. La mezcla solo existe
+            // durante la transición; en reposo (0) no hay "cuello" entre
+            // ambos a pesar de estar a 12 dp.
+            AnimatedBuilder(
+              animation: _miniEmerge,
+              builder: (context, child) => LiquidGlassBlendGroup(
+                blend:
+                    28 * math.sin(math.pi * _miniEmerge.value.clamp(0.0, 1.0)),
+                child: child!,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildMiniPlayer(l10n),
+                  const SizedBox(height: _gap),
+                  _buildBottomRow(l10n),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -321,52 +404,25 @@ class _GlassLabScreenState extends State<GlassLabScreen>
   }
 
   Widget _buildMiniPlayer(AppLocalizations l10n) {
-    return LiquidGlass(
-      shape: const LiquidRoundedSuperellipse(borderRadius: 30),
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          children: [
-            const SizedBox(width: 18),
-            const Text(
-              '1',
-              style: TextStyle(
-                color: _onGlass,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                shadows: _textShadow,
-              ),
-            ),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Text(
-                'Cantad alegres al Señor',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: _onGlass,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  shadows: _textShadow,
-                ),
-              ),
-            ),
-            _CircleTap(
-              size: 48,
-              semanticLabel: _isPlaying
-                  ? l10n.glassLabPause
-                  : l10n.glassLabPlay,
-              onTap: _togglePlaying,
-              child: Icon(
-                _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                color: _onGlass,
-                shadows: _textShadow,
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-        ),
-      ),
+    final (number, title) = _hymns[_hymnIndex];
+    return LiquidMiniPlayer(
+      emerge: _miniEmerge,
+      shown: _miniShown,
+      number: number,
+      title: title,
+      isPlaying: _isPlaying,
+      progress: _hymnProgress,
+      onTogglePlay: _togglePlaying,
+      onNext: () => _changeHymn(1),
+      onPrevious: () => _changeHymn(-1),
+      onClose: _closeMiniPlayer,
+      playLabel: l10n.glassLabPlay,
+      pauseLabel: l10n.glassLabPause,
+      closeLabel: l10n.glassLabClosePlayer,
+      nextLabel: l10n.glassLabNextHymn,
+      previousLabel: l10n.glassLabPreviousHymn,
+      liftFromBar: 60 / 2 + _gap + _barHeight / 2,
+      accent: _accentTint,
     );
   }
 

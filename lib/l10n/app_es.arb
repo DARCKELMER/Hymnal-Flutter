@@ -126,5 +126,8 @@
   "glassLabPerformanceOverlay": "Superposición de rendimiento",
   "glassLabPlay": "Reproducir",
   "glassLabPause": "Pausa",
-  "glassLabWater": "Agua brillante"
+  "glassLabWater": "Agua brillante",
+  "glassLabClosePlayer": "Cerrar reproductor",
+  "glassLabNextHymn": "Himno siguiente",
+  "glassLabPreviousHymn": "Himno anterior"
 }

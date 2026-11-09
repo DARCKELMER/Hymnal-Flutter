@@ -126,5 +126,8 @@
   "glassLabPerformanceOverlay": "Оверлей производительности",
   "glassLabPlay": "Воспроизвести",
   "glassLabPause": "Пауза",
-  "glassLabWater": "Блестящая вода"
+  "glassLabWater": "Блестящая вода",
+  "glassLabClosePlayer": "Закрыть плеер",
+  "glassLabNextHymn": "Следующий гимн",
+  "glassLabPreviousHymn": "Предыдущий гимн"
 }

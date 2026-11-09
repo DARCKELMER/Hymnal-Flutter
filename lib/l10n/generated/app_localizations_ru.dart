@@ -351,4 +351,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get glassLabWater => 'Блестящая вода';
+
+  @override
+  String get glassLabClosePlayer => 'Закрыть плеер';
+
+  @override
+  String get glassLabNextHymn => 'Следующий гимн';
+
+  @override
+  String get glassLabPreviousHymn => 'Предыдущий гимн';
 }
