@@ -1,5 +1,5 @@
 import 'package:hymnal_app/constants/app_links.dart';
-import 'package:hymnal_app/core/constants/app_assets.dart';
+import 'package:hymnal_app/widgets/glass/glass_background.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/services/audio_service.dart';
@@ -26,7 +26,9 @@ class _PlayerScreenState extends _PlayerController {
     final hours = twoDigits(duration.inHours);
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return duration.inHours > 0 ? '$hours:$minutes:$seconds' : '$minutes:$seconds';
+    return duration.inHours > 0
+        ? '$hours:$minutes:$seconds'
+        : '$minutes:$seconds';
   }
 
   @override
@@ -62,18 +64,18 @@ class _PlayerScreenState extends _PlayerController {
             final hymnal = _audioService.currentHymnal;
 
             if (hymn == null) {
-              return Center(
-                child: Text(l10n.noAudioPlaying),
-              );
+              return Center(child: Text(l10n.noAudioPlaying));
             }
 
-            final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+            final isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
 
             final albumArt = Container(
               width: isLandscape ? 140 : 100,
               height: isLandscape ? 140 : 100,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.8),
+                color: Theme.of(context).colorScheme.primaryContainer
+                    .withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
@@ -84,7 +86,9 @@ class _PlayerScreenState extends _PlayerController {
                 ],
               ),
               child: Icon(
-                _audioService.isInstrumental ? Icons.piano : Icons.record_voice_over,
+                _audioService.isInstrumental
+                    ? Icons.piano
+                    : Icons.record_voice_over,
                 size: isLandscape ? 50 : 40,
                 color: Theme.of(context).colorScheme.onPrimaryContainer,
               ),
@@ -96,9 +100,9 @@ class _PlayerScreenState extends _PlayerController {
                 Text(
                   hymn.title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: isLandscape ? 18 : null,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    fontSize: isLandscape ? 18 : null,
+                  ),
                   textAlign: TextAlign.center,
                   maxLines: isLandscape ? 1 : 2,
                   overflow: TextOverflow.ellipsis,
@@ -107,19 +111,26 @@ class _PlayerScreenState extends _PlayerController {
                 Text(
                   '#${hymn.number} • ${hymnal?.name ?? ""}',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-                        fontSize: isLandscape ? 14 : null,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurface
+                        .withValues(alpha: 0.7),
+                    fontSize: isLandscape ? 14 : null,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context).colorScheme.primary
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    _audioService.isInstrumental ? l10n.instrumental : l10n.sung,
+                    _audioService.isInstrumental
+                        ? l10n.instrumental
+                        : l10n.sung,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -135,17 +146,18 @@ class _PlayerScreenState extends _PlayerController {
               children: [
                 Slider(
                   value: _audioService.position.inMilliseconds.toDouble().clamp(
-                        0,
-                        _audioService.duration.inMilliseconds.toDouble().clamp(1, double.infinity),
-                      ),
+                    0,
+                    _audioService.duration.inMilliseconds.toDouble().clamp(
+                      1,
+                      double.infinity,
+                    ),
+                  ),
                   max: _audioService.duration.inMilliseconds.toDouble().clamp(
-                        1,
-                        double.infinity,
-                      ),
+                    1,
+                    double.infinity,
+                  ),
                   onChanged: (value) {
-                    _audioService.seek(
-                      Duration(milliseconds: value.toInt()),
-                    );
+                    _audioService.seek(Duration(milliseconds: value.toInt()));
                   },
                 ),
                 Padding(
@@ -156,14 +168,16 @@ class _PlayerScreenState extends _PlayerController {
                       Text(
                         _formatDuration(_audioService.position),
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
                       Text(
                         _formatDuration(_audioService.duration),
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                          color: Theme.of(context).colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                           fontSize: 12,
                         ),
                       ),
@@ -184,7 +198,8 @@ class _PlayerScreenState extends _PlayerController {
                     IconButton(
                       icon: const Icon(Icons.replay_10_rounded),
                       iconSize: isLandscape ? 24 : 32,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      color: Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.8),
                       onPressed: () {
                         _audioService.seek(
                           _audioService.position - const Duration(seconds: 10),
@@ -202,14 +217,17 @@ class _PlayerScreenState extends _PlayerController {
                           color: Theme.of(context).colorScheme.primary,
                           boxShadow: [
                             BoxShadow(
-                              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                              color: Theme.of(context).colorScheme.primary
+                                  .withValues(alpha: 0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: Icon(
-                          _audioService.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                          _audioService.isPlaying
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
                           size: isLandscape ? 32 : 42,
                           color: Theme.of(context).colorScheme.onPrimary,
                         ),
@@ -219,7 +237,8 @@ class _PlayerScreenState extends _PlayerController {
                     IconButton(
                       icon: const Icon(Icons.forward_10_rounded),
                       iconSize: isLandscape ? 24 : 32,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                      color: Theme.of(context).colorScheme.onSurface
+                          .withValues(alpha: 0.8),
                       onPressed: () {
                         _audioService.seek(
                           _audioService.position + const Duration(seconds: 10),
@@ -240,7 +259,9 @@ class _PlayerScreenState extends _PlayerController {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border),
+                      icon: Icon(
+                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                      ),
                       color: _isFavorite ? Colors.red : null,
                       onPressed: _toggleFavorite,
                     ),
@@ -260,8 +281,9 @@ class _PlayerScreenState extends _PlayerController {
                           color: _audioService.continuousPlay
                               ? Theme.of(context).colorScheme.primary
                               : Colors.grey,
-                          fontWeight:
-                              _audioService.continuousPlay ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: _audioService.continuousPlay
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           fontSize: isLandscape ? 11 : null,
                         ),
                       ),
@@ -280,11 +302,17 @@ class _PlayerScreenState extends _PlayerController {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           visualDensity: VisualDensity.compact,
                         ),
                         icon: const Icon(Icons.library_music, size: 18),
-                        label: Text(l10n.viewLyrics, style: const TextStyle(fontSize: 12)),
+                        label: Text(
+                          l10n.viewLyrics,
+                          style: const TextStyle(fontSize: 12),
+                        ),
                       ),
                     ],
                   ],
@@ -294,7 +322,10 @@ class _PlayerScreenState extends _PlayerController {
 
             if (isLandscape) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     Center(child: albumArt),
@@ -349,15 +380,11 @@ class _PlayerScreenState extends _PlayerController {
       builder: (context, child) {
         return Stack(
           children: [
-            Container(color: Theme.of(context).scaffoldBackgroundColor),
-            if (_settingsService.showBackgroundImage)
-              Positioned.fill(
-                child: Image.asset(
-                  AppAssets.backgroundImage,
-                  fit: BoxFit.cover,
-                  opacity: const AlwaysStoppedAnimation(0.15),
-                ),
+            Positioned.fill(
+              child: GlassBackground(
+                showImage: _settingsService.showBackgroundImage,
               ),
+            ),
             content,
           ],
         );

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/services/audio_service.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
+import 'package:hymnal_app/widgets/glass/glass_background.dart';
 import 'package:hymnal_app/widgets/glass/glass_dock.dart';
 import 'package:hymnal_app/widgets/glass/glass_tab_bar.dart';
 
@@ -65,15 +65,11 @@ class _AppScaffoldState extends State<AppScaffold> {
                   : SystemUiOverlayStyle.dark),
           child: Stack(
             children: [
-              Container(color: Theme.of(context).scaffoldBackgroundColor),
-              if (settingsService.showBackgroundImage)
-                Positioned.fill(
-                  child: Image.asset(
-                    AppAssets.backgroundImage,
-                    fit: BoxFit.cover,
-                    opacity: const AlwaysStoppedAnimation(0.15),
-                  ),
+              Positioned.fill(
+                child: GlassBackground(
+                  showImage: settingsService.showBackgroundImage,
                 ),
+              ),
               Scaffold(
                 backgroundColor: Colors.transparent,
                 appBar: widget.appBar,
