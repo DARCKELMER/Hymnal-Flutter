@@ -22,8 +22,8 @@ class GlassBackground extends StatelessWidget {
   /// Velo sobre el paisaje (de arriba hacia abajo) según el brillo.
   static List<Color> veil(Brightness brightness) =>
       brightness == Brightness.dark
-      ? const [Color(0xCC0B1220), Color(0xAD0B1220), Color(0x940B1220)]
-      : const [Color(0xB3FFFFFF), Color(0x8CFFFFFF), Color(0x73FFFFFF)];
+      ? const [Color(0xA60B1220), Color(0x800B1220), Color(0x660B1220)]
+      : const [Color(0x73FFFFFF), Color(0x4DFFFFFF), Color(0x33FFFFFF)];
 
   /// Degradado sin imagen a partir del color vivo del paisaje.
   static List<Color> plainGradient(Color seed, Brightness brightness) {
