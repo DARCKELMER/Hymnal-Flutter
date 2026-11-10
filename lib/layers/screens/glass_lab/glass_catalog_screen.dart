@@ -97,7 +97,9 @@ class _GlassCatalogScreenState extends State<GlassCatalogScreen> {
               children: [
                 if (settings != null) _tintSlider(l10n, settings),
                 _section(l10n.glassCatalogButtons),
+                // Con blend group: la barra lateral es la barra del celular.
                 GlassZone(
+                  blend: 20,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

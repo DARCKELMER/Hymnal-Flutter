@@ -60,6 +60,7 @@ class LoupeTabBar extends StatefulWidget {
     this.collapse = 0,
     this.collapsedLabel,
     this.onCollapsedTap,
+    this.contentQuarterTurns = 0,
     super.key,
   }) : assert(tabs.length > 0, 'A tab bar needs at least one tab.');
 
@@ -131,6 +132,11 @@ class LoupeTabBar extends StatefulWidget {
 
   /// MODIFICADO: toque sobre la barra encogida (p. ej. cerrar el buscador).
   final VoidCallback? onCollapsedTap;
+
+  /// MODIFICADO: gira el contenido de cada pestaña (ícono y etiqueta) en
+  /// cuartos de vuelta. La barra lateral de tableta es esta misma barra
+  /// girada 90° (`RotatedBox`); con `3` sus íconos vuelven a leerse derechos.
+  final int contentQuarterTurns;
 
   /// A clear, unfrosted lens like the iOS 27 tab bar's: it shows the bar
   /// 14% smaller and bends and splits the colors only in a 3–4 pt band along
@@ -683,7 +689,11 @@ class _LoupeTabBarState extends State<LoupeTabBar>
   }) {
     Widget item(BottomBarTab tab) {
       final child = RepaintBoundary(
-        child: _TabItem(tab: tab, color: color, foregrounds: foregrounds),
+        // MODIFICADO: contenido girado (barra lateral).
+        child: RotatedBox(
+          quarterTurns: widget.contentQuarterTurns,
+          child: _TabItem(tab: tab, color: color, foregrounds: foregrounds),
+        ),
       );
       if (!magnify) return child;
       return ListenableTransform(

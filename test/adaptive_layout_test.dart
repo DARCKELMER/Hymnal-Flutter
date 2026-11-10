@@ -94,7 +94,15 @@ void main() {
   ) async {
     await pumpApp(tester, const Size(800, 1000));
     expect(find.byType(GlassNavigationRail), findsOneWidget);
-    expect(find.byType(LoupeTabBar), findsNothing);
+    // Sin barra de pestañas abajo (la de la barra lateral es la misma
+    // barra, girada).
+    expect(
+      find.descendant(
+        of: find.byType(GlassTabBar),
+        matching: find.byType(LoupeTabBar),
+      ),
+      findsNothing,
+    );
     expect(find.bySemanticsLabel('Historial'), findsWidgets);
     // Historial es un destino de la barra lateral.
     await tester.tap(

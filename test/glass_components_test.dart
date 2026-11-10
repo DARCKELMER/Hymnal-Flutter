@@ -14,10 +14,16 @@ import 'package:hymnal_app/widgets/glass/glass_pill.dart';
 import 'package:hymnal_app/widgets/glass/glass_scope.dart';
 import 'package:hymnal_app/widgets/glass/glass_segmented.dart';
 import 'package:hymnal_app/widgets/glass/glass_zone.dart';
+import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:hymnal_app/widgets/glass/lyrics_card.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
-Widget _host(Widget child, {double tint = 0, ThemeData? theme}) => MaterialApp(
+Widget _host(
+  Widget child, {
+  double tint = 0,
+  ThemeData? theme,
+  double blend = 0,
+}) => MaterialApp(
   theme: theme ?? AppTheme.lightTheme,
   locale: const Locale('es'),
   localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -26,6 +32,7 @@ Widget _host(Widget child, {double tint = 0, ThemeData? theme}) => MaterialApp(
     tintAmount: tint,
     child: Scaffold(
       body: GlassZone(
+        blend: blend,
         child: Center(
           child: Padding(padding: const EdgeInsets.all(20), child: child),
         ),
@@ -239,7 +246,7 @@ void main() {
     expect(value, closeTo(1, .01));
   });
 
-  testWidgets('GlassNavigationRail: 84 dp de ancho y cambia de destino', (
+  testWidgets('GlassNavigationRail: la barra del celular girada (64 dp)', (
     tester,
   ) async {
     var index = 0;
@@ -256,33 +263,34 @@ void main() {
             onSelected: (i) => setState(() => index = i),
           ),
         ),
+        blend: 20,
       ),
     );
-    expect(tester.getSize(find.byType(GlassNavigationRail)).width, 84);
-    // La gota de agua 3D (lente propia) está sobre el destino elegido.
-    final drop = find.byKey(GlassNavigationRail.dropKey);
-    expect(drop, findsOneWidget);
-    final start = tester.getCenter(drop).dy;
-    await tester.tap(find.bySemanticsLabel('Favoritos'));
-    await tester.pump(); // arranca el resorte
-    await tester.pump(const Duration(seconds: 2));
-    expect(index, 2);
-    // Se deslizó dos destinos hacia abajo y quedó sobre "Favoritos".
-    expect(tester.getCenter(drop).dy, closeTo(start + 2 * 72, 1));
+    final rail = find.byType(GlassNavigationRail);
+    // Mismo grosor que la barra del celular, en vertical.
+    expect(tester.getSize(rail), const Size(64, 3 * 72));
+    // Es la misma barra con la gota 3D (lente propia).
     expect(
-      tester.getCenter(drop).dy,
-      closeTo(tester.getCenter(find.bySemanticsLabel('Favoritos')).dy, 1),
+      find.descendant(of: rail, matching: find.byType(LoupeTabBar)),
+      findsOneWidget,
+    );
+    expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
+
+    // Tocar "Favoritos" (abajo) la elige.
+    await tester.tap(find.bySemanticsLabel('Favoritos'));
+    await tester.pumpAndSettle();
+    expect(index, 2);
+    // Los destinos van de arriba hacia abajo.
+    expect(
+      tester.getCenter(find.bySemanticsLabel('Inicio')).dy,
+      lessThan(tester.getCenter(find.bySemanticsLabel('Favoritos')).dy),
     );
 
-    // Arrastrar la gota (como en el laboratorio) hasta "Inicio".
-    final rail = find.byType(GlassNavigationRail);
-    final from = tester.getCenter(drop);
-    await tester.dragFrom(from, const Offset(0, -2 * 72.0));
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 2));
+    // Arrastrar la gota hacia arriba, hasta "Inicio".
+    final favorites = tester.getCenter(find.bySemanticsLabel('Favoritos'));
+    await tester.dragFrom(favorites, const Offset(0, -2 * 72.0));
+    await tester.pumpAndSettle();
     expect(index, 0);
-    expect(tester.getCenter(drop).dy, closeTo(start, 1));
-    expect(tester.getSize(rail).width, 84);
   });
 
   testWidgets('LyricsCard: tinte mínimo 0.85 aunque el cristal sea Clear', (
@@ -353,6 +361,7 @@ void main() {
     expect(find.byType(LyricsCard), findsOneWidget);
     // Zona de controles + tarjeta de letra + gota de la barra lateral.
     expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
+    expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

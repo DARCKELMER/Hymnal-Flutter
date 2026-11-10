@@ -1,11 +1,6 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
-import 'package:hymnal_app/styles/glass/glass_typography.dart';
-import 'package:hymnal_app/widgets/glass/glass_haptics.dart';
-import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
-import 'package:motor/motor.dart';
+import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 
 /// Un destino de [GlassNavigationRail].
 @immutable
@@ -16,13 +11,14 @@ class GlassRailDestination {
   final String label;
 }
 
-/// Barra lateral de cristal para tableta: cápsula vertical de 84 dp de
-/// ancho con ícono y etiqueta por destino.
+/// Barra lateral de cristal para tableta: **la misma barra de pestañas del
+/// celular** (cápsula de 64 dp con la gota de agua 3D que recorre la barra
+/// con efecto lupa, se infla al presionar, sigue al dedo y rebota), girada
+/// 90°, con los íconos y etiquetas girados de vuelta para leerse derechos.
 ///
-/// La opción elegida lleva una píldora interior **sin** cristal (blanco
-/// translúcido) que se desliza con rebote. Debe ir dentro de un
-/// `GlassZone`.
-class GlassNavigationRail extends StatefulWidget {
+/// Debe ir dentro de un `LiquidGlassLayer` con `LiquidGlassBlendGroup`
+/// (p. ej. `GlassZone(blend: …)`), como la barra inferior.
+class GlassNavigationRail extends StatelessWidget {
   const GlassNavigationRail({
     required this.destinations,
     required this.selectedIndex,
@@ -36,7 +32,7 @@ class GlassNavigationRail extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  /// Arriba de los destinos (p. ej. la insignia del himnario).
+  /// Arriba de la barra (p. ej. la insignia del himnario).
   final Widget? header;
 
   /// Alto de cada destino (menos en pantallas bajas, como un celular
@@ -45,425 +41,47 @@ class GlassNavigationRail extends StatefulWidget {
 
   static const double defaultItemHeight = 72;
 
-  /// Clave de la gota de agua (pruebas).
-  static const dropKey = ValueKey('rail-drop');
-
-  /// Lente de la gota: la de la barra inferior con el borde más brillante
-  /// y más refracción, para que se note en 3D sobre la barra.
-  static const dropSettings = LiquidGlassSettings(
-    refractionHeight: 18,
-    refractionAmount: 16,
-    refractionFitsShape: false,
-    dispersion: -.35,
-    frost: 0,
-    contourStrength: .85,
-    highlight: 1,
-    backdropShrink: .16,
-  );
-
-  /// Tamaño de la gota: justa al ícono y la etiqueta, sin invadir los
-  /// destinos vecinos (más baja si los destinos se compactan).
-  static const double dropWidth = 60;
-  static const double dropHeight = 64;
+  /// Grosor de la barra: el mismo alto que la barra del celular.
+  static const double thickness = GlassMetrics.tabBarHeight;
 
   /// Alto reservado para [header].
   static const double headerHeight = 60;
 
   @override
-  State<GlassNavigationRail> createState() => _GlassNavigationRailState();
-}
-
-class _GlassNavigationRailState extends State<GlassNavigationRail>
-    with TickerProviderStateMixin {
-  /// Posición de la gota en "destinos" (puede ir entre dos al arrastrar).
-  late final SingleMotionController _position = SingleMotionController(
-    motion: const Motion.bouncySpring(),
-    vsync: this,
-    initialValue: widget.selectedIndex.toDouble(),
-  );
-
-  /// Se infla mientras se mantiene presionada (0 → 1).
-  late final AnimationController _press = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 140),
-    reverseDuration: const Duration(milliseconds: 260),
-  );
-
-  static const double _inset = 6;
-
-  bool _dragging = false;
-
-  /// Último destino sobre el que vibró la gota.
-  late int _ticked = widget.selectedIndex;
-
-  /// Vibrar al asentarse cuando termine el viaje actual.
-  bool _settlePending = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _position.addListener(_onMove);
-  }
-
-  /// Vibra cada vez que la gota pasa por un destino (arrastrando o
-  /// viajando sola) y, al llegar, una vez más firme.
-  void _onMove() {
-    final value = _position.value;
-    final over = value.round().clamp(0, widget.destinations.length - 1);
-    if (over != _ticked) {
-      _ticked = over;
-      GlassHaptics.tick(context);
-    }
-    if (_settlePending &&
-        !_dragging &&
-        (value - widget.selectedIndex).abs() < .02) {
-      _settlePending = false;
-      GlassHaptics.settle(context);
-    }
-  }
-
-  double get _headerHeight =>
-      widget.header == null ? 0 : GlassNavigationRail.headerHeight;
-
-  @override
-  void didUpdateWidget(GlassNavigationRail oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedIndex != widget.selectedIndex && !_dragging) {
-      _settlePending = true;
-      _position.animateTo(widget.selectedIndex.toDouble());
-    }
-  }
-
-  @override
-  void dispose() {
-    _position
-      ..removeListener(_onMove)
-      ..dispose();
-    _press.dispose();
-    super.dispose();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Arrastrar la gota por la barra (como en el laboratorio)
-  // ---------------------------------------------------------------------------
-
-  double _positionAt(double localY) {
-    final last = widget.destinations.length - 1.0;
-    final p = (localY - _inset - _headerHeight) / widget.itemHeight - .5;
-    // Más allá de los extremos cede poco, como un líquido.
-    if (p < 0) return p * .25;
-    if (p > last) return last + (p - last) * .25;
-    return p;
-  }
-
-  void _onDragStart(DragStartDetails d) {
-    _dragging = true;
-    _press.forward();
-    _position.value = _positionAt(d.localPosition.dy);
-  }
-
-  void _onDragUpdate(DragUpdateDetails d) {
-    final p = _positionAt(d.localPosition.dy);
-    _position.value = p; // _onMove vibra al cruzar cada destino
-  }
-
-  void _onDragEnd([DragEndDetails? d]) {
-    _dragging = false;
-    _press.reverse();
-    final target = _position.value.round().clamp(
-      0,
-      widget.destinations.length - 1,
-    );
-    // Se asienta en el destino con rebote (y la velocidad del dedo).
-    _position.animateTo(
-      target.toDouble(),
-      withVelocity: (d?.velocity.pixelsPerSecond.dy ?? 0) / widget.itemHeight,
-    );
-    _settlePending = true;
-    if (target != widget.selectedIndex) widget.onSelected(target);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const width = GlassMetrics.navigationRailWidth;
-    const inset = _inset;
-    final itemHeight = widget.itemHeight;
-    final headerHeight = _headerHeight;
-    final height =
-        headerHeight + itemHeight * widget.destinations.length + inset * 2;
-    const dropWidth = GlassNavigationRail.dropWidth;
-    final dropHeight = math.min(GlassNavigationRail.dropHeight, itemHeight - 4);
-    const dropRadius = dropWidth / 2;
-    double dropTop() =>
-        inset +
-        headerHeight +
-        itemHeight * _position.value +
-        (itemHeight - dropHeight) / 2;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onVerticalDragStart: _onDragStart,
-      onVerticalDragUpdate: _onDragUpdate,
-      onVerticalDragEnd: _onDragEnd,
-      onVerticalDragCancel: _onDragEnd,
-      child: Listener(
-        // Mantener presionado infla la gota (también al tocar).
-        onPointerDown: (_) => _press.forward(),
-        onPointerUp: (_) {
-          if (!_dragging) _press.reverse();
-        },
-        onPointerCancel: (_) {
-          if (!_dragging) _press.reverse();
-        },
-        child: SizedBox(
-          width: width,
-          height: height,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // La cápsula de cristal con los destinos (sin píldora plana:
-              // el elegido lo marca solo la gota, como en la barra inferior).
-              LiquidGlass(
-                shape: const LiquidRoundedSuperellipse(borderRadius: width / 2),
-                child: SizedBox(
-                  width: width,
-                  height: height,
-                  child: Padding(
-                    padding: const EdgeInsets.all(inset),
-                    child: AnimatedBuilder(
-                      animation: _position,
-                      builder: (context, _) => Column(
-                        children: [
-                          if (widget.header case final header?)
-                            SizedBox(
-                              height: headerHeight,
-                              child: Center(child: header),
-                            ),
-                          for (final (i, d) in widget.destinations.indexed)
-                            _RailItem(
-                              height: itemHeight,
-                              destination: d,
-                              selected: i == widget.selectedIndex,
-                              // El ícono bajo la gota se agranda y toma
-                              // color mientras ella pasa encima.
-                              under: (1 - (_position.value - i).abs()).clamp(
-                                0.0,
-                                1.0,
-                              ),
-                              onTap: () {
-                                if (i == widget.selectedIndex) return;
-                                widget.onSelected(i);
-                              },
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // La gota de agua 3D (la misma lente que la barra inferior):
-              // en su propio layer, encima, para refractar y agrandar la
-              // cápsula y el ícono de abajo. Se infla al presionar, sigue
-              // al dedo al arrastrar, se desliza con rebote y se estira
-              // como gelatina con la velocidad. Solo se transforma: no
-              // cambia de tamaño (un layer propio que cambia de tamaño deja
-              // restos de contorno).
-              AnimatedBuilder(
-                animation: Listenable.merge([_position, _press]),
-                builder: (context, child) {
-                  final speed = _position.velocity.abs();
-                  final stretch = 1.0 + math.min(speed * .045, .22);
-                  // Se infla al presionar y también en el trayecto entre
-                  // destinos (y se desinfla al llegar), como en el
-                  // laboratorio.
-                  final travel = _dragging
-                      ? 0.0
-                      : (_position.value - widget.selectedIndex).abs().clamp(
-                          0.0,
-                          1.0,
-                        );
-                  final swell =
-                      1 +
-                      math.max(
-                        .1 * Curves.easeOutBack.transform(_press.value),
-                        .14 * travel,
-                      );
-                  return Positioned(
-                    left: (width - dropWidth) / 2,
-                    width: dropWidth,
-                    top: dropTop(),
-                    height: dropHeight,
-                    child: Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.diagonal3Values(
-                        swell / math.sqrt(stretch),
-                        swell * stretch,
-                        1,
-                      ),
-                      child: child,
-                    ),
-                  );
-                },
-                child: const IgnorePointer(
-                  child: CustomPaint(
-                    painter: _DropShadowPainter(),
-                    child: LiquidGlass.withOwnLayer(
-                      key: GlassNavigationRail.dropKey,
-                      settings: GlassNavigationRail.dropSettings,
-                      shape: LiquidRoundedSuperellipse(
-                        borderRadius: dropRadius,
-                      ),
-                      // Interior transparente como agua; el brillo es un
-                      // reflejo fino arriba, como en una burbuja.
-                      child: CustomPaint(
-                        painter: _DropSheenPainter(),
-                        child: SizedBox.expand(),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Sombra suave de la gota, pintada **solo por fuera** (una sombra dentro
-/// la captaría su propio layer y oscurecería la lente).
-class _DropShadowPainter extends CustomPainter {
-  const _DropShadowPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final shape = RRect.fromRectAndRadius(
-      rect,
-      Radius.circular(size.shortestSide / 2),
-    );
-    canvas
-      ..saveLayer(rect.inflate(24), Paint())
-      ..drawRRect(
-        shape.shift(const Offset(0, 3)),
-        Paint()
-          ..color = const Color(0x38000000)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9),
-      )
-      ..drawRRect(shape, Paint()..blendMode = BlendMode.clear)
-      ..restore();
-  }
-
-  @override
-  bool shouldRepaint(_DropShadowPainter oldDelegate) => false;
-}
-
-class _RailItem extends StatelessWidget {
-  const _RailItem({
-    required this.height,
-    required this.destination,
-    required this.selected,
-    required this.under,
-    required this.onTap,
-  });
-
-  final double height;
-  final GlassRailDestination destination;
-  final bool selected;
-
-  /// Cuánto está la gota encima (0–1): agranda y colorea el ícono.
-  final double under;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      button: true,
-      selected: selected,
-      inMutuallyExclusiveGroup: true,
-      label: destination.label,
-      onTap: onTap,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: _RailItemFace(
-          height: height,
-          destination: destination,
-          under: under,
-        ),
-      ),
-    );
-  }
-}
-
-/// Ícono y etiqueta de un destino: se agranda y toma el azul vivo cuanto
-/// más encima está la gota ([under], 0–1).
-class _RailItemFace extends StatelessWidget {
-  const _RailItemFace({
-    required this.height,
-    required this.destination,
-    required this.under,
-  });
-
-  final double height;
-  final GlassRailDestination destination;
-  final double under;
-
-  @override
   Widget build(BuildContext context) {
     final tokens = GlassTokens.of(context);
-    final color = Color.lerp(tokens.textPrimary, tokens.vivid, under)!;
-    // La lente muestra lo de abajo un 16 % más chico: el ícono se agranda
-    // más para que, visto a través de la gota, quede con efecto lupa.
-    final magnify = 1 + .3 * under;
-    return SizedBox(
-      height: height,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Transform.scale(
-            scale: magnify,
-            child: Icon(destination.icon, size: 26, color: color),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (header case final header?)
+          SizedBox(
+            width: thickness,
+            height: headerHeight,
+            child: Center(child: header),
           ),
-          SizedBox(height: 4 * magnify),
-          Text(
-            destination.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GlassTypography.tabLabel(color, selected: under > .5),
+        SizedBox(
+          width: thickness,
+          height: itemHeight * destinations.length,
+          // La barra horizontal girada 90°: su comienzo queda arriba.
+          child: RotatedBox(
+            quarterTurns: 1,
+            child: LoupeTabBar(
+              tabs: [
+                for (final d in destinations)
+                  BottomBarTab(icon: d.icon, label: d.label),
+              ],
+              selectedIndex: selectedIndex,
+              onSelected: onSelected,
+              height: thickness,
+              tint: tokens.vivid,
+              restingDrop: true,
+              restingIconScale: 1.06,
+              // Íconos y etiquetas girados de vuelta, derechos.
+              contentQuarterTurns: 3,
+            ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
-}
-
-/// Reflejo fino en la parte de arriba de la gota (como en una burbuja):
-/// el interior queda transparente.
-class _DropSheenPainter extends CustomPainter {
-  const _DropSheenPainter();
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final r = size.shortestSide / 2;
-    final arc = Rect.fromLTWH(4, 3, size.width - 8, r * 1.4);
-    canvas.drawArc(
-      arc,
-      3.5,
-      2.42,
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round
-        ..color = const Color(0x8CFFFFFF)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, .8),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_DropSheenPainter oldDelegate) => false;
 }

@@ -129,6 +129,7 @@ abstract final class GlassMetrics {
   static const double tabBarHeight = 64;
   static const double miniPlayerHeight = 60;
 
-  /// Ancho de la barra lateral en tableta.
-  static const double navigationRailWidth = 84;
+  /// Ancho de la barra lateral en tableta: el mismo grosor que la barra
+  /// de pestañas del celular (es la misma barra, girada).
+  static const double navigationRailWidth = 64;
 }
