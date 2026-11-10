@@ -206,5 +206,19 @@
   "sectionBackground": "Фон",
   "credits": "Благодарности",
   "creditsBasedOn": "Основано на Hymnal-Flutter от Isaac R. (GoGoShift).",
-  "creditsRedesign": "Редизайн Liquid Glass."
+  "creditsRedesign": "Редизайн Liquid Glass.",
+  "pageOfTotal": "Страница {page} из {total}",
+  "@pageOfTotal": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsShort": "Текст",
+  "zoomIn": "Увеличить",
+  "zoomOut": "Уменьшить"
 }

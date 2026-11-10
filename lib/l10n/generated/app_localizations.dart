@@ -1031,6 +1031,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Liquid Glass redesign.'**
   String get creditsRedesign;
+
+  /// Sheet music page indicator
+  ///
+  /// In en, this message translates to:
+  /// **'Page {page} of {total}'**
+  String pageOfTotal(int page, int total);
+
+  /// Button on the sheet music screen that goes back to the lyrics
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics'**
+  String get lyricsShort;
+
+  /// Sheet music zoom in button
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get zoomIn;
+
+  /// Sheet music zoom out button
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get zoomOut;
 }
 
 class _AppLocalizationsDelegate

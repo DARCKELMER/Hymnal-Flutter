@@ -523,4 +523,18 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get creditsRedesign => 'Редизайн Liquid Glass.';
+
+  @override
+  String pageOfTotal(int page, int total) {
+    return 'Страница $page из $total';
+  }
+
+  @override
+  String get lyricsShort => 'Текст';
+
+  @override
+  String get zoomIn => 'Увеличить';
+
+  @override
+  String get zoomOut => 'Уменьшить';
 }

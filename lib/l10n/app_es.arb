@@ -206,5 +206,19 @@
   "sectionBackground": "Fondo",
   "credits": "Créditos",
   "creditsBasedOn": "Basado en Hymnal-Flutter de Isaac R. (GoGoShift).",
-  "creditsRedesign": "Rediseño Liquid Glass."
+  "creditsRedesign": "Rediseño Liquid Glass.",
+  "pageOfTotal": "Página {page} de {total}",
+  "@pageOfTotal": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsShort": "Letra",
+  "zoomIn": "Acercar",
+  "zoomOut": "Alejar"
 }

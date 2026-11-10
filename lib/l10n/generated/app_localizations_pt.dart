@@ -523,4 +523,18 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get creditsRedesign => 'Redesenho Liquid Glass.';
+
+  @override
+  String pageOfTotal(int page, int total) {
+    return 'Página $page de $total';
+  }
+
+  @override
+  String get lyricsShort => 'Letra';
+
+  @override
+  String get zoomIn => 'Ampliar';
+
+  @override
+  String get zoomOut => 'Reduzir';
 }

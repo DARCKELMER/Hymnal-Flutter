@@ -710,5 +710,29 @@
   "creditsRedesign": "Liquid Glass redesign.",
   "@creditsRedesign": {
     "description": "Credits text for the redesign"
+  },
+  "pageOfTotal": "Page {page} of {total}",
+  "@pageOfTotal": {
+    "description": "Sheet music page indicator",
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "lyricsShort": "Lyrics",
+  "@lyricsShort": {
+    "description": "Button on the sheet music screen that goes back to the lyrics"
+  },
+  "zoomIn": "Zoom in",
+  "@zoomIn": {
+    "description": "Sheet music zoom in button"
+  },
+  "zoomOut": "Zoom out",
+  "@zoomOut": {
+    "description": "Sheet music zoom out button"
   }
 }
