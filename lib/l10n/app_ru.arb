@@ -202,5 +202,9 @@
   "favoriteRemove": "Удалить из избранного",
   "upNext": "Далее",
   "continuousShort": "Подряд",
-  "closePlayer": "Закрыть"
+  "closePlayer": "Закрыть",
+  "sectionBackground": "Фон",
+  "credits": "Благодарности",
+  "creditsBasedOn": "Основано на Hymnal-Flutter от Isaac R. (GoGoShift).",
+  "creditsRedesign": "Редизайн Liquid Glass."
 }

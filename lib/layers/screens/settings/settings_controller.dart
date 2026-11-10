@@ -41,9 +41,7 @@ abstract class _SettingsController extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(l10n.clear),
           ),
         ],
@@ -53,11 +51,8 @@ abstract class _SettingsController extends State<SettingsScreen> {
     if (confirmed == true) {
       await GetIt.I<HistoryService>().clearHistory();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.historyCleared),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.historyCleared)));
       }
     }
   }
@@ -76,9 +71,7 @@ abstract class _SettingsController extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(l10n.clear),
           ),
         ],
@@ -88,11 +81,8 @@ abstract class _SettingsController extends State<SettingsScreen> {
     if (confirmed == true) {
       await _favoritesService.clearFavorites();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.favoritesCleared),
-          ),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.favoritesCleared)));
       }
     }
   }
@@ -113,7 +103,10 @@ abstract class _SettingsController extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               child: Text(
                 l10n.selectHymnal,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Flexible(
@@ -122,13 +115,18 @@ abstract class _SettingsController extends State<SettingsScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ..._settingsService.hymnals.map((hymnal) {
-                      final isSelected = hymnal.id == _settingsService.selectedHymnal?.id;
+                      final isSelected =
+                          hymnal.id == _settingsService.selectedHymnal?.id;
                       return ListTile(
                         leading: Text(
                           hymnal.twoLetterIsoLanguageName.toUpperCase(),
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? Theme.of(context).colorScheme.primary : null,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
                           ),
                         ),
                         title: Text(hymnal.name),
@@ -151,67 +149,32 @@ abstract class _SettingsController extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showThemeSelector() async {
+  /// Créditos: el proyecto original y el rediseño.
+  void _showCredits() {
     final l10n = AppLocalizations.of(context)!;
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.9,
-      ),
-      builder: (context) => SafeArea(
-        child: Column(
+      builder: (context) => AlertDialog(
+        title: Text(l10n.credits),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.selectTheme,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.brightness_auto),
-                      title: Text(l10n.themeSystem),
-                      trailing:
-                          _settingsService.themeMode == 'system' ? const Icon(Icons.check) : null,
-                      onTap: () {
-                        _settingsService.setThemeMode('system');
-                        Navigator.pop(context);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.light_mode),
-                      title: Text(l10n.themeLight),
-                      trailing:
-                          _settingsService.themeMode == 'light' ? const Icon(Icons.check) : null,
-                      onTap: () {
-                        _settingsService.setThemeMode('light');
-                        Navigator.pop(context);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.dark_mode),
-                      title: Text(l10n.themeDark),
-                      trailing:
-                          _settingsService.themeMode == 'dark' ? const Icon(Icons.check) : null,
-                      onTap: () {
-                        _settingsService.setThemeMode('dark');
-                        Navigator.pop(context);
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                ),
-              ),
-            ),
+            Text(l10n.creditsBasedOn),
+            const SizedBox(height: 8),
+            Text(l10n.creditsRedesign),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => _launchUrl(AppLinks.repositoryUrl),
+            child: const Text('GitHub'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+          ),
+        ],
       ),
     );
   }
@@ -237,7 +200,10 @@ abstract class _SettingsController extends State<SettingsScreen> {
               padding: const EdgeInsets.all(16),
               child: Text(
                 l10n.rateApp,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             Flexible(
@@ -278,9 +244,8 @@ abstract class _SettingsController extends State<SettingsScreen> {
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.couldNotLaunch(url))),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(l10n.couldNotLaunch(url))));
         }
       }
     } catch (e) {

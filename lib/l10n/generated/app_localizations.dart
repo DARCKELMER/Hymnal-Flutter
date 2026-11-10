@@ -1007,6 +1007,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get closePlayer;
+
+  /// Settings section with the background options
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get sectionBackground;
+
+  /// Settings > About row that shows the credits
+  ///
+  /// In en, this message translates to:
+  /// **'Credits'**
+  String get credits;
+
+  /// Credits text naming the original project
+  ///
+  /// In en, this message translates to:
+  /// **'Based on Hymnal-Flutter by Isaac R. (GoGoShift).'**
+  String get creditsBasedOn;
+
+  /// Credits text for the redesign
+  ///
+  /// In en, this message translates to:
+  /// **'Liquid Glass redesign.'**
+  String get creditsRedesign;
 }
 
 class _AppLocalizationsDelegate

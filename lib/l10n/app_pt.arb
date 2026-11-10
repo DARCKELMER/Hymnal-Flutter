@@ -202,5 +202,9 @@
   "favoriteRemove": "Remover dos favoritos",
   "upNext": "A seguir",
   "continuousShort": "Contínua",
-  "closePlayer": "Fechar"
+  "closePlayer": "Fechar",
+  "sectionBackground": "Fundo",
+  "credits": "Créditos",
+  "creditsBasedOn": "Baseado no Hymnal-Flutter de Isaac R. (GoGoShift).",
+  "creditsRedesign": "Redesenho Liquid Glass."
 }

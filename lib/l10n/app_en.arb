@@ -694,5 +694,21 @@
   "closePlayer": "Close",
   "@closePlayer": {
     "description": "Accessibility label of the down arrow that closes the full player"
+  },
+  "sectionBackground": "Background",
+  "@sectionBackground": {
+    "description": "Settings section with the background options"
+  },
+  "credits": "Credits",
+  "@credits": {
+    "description": "Settings > About row that shows the credits"
+  },
+  "creditsBasedOn": "Based on Hymnal-Flutter by Isaac R. (GoGoShift).",
+  "@creditsBasedOn": {
+    "description": "Credits text naming the original project"
+  },
+  "creditsRedesign": "Liquid Glass redesign.",
+  "@creditsRedesign": {
+    "description": "Credits text for the redesign"
   }
 }

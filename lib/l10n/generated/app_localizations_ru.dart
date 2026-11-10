@@ -510,4 +510,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get closePlayer => 'Закрыть';
+
+  @override
+  String get sectionBackground => 'Фон';
+
+  @override
+  String get credits => 'Благодарности';
+
+  @override
+  String get creditsBasedOn =>
+      'Основано на Hymnal-Flutter от Isaac R. (GoGoShift).';
+
+  @override
+  String get creditsRedesign => 'Редизайн Liquid Glass.';
 }

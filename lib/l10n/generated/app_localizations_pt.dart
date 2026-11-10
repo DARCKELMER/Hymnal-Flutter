@@ -510,4 +510,17 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get closePlayer => 'Fechar';
+
+  @override
+  String get sectionBackground => 'Fundo';
+
+  @override
+  String get credits => 'Créditos';
+
+  @override
+  String get creditsBasedOn =>
+      'Baseado no Hymnal-Flutter de Isaac R. (GoGoShift).';
+
+  @override
+  String get creditsRedesign => 'Redesenho Liquid Glass.';
 }
