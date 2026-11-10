@@ -483,4 +483,18 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String hymnOfTotal(int number, int total) {
+    return 'Hymn $number of $total';
+  }
+
+  @override
+  String get nextHymnCard => 'Next hymn';
+
+  @override
+  String get favoriteAdd => 'Add to favorites';
+
+  @override
+  String get favoriteRemove => 'Remove from favorites';
 }

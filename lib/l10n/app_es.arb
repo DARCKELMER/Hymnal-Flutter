@@ -185,5 +185,19 @@
         "type": "int"
       }
     }
-  }
+  },
+  "hymnOfTotal": "Himno {number} de {total}",
+  "@hymnOfTotal": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nextHymnCard": "Siguiente himno",
+  "favoriteAdd": "Agregar a favoritos",
+  "favoriteRemove": "Quitar de favoritos"
 }

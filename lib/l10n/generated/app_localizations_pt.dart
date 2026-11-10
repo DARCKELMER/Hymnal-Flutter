@@ -487,4 +487,18 @@ class AppLocalizationsPt extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String hymnOfTotal(int number, int total) {
+    return 'Hino $number de $total';
+  }
+
+  @override
+  String get nextHymnCard => 'Próximo hino';
+
+  @override
+  String get favoriteAdd => 'Adicionar aos favoritos';
+
+  @override
+  String get favoriteRemove => 'Remover dos favoritos';
 }

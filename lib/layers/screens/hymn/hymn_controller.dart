@@ -14,6 +14,15 @@ abstract class _HymnController extends State<HymnScreen> {
   List<Hymn>? _allHymns;
   bool _isFavorite = false;
 
+  /// Temas del himnario (para la etiqueta "HIMNO 1 · ADORACIÓN …").
+  List<ThematicCategory> _thematic = const [];
+
+  /// Versión elegida en la barra de audio.
+  bool _instrumental = true;
+
+  /// Texto seleccionado en la letra (copiar / compartir).
+  String? _selectedText;
+
   @override
   void initState() {
     super.initState();
@@ -27,7 +36,9 @@ abstract class _HymnController extends State<HymnScreen> {
 
   void _onFavoritesChanged() {
     if (_hymn != null && mounted) {
-      _favoritesService.isFavorite(widget.hymnalId, _hymn!.number).then((isFav) {
+      _favoritesService.isFavorite(widget.hymnalId, _hymn!.number).then((
+        isFav,
+      ) {
         if (mounted && isFav != _isFavorite) {
           setState(() {
             _isFavorite = isFav;
@@ -45,6 +56,12 @@ abstract class _HymnController extends State<HymnScreen> {
     _hymn = _allHymns!.firstWhere((h) => h.number == widget.hymnNumber);
 
     try {
+      _thematic = await _repository.getThematicList(widget.hymnalId);
+    } catch (_) {
+      _thematic = const [];
+    }
+
+    try {
       _musicSettings = await _repository.getMusicSettings(widget.hymnalId);
     } catch (_) {
       // Settings unavailable (e.g. offline on first launch).
@@ -57,7 +74,16 @@ abstract class _HymnController extends State<HymnScreen> {
       widget.hymnNumber,
     );
 
-    final initialPage = _allHymns!.indexWhere((h) => h.number == widget.hymnNumber);
+    // Versión inicial: la que suena si es este himno; si no, instrumental
+    // cuando existe.
+    _instrumental = _isCurrentInPlayer
+        ? _audioService.isInstrumental
+        : _hasVersion(_hymn!, instrumental: true) ||
+              !_hasVersion(_hymn!, instrumental: false);
+
+    final initialPage = _allHymns!.indexWhere(
+      (h) => h.number == widget.hymnNumber,
+    );
     _pageController = PageController(initialPage: initialPage);
 
     // Only add to history if not skipped
@@ -138,10 +164,8 @@ ${_hymn!.content}''';
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => SheetsScreen(
-          hymnal: _hymnal!,
-          hymnNumber: _hymn!.number,
-        ),
+        builder: (_) =>
+            SheetsScreen(hymnal: _hymnal!, hymnNumber: _hymn!.number),
       ),
     );
   }
@@ -153,11 +177,167 @@ ${_hymn!.content}''';
 
     if (url != null) {
       try {
-        await _audioService.playHymn(_hymnal!, _hymn!, url, instrumental: instrumental);
+        await _audioService.playHymn(
+          _hymnal!,
+          _hymn!,
+          url,
+          instrumental: instrumental,
+        );
       } catch (e) {
         debugPrint('Failed to play audio: $e');
       }
     }
+  }
+
+  /// Nombre de la sección temática del himno (p. ej. "Adoración y
+  /// alabanza"), o `null` si no está en ninguna.
+  String? _sectionOf(int number) {
+    for (final theme in _thematic) {
+      for (final ambit in theme.ambits) {
+        if (number >= ambit.start && number <= ambit.end) return ambit.name;
+      }
+    }
+    return null;
+  }
+
+  bool _hasVersion(Hymn hymn, {required bool instrumental}) =>
+      (instrumental
+          ? _musicSettings?.getInstrumentalUrl(hymn.number)
+          : _musicSettings?.getSungUrl(hymn.number)) !=
+      null;
+
+  /// Si el himno abierto es el que está cargado en el reproductor.
+  bool get _isCurrentInPlayer =>
+      _hymn != null &&
+      _audioService.currentHymn?.number == _hymn!.number &&
+      _audioService.currentHymnal?.id == widget.hymnalId &&
+      !_audioService.isDismissing;
+
+  /// Reproducir / pausar en la versión elegida.
+  Future<void> _togglePlay() async {
+    final hymn = _hymn;
+    if (hymn == null) return;
+    // La versión elegida puede no existir: usa la que haya.
+    var instrumental = _instrumental;
+    if (!_hasVersion(hymn, instrumental: instrumental)) {
+      instrumental = !instrumental;
+    }
+    if (_isCurrentInPlayer) {
+      if (_audioService.isInstrumental != instrumental) {
+        await _audioService.switchVersion(instrumental: instrumental);
+      } else {
+        await _audioService.togglePlayPause();
+      }
+      return;
+    }
+    await _playAudio(instrumental: instrumental);
+  }
+
+  /// Cambia la versión; si este himno ya suena, sigue en el mismo punto.
+  Future<void> _selectVersion(bool instrumental) async {
+    setState(() => _instrumental = instrumental);
+    if (_isCurrentInPlayer && _audioService.isInstrumental != instrumental) {
+      await _audioService.switchVersion(instrumental: instrumental);
+    }
+  }
+
+  /// Himno anterior (-1) o siguiente (+1).
+  void _goTo(int delta) {
+    final controller = _pageController;
+    final hymns = _allHymns;
+    if (controller == null || hymns == null || !controller.hasClients) return;
+    final page = (controller.page ?? 0).round() + delta;
+    if (page < 0 || page >= hymns.length) return;
+    controller.animateToPage(
+      page,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  /// "Aa": tamaño de la letra (escala solo la letra del himno).
+  void _showFontSize() {
+    final l10n = AppLocalizations.of(context)!;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => ListenableBuilder(
+        listenable: _settingsService,
+        builder: (context, _) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.fontSize,
+                  style: const TextStyle(
+                    fontFamily: GlassTypography.ui,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Text('A', style: TextStyle(fontSize: 14)),
+                    Expanded(
+                      child: GlassSlider(
+                        value: _settingsService.fontSize,
+                        min: 12,
+                        max: 32,
+                        divisions: 10,
+                        label: _settingsService.fontSize.round().toString(),
+                        onChanged: _settingsService.setFontSize,
+                      ),
+                    ),
+                    const Text('A', style: TextStyle(fontSize: 26)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Menú al seleccionar texto de la letra: copiar y compartir.
+  Widget _selectionMenu(
+    BuildContext context,
+    SelectableRegionState selectableRegionState,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final selected = _selectedText ?? '';
+    final shareText = AppLinks.getShareMessage(
+      selected,
+      l10n.sharedFromApp(AppLinks.appStoreUrl, AppLinks.playStoreUrl),
+    );
+    return AdaptiveTextSelectionToolbar(
+      anchors: selectableRegionState.contextMenuAnchors,
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.copy, size: 18),
+          label: Text(l10n.copy),
+          onPressed: selected.isEmpty
+              ? null
+              : () {
+                  Clipboard.setData(ClipboardData(text: shareText));
+                  ContextMenuController.removeAny();
+                },
+        ),
+        TextButton.icon(
+          icon: const Icon(Icons.share, size: 18),
+          label: Text(l10n.share),
+          onPressed: selected.isEmpty
+              ? null
+              : () {
+                  ContextMenuController.removeAny();
+                  SharePlus.instance.share(ShareParams(text: shareText));
+                },
+        ),
+      ],
+    );
   }
 
   @override

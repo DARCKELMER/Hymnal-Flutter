@@ -658,5 +658,29 @@
         "type": "int"
       }
     }
+  },
+  "hymnOfTotal": "Hymn {number} of {total}",
+  "@hymnOfTotal": {
+    "description": "Tablet header between previous/next arrows",
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nextHymnCard": "Next hymn",
+  "@nextHymnCard": {
+    "description": "Card under the lyrics on tablet portrait that opens the next hymn"
+  },
+  "favoriteAdd": "Add to favorites",
+  "@favoriteAdd": {
+    "description": "Accessibility label of the favorite button when the hymn is not a favorite"
+  },
+  "favoriteRemove": "Remove from favorites",
+  "@favoriteRemove": {
+    "description": "Accessibility label of the favorite button when the hymn is a favorite"
   }
 }

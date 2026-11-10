@@ -965,6 +965,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 section} other{{count} sections}}'**
   String sectionsCount(int count);
+
+  /// Tablet header between previous/next arrows
+  ///
+  /// In en, this message translates to:
+  /// **'Hymn {number} of {total}'**
+  String hymnOfTotal(int number, int total);
+
+  /// Card under the lyrics on tablet portrait that opens the next hymn
+  ///
+  /// In en, this message translates to:
+  /// **'Next hymn'**
+  String get nextHymnCard;
+
+  /// Accessibility label of the favorite button when the hymn is not a favorite
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get favoriteAdd;
+
+  /// Accessibility label of the favorite button when the hymn is a favorite
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get favoriteRemove;
 }
 
 class _AppLocalizationsDelegate

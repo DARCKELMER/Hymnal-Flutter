@@ -9,6 +9,10 @@ class Hymn extends Equatable implements ISuspensionBean {
   final String content;
   final String normalizedTitle;
   final String normalizedContent;
+
+  /// Autores (una línea "Letra: …" y otra "Música: …"), si los trae el
+  /// himnario.
+  final String? author;
   bool _isShowSuspension = false;
 
   Hymn({
@@ -17,6 +21,7 @@ class Hymn extends Equatable implements ISuspensionBean {
     required this.content,
     required this.normalizedTitle,
     required this.normalizedContent,
+    this.author,
   });
 
   @override
@@ -52,6 +57,7 @@ class Hymn extends Equatable implements ISuspensionBean {
       content: content,
       normalizedTitle: StringUtils.normalize(title),
       normalizedContent: StringUtils.normalize(content),
+      author: (json['author'] as String?)?.trim(),
     );
   }
 

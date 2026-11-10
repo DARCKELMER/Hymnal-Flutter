@@ -185,5 +185,19 @@
         "type": "int"
       }
     }
-  }
+  },
+  "hymnOfTotal": "Гимн {number} из {total}",
+  "@hymnOfTotal": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "nextHymnCard": "Следующий гимн",
+  "favoriteAdd": "Добавить в избранное",
+  "favoriteRemove": "Удалить из избранного"
 }

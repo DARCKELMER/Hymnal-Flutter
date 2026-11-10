@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hymnal_app/layers/screens/hymn/hymn_screen.dart';
 
 /// Abre un himno desde cualquier lista.
-typedef OpenHymn =
-    void Function(String hymnalId, int hymnNumber, {bool skipHistory});
+typedef OpenHymn = void Function(
+  String hymnalId,
+  int hymnNumber, {
+  bool skipHistory,
+});
 
 /// Punto único para abrir un himno. En la vista expandida (tableta) la
 /// pantalla principal lo pone a la derecha **sin navegar**; en las demás se

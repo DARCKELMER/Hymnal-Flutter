@@ -487,4 +487,18 @@ class AppLocalizationsRu extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String hymnOfTotal(int number, int total) {
+    return 'Гимн $number из $total';
+  }
+
+  @override
+  String get nextHymnCard => 'Следующий гимн';
+
+  @override
+  String get favoriteAdd => 'Добавить в избранное';
+
+  @override
+  String get favoriteRemove => 'Удалить из избранного';
 }
