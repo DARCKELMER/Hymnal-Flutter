@@ -199,5 +199,8 @@
   },
   "nextHymnCard": "Próximo hino",
   "favoriteAdd": "Adicionar aos favoritos",
-  "favoriteRemove": "Remover dos favoritos"
+  "favoriteRemove": "Remover dos favoritos",
+  "upNext": "A seguir",
+  "continuousShort": "Contínua",
+  "closePlayer": "Fechar"
 }

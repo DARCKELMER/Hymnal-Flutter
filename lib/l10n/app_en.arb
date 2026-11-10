@@ -682,5 +682,17 @@
   "favoriteRemove": "Remove from favorites",
   "@favoriteRemove": {
     "description": "Accessibility label of the favorite button when the hymn is a favorite"
+  },
+  "upNext": "Up next",
+  "@upNext": {
+    "description": "Card in the full player showing the next hymn"
+  },
+  "continuousShort": "Continuous",
+  "@continuousShort": {
+    "description": "Short label of the continuous play toggle in the full player"
+  },
+  "closePlayer": "Close",
+  "@closePlayer": {
+    "description": "Accessibility label of the down arrow that closes the full player"
   }
 }

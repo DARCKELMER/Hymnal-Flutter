@@ -199,5 +199,8 @@
   },
   "nextHymnCard": "Следующий гимн",
   "favoriteAdd": "Добавить в избранное",
-  "favoriteRemove": "Удалить из избранного"
+  "favoriteRemove": "Удалить из избранного",
+  "upNext": "Далее",
+  "continuousShort": "Подряд",
+  "closePlayer": "Закрыть"
 }

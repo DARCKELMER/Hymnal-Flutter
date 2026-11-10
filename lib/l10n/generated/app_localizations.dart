@@ -989,6 +989,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove from favorites'**
   String get favoriteRemove;
+
+  /// Card in the full player showing the next hymn
+  ///
+  /// In en, this message translates to:
+  /// **'Up next'**
+  String get upNext;
+
+  /// Short label of the continuous play toggle in the full player
+  ///
+  /// In en, this message translates to:
+  /// **'Continuous'**
+  String get continuousShort;
+
+  /// Accessibility label of the down arrow that closes the full player
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closePlayer;
 }
 
 class _AppLocalizationsDelegate

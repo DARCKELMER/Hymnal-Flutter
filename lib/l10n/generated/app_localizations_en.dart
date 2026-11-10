@@ -497,4 +497,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get favoriteRemove => 'Remove from favorites';
+
+  @override
+  String get upNext => 'Up next';
+
+  @override
+  String get continuousShort => 'Continuous';
+
+  @override
+  String get closePlayer => 'Close';
 }

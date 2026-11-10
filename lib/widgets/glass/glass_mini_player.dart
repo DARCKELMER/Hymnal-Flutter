@@ -103,8 +103,13 @@ class _GlassMiniPlayerState extends State<GlassMiniPlayer>
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         settings: const RouteSettings(name: '/player'),
-        builder: (context) =>
-            PlayerScreen(onClose: () => Navigator.of(context).pop()),
+        builder: (context) => PlayerScreen(
+          onClose: () => Navigator.of(context).pop(),
+          onOpenLyrics: () {
+            Navigator.of(context).pop();
+            _openLyrics();
+          },
+        ),
       ),
     );
   }

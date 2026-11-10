@@ -501,4 +501,13 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get favoriteRemove => 'Remover dos favoritos';
+
+  @override
+  String get upNext => 'A seguir';
+
+  @override
+  String get continuousShort => 'Contínua';
+
+  @override
+  String get closePlayer => 'Fechar';
 }

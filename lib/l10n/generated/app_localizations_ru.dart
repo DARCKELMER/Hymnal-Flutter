@@ -501,4 +501,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get favoriteRemove => 'Удалить из избранного';
+
+  @override
+  String get upNext => 'Далее';
+
+  @override
+  String get continuousShort => 'Подряд';
+
+  @override
+  String get closePlayer => 'Закрыть';
 }
