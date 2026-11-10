@@ -50,12 +50,17 @@ class _ListsScreenState extends _ListsController {
       content = IndexedStack(
         index: _mode == _ListMode.thematic ? 1 : 0,
         sizing: StackFit.expand,
+        // Cada vista con su propia capa de cristal: la oculta no se pinta
+        // y su capa no dibuja nada (en una capa compartida, sus formas se
+        // seguían dibujando como franjas sueltas).
         children: [
-          _hymnList(
-            alpha ? _alphabeticHymns! : _hymns!,
-            alpha ? _alphabeticIndex : _numericIndex,
+          GlassZone(
+            child: _hymnList(
+              alpha ? _alphabeticHymns! : _hymns!,
+              alpha ? _alphabeticIndex : _numericIndex,
+            ),
           ),
-          _buildThematic(l10n),
+          GlassZone(child: _buildThematic(l10n)),
         ],
       );
     }
