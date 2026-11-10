@@ -16,11 +16,16 @@ class GlassHymnItem {
     required this.number,
     required this.title,
     this.subtitle,
+    this.hymnalId,
   });
 
   final int number;
   final String title;
   final String? subtitle;
+
+  /// Himnario del himno, si la lista mezcla himnarios (Favoritos,
+  /// Historial). Si no, se usa el de la lista.
+  final String? hymnalId;
 }
 
 /// Una entrada del índice lateral: texto y la fila a la que salta.
@@ -42,8 +47,14 @@ class GlassHymnList extends StatefulWidget {
     this.index,
     this.trailingBuilder,
     this.padding = EdgeInsets.zero,
+    this.onReorder,
+    this.confirmRemove,
+    this.onRemove,
     super.key,
-  });
+  }) : assert(
+         onReorder == null || index == null,
+         'Una lista que se reordena no lleva índice',
+       );
 
   final List<GlassHymnItem> items;
   final ValueChanged<int> onTap;
@@ -55,6 +66,15 @@ class GlassHymnList extends StatefulWidget {
   /// Algo al final de cada fila (p. ej. quitar de favoritos).
   final Widget? Function(int index)? trailingBuilder;
   final EdgeInsets padding;
+
+  /// Si se da, las filas se reordenan arrastrando (pulsación larga en la
+  /// fila, o al instante desde el asa a la derecha).
+  final void Function(int oldIndex, int newIndex)? onReorder;
+
+  /// Si se da [onRemove], las filas se quitan deslizando hacia la
+  /// izquierda; [confirmRemove] puede pedir confirmación.
+  final Future<bool?> Function(int index)? confirmRemove;
+  final ValueChanged<int>? onRemove;
 
   /// Alto de cada fila.
   static const double rowHeight = 54;
@@ -143,21 +163,78 @@ class _GlassHymnListState extends State<GlassHymnList> {
                   !audio.isDismissing
               ? audio.currentHymn?.number
               : null;
+          final playingHymnal = audio?.currentHymnal?.id;
+          Widget row(int i) {
+            final item = widget.items[i];
+            final reorder = widget.onReorder != null;
+            Widget child = GlassHymnRow(
+              item: item,
+              playing:
+                  playing == item.number ||
+                  (item.hymnalId != null &&
+                      item.hymnalId == playingHymnal &&
+                      audio?.isDismissing == false &&
+                      audio?.currentHymn?.number == item.number),
+              showDivider: i < widget.items.length - 1,
+              trailing: reorder
+                  ? ReorderableDragStartListener(
+                      index: i,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Icon(
+                          Icons.drag_handle_rounded,
+                          color: GlassTokens.of(context).textSecondary,
+                        ),
+                      ),
+                    )
+                  : widget.trailingBuilder?.call(i),
+              onTap: () => widget.onTap(i),
+            );
+            if (reorder) {
+              child = ReorderableDelayedDragStartListener(
+                index: i,
+                child: child,
+              );
+            }
+            final onRemove = widget.onRemove;
+            if (onRemove != null) {
+              child = Dismissible(
+                key: ValueKey(('remove', item.hymnalId, item.number)),
+                direction: DismissDirection.endToStart,
+                background: const _RemoveBackground(),
+                confirmDismiss: widget.confirmRemove == null
+                    ? null
+                    : (_) async => await widget.confirmRemove!(i) ?? false,
+                onDismissed: (_) => onRemove(i),
+                child: child,
+              );
+            }
+            return KeyedSubtree(
+              key: ValueKey((item.hymnalId, item.number)),
+              child: child,
+            );
+          }
+
+          final onReorder = widget.onReorder;
+          if (onReorder != null) {
+            return ReorderableListView.builder(
+              scrollController: _scroll,
+              padding: widget.padding,
+              itemCount: widget.items.length,
+              itemExtent: GlassHymnList.rowHeight,
+              buildDefaultDragHandles: false,
+              onReorderItem: onReorder,
+              proxyDecorator: (child, _, animation) =>
+                  _DragProxy(animation: animation, child: child),
+              itemBuilder: (context, i) => row(i),
+            );
+          }
           return ListView.builder(
             controller: _scroll,
             padding: widget.padding,
             itemCount: widget.items.length,
             itemExtent: GlassHymnList.rowHeight,
-            itemBuilder: (context, i) {
-              final item = widget.items[i];
-              return GlassHymnRow(
-                item: item,
-                playing: playing == item.number,
-                showDivider: i < widget.items.length - 1,
-                trailing: widget.trailingBuilder?.call(i),
-                onTap: () => widget.onTap(i),
-              );
-            },
+            itemBuilder: (context, i) => row(i),
           );
         },
       ),
@@ -323,6 +400,52 @@ class GlassHymnRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Fondo al deslizar para quitar: rojo con un ícono de borrar.
+class _RemoveBackground extends StatelessWidget {
+  const _RemoveBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      color: const Color(0xE6D93025),
+      child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+    );
+  }
+}
+
+/// La fila que se arrastra: flota sobre una cápsula clara con sombra.
+class _DragProxy extends StatelessWidget {
+  const _DragProxy({required this.animation, required this.child});
+
+  final Animation<double> animation;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        final t = Curves.easeOut.transform(animation.value);
+        return Transform.scale(
+          scale: 1 + .03 * t,
+          child: Material(
+            color: dark ? const Color(0xE61B2333) : const Color(0xF2FFFFFF),
+            elevation: 8 * t,
+            shadowColor: const Color(0x66000000),
+            borderRadius: BorderRadius.circular(16),
+            clipBehavior: Clip.antiAlias,
+            child: child,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }

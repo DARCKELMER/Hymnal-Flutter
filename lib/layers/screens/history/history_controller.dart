@@ -17,11 +17,11 @@ abstract class _HistoryController extends State<HistoryScreen> {
     // Don't add to history when opening from history
     if (mounted) {
       HymnOpener.open(
-      context,
-      hymnalId: hymnalId,
-      hymnNumber: hymnNumber,
-      skipHistory: true,
-    );
+        context,
+        hymnalId: hymnalId,
+        hymnNumber: hymnNumber,
+        skipHistory: true,
+      );
     }
   }
 
@@ -58,7 +58,7 @@ abstract class _HistoryController extends State<HistoryScreen> {
     return hymnal.name;
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  /// Fecha en el formato del idioma (p. ej. "10 nov 2026").
+  String _formatDate(DateTime date) =>
+      MaterialLocalizations.of(context).formatMediumDate(date);
 }

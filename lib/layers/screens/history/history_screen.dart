@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hymnal_app/services/history_service.dart';
-import 'package:hymnal_app/services/settings_service.dart';
-import 'package:hymnal_app/widgets/app_scaffold.dart';
 
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
+import 'package:hymnal_app/services/history_service.dart';
+import 'package:hymnal_app/services/settings_service.dart';
+import 'package:hymnal_app/styles/glass/glass_tokens.dart';
+import 'package:hymnal_app/widgets/app_scaffold.dart';
+import 'package:hymnal_app/widgets/glass/glass_hymn_list.dart';
+import 'package:hymnal_app/widgets/glass/glass_icon_button.dart';
+import 'package:hymnal_app/widgets/glass/glass_screen_header.dart';
+import 'package:hymnal_app/widgets/glass/glass_zone.dart';
 
 part 'history_controller.dart';
 
+/// Historial (lienzo 5.6): la misma lista de cristal que Listas, con el
+/// himnario y la fecha en cada fila, y un botón para borrarlo.
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
 
@@ -20,76 +27,67 @@ class _HistoryScreenState extends _HistoryController {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return AnimatedBuilder(
-      animation: _historyService,
-      builder: (context, child) {
+    return ListenableBuilder(
+      listenable: _historyService,
+      builder: (context, _) {
         final history = _historyService.history;
-
         return AppScaffold(
-          appBar: AppBar(
-            toolbarHeight: MediaQuery.of(context).orientation == Orientation.landscape ? 40 : null,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme: IconThemeData(
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            titleTextStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-            title: Text(l10n.history),
-            actions: [
-              if (history.isNotEmpty)
-                IconButton(
-                  icon: const Icon(Icons.clear_all),
-                  onPressed: _clearHistory,
-                ),
-            ],
-          ),
-          body: history.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.history, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.noHistoryYet,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    final entry = history[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor:
-                            Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
-                        child: Text(
-                          '${entry.hymnNumber}',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
+          body: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                GlassMetrics.screenMarginPhone,
+                12,
+                GlassMetrics.screenMarginPhone,
+                0,
+              ),
+              child: GlassZone(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    GlassScreenHeader(
+                      title: l10n.history,
+                      actions: [
+                        if (history.isNotEmpty)
+                          GlassIconButton(
+                            icon: Icons.delete_sweep_outlined,
+                            semanticLabel: l10n.clearHistory,
+                            onPressed: _clearHistory,
                           ),
-                        ),
-                      ),
-                      title: Text(entry.title),
-                      subtitle: Text(
-                        '${_getHymnalName(entry.hymnalId)} • ${_formatDate(entry.openedAt)}',
-                      ),
-                      onTap: () => _openHymn(
-                        entry.hymnalId,
-                        entry.hymnNumber,
-                        entry.title,
-                      ),
-                    );
-                  },
+                      ],
+                    ),
+                    const SizedBox(height: GlassMetrics.gapM),
+                    Expanded(
+                      child: history.isEmpty
+                          ? GlassEmptyState(
+                              icon: Icons.history_rounded,
+                              title: l10n.noHistoryYet,
+                            )
+                          : GlassHymnList(
+                              items: [
+                                for (final e in history)
+                                  GlassHymnItem(
+                                    number: e.hymnNumber,
+                                    title: e.title,
+                                    subtitle:
+                                        '${_getHymnalName(e.hymnalId)} · '
+                                        '${_formatDate(e.openedAt)}',
+                                    hymnalId: e.hymnalId,
+                                  ),
+                              ],
+                              padding: const EdgeInsets.only(bottom: 8),
+                              onTap: (i) => _openHymn(
+                                history[i].hymnalId,
+                                history[i].hymnNumber,
+                                history[i].title,
+                              ),
+                            ),
+                    ),
+                  ],
                 ),
+              ),
+            ),
+          ),
         );
       },
     );

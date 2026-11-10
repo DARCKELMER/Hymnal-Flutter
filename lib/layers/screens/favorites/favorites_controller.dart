@@ -30,10 +30,10 @@ abstract class _FavoritesController extends State<FavoritesScreen> {
     );
     if (mounted) {
       HymnOpener.open(
-      context,
-      hymnalId: favorite.hymnalId,
-      hymnNumber: favorite.hymnNumber,
-    );
+        context,
+        hymnalId: favorite.hymnalId,
+        hymnNumber: favorite.hymnNumber,
+      );
     }
   }
 
@@ -51,9 +51,7 @@ abstract class _FavoritesController extends State<FavoritesScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(l10n.remove),
           ),
         ],
@@ -62,9 +60,6 @@ abstract class _FavoritesController extends State<FavoritesScreen> {
   }
 
   void _onDismissed(FavoriteHymn favorite) {
-    _favoritesService.removeFavorite(
-      favorite.hymnalId,
-      favorite.hymnNumber,
-    );
+    _favoritesService.removeFavorite(favorite.hymnalId, favorite.hymnNumber);
   }
 }

@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
 import 'package:get_it/get_it.dart';
-import 'package:hymnal_app/services/settings_service.dart';
+
+import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/layers/domain/model/favorite_hymn.dart';
+import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
 import 'package:hymnal_app/services/favorites_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
-import 'package:hymnal_app/layers/domain/model/favorite_hymn.dart';
-import 'package:hymnal_app/widgets/hymn_list_tile.dart';
-import 'package:hymnal_app/l10n/generated/app_localizations.dart';
+import 'package:hymnal_app/services/settings_service.dart';
+import 'package:hymnal_app/styles/glass/glass_tokens.dart';
+import 'package:hymnal_app/widgets/glass/glass_hymn_list.dart';
+import 'package:hymnal_app/widgets/glass/glass_screen_header.dart';
+import 'package:hymnal_app/widgets/glass/glass_zone.dart';
 
 part 'favorites_controller.dart';
 
+/// Favoritos (lienzo 5.6): la misma lista de cristal que Listas. Se
+/// reordena arrastrando (pulsación larga o el asa) y se quita deslizando
+/// a la izquierda, con confirmación.
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -21,76 +28,53 @@ class _FavoritesScreenState extends _FavoritesController {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return AnimatedBuilder(
-      animation: Listenable.merge([_settingsService, _favoritesService]),
-      builder: (context, child) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([_settingsService, _favoritesService]),
+      builder: (context, _) {
         final favorites = _favoritesService.favorites;
-
-        return Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            toolbarHeight: MediaQuery.of(context).orientation == Orientation.landscape ? 40 : null,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme: IconThemeData(
-              color: Theme.of(context).colorScheme.onSurface,
+        return SafeArea(
+          bottom: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              GlassMetrics.screenMarginPhone,
+              12,
+              GlassMetrics.screenMarginPhone,
+              0,
             ),
-            titleTextStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-            title: Text(l10n.favorites),
-          ),
-          body: favorites.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.favorite_border, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.noFavoritesYet,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.addHymnsToFavorites,
-                        style: const TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
+            child: GlassZone(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GlassScreenHeader(title: l10n.favorites),
+                  const SizedBox(height: GlassMetrics.gapM),
+                  Expanded(
+                    child: favorites.isEmpty
+                        ? GlassEmptyState(
+                            icon: Icons.favorite_border_rounded,
+                            title: l10n.noFavoritesYet,
+                            subtitle: l10n.addHymnsToFavorites,
+                          )
+                        : GlassHymnList(
+                            items: [
+                              for (final f in favorites)
+                                GlassHymnItem(
+                                  number: f.hymnNumber,
+                                  title: f.title,
+                                  subtitle: _getHymnalName(f.hymnalId),
+                                  hymnalId: f.hymnalId,
+                                ),
+                            ],
+                            padding: const EdgeInsets.only(bottom: 8),
+                            onTap: (i) => _onFavoriteTapped(favorites[i]),
+                            onReorder: _favoritesService.reorderFavorites,
+                            confirmRemove: (i) => _confirmDismiss(favorites[i]),
+                            onRemove: (i) => _onDismissed(favorites[i]),
+                          ),
                   ),
-                )
-              : ReorderableListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: favorites.length,
-                  onReorderItem: _favoritesService.reorderFavorites,
-                  itemBuilder: (context, index) {
-                    final favorite = favorites[index];
-                    return Dismissible(
-                      key: ValueKey(favorite),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 20),
-                        color: Colors.red,
-                        child: const Icon(
-                          Icons.delete,
-                          color: Colors.white,
-                        ),
-                      ),
-                      confirmDismiss: (_) => _confirmDismiss(favorite),
-                      onDismissed: (_) => _onDismissed(favorite),
-                      child: HymnListTile(
-                        number: favorite.hymnNumber,
-                        title: favorite.title,
-                        subtitle: _getHymnalName(favorite.hymnalId),
-                        trailing: const Icon(Icons.drag_handle),
-                        onTap: () => _onFavoriteTapped(favorite),
-                      ),
-                    );
-                  },
-                ),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
