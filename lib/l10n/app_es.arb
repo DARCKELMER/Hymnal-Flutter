@@ -177,5 +177,13 @@
   "appFullName": "Himnario Adventista",
   "hymnDoesNotExist": "No existe",
   "deleteDigit": "Borrar último dígito",
-  "clearNumber": "Borrar número"
+  "clearNumber": "Borrar número",
+  "sectionsCount": "{count, plural, =1{1 sección} other{{count} secciones}}",
+  "@sectionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

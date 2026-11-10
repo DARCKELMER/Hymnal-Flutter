@@ -6,7 +6,9 @@ import 'package:hymnal_app/layers/domain/model/hymn.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
 import 'package:hymnal_app/widgets/app_scaffold.dart';
-import 'package:hymnal_app/widgets/hymn_list_tile.dart';
+import 'package:hymnal_app/styles/glass/glass_tokens.dart';
+import 'package:hymnal_app/styles/glass/glass_typography.dart';
+import 'package:hymnal_app/widgets/glass/glass_hymn_list.dart';
 
 part 'ambit_controller.dart';
 
@@ -29,32 +31,50 @@ class AmbitScreen extends StatefulWidget {
 class _AmbitScreenState extends _AmbitController {
   @override
   Widget build(BuildContext context) {
+    final tokens = GlassTokens.of(context);
     return AppScaffold(
       appBar: AppBar(
-        toolbarHeight: MediaQuery.of(context).orientation == Orientation.landscape ? 40 : null,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(
-          color: Theme.of(context).colorScheme.onSurface,
+        foregroundColor: tokens.textPrimary,
+        centerTitle: false,
+        titleTextStyle: GlassTypography.listRow(
+          tokens.textPrimary,
+          selected: true,
+        ).copyWith(fontSize: 20),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.category,
+              style: TextStyle(
+                fontFamily: GlassTypography.ui,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: tokens.textSecondary,
+              ),
+            ),
+            Text(widget.ambit.name),
+          ],
         ),
-        titleTextStyle: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-        title: Text(widget.category),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.only(bottom: 80),
-        itemCount: widget.hymns.length,
-        itemBuilder: (context, index) {
-          final hymn = widget.hymns[index];
-          return HymnListTile(
-            number: hymn.number,
-            title: hymn.title,
-            onTap: () => _onHymnTapped(hymn),
-          );
-        },
+      // La misma lista de cristal que Listas.
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          GlassMetrics.screenMarginPhone,
+          8,
+          GlassMetrics.screenMarginPhone,
+          0,
+        ),
+        child: GlassHymnList(
+          items: [
+            for (final h in widget.hymns)
+              GlassHymnItem(number: h.number, title: h.title),
+          ],
+          hymnalId: _settingsService.selectedHymnal?.id,
+          padding: const EdgeInsets.only(bottom: 8),
+          onTap: (i) => _onHymnTapped(widget.hymns[i]),
+        ),
       ),
     );
   }

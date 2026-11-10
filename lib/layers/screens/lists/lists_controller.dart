@@ -1,27 +1,30 @@
 part of 'lists_screen.dart';
 
+/// Vista de la lista.
+enum _ListMode { numeric, alpha, thematic }
+
 abstract class _ListsController extends State<ListsScreen> {
   final HymnalRepository _repository = GetIt.I<HymnalRepository>();
   final SettingsService _settingsService = GetIt.I<SettingsService>();
   final HistoryService _historyService = GetIt.I<HistoryService>();
 
+  _ListMode _mode = _ListMode.numeric;
+
   List<Hymn>? _hymns;
-  List<ThematicCategory>? _thematicList;
   List<Hymn>? _alphabeticHymns;
-  List<String>? _alphabeticIndexBarData;
-  List<NumericHymn>? _numericHymns;
-  List<String>? _numericIndexBarData;
+  List<GlassIndexEntry> _numericIndex = const [];
+  List<GlassIndexEntry> _alphabeticIndex = const [];
+  List<ThematicCategory>? _thematicList;
+
+  /// Temas abiertos en la vista temática.
+  final Set<int> _expandedThemes = {};
   String? _lastHymnalId;
 
   @override
   void initState() {
     super.initState();
-
     _settingsService.addListener(_onSettingsChanged);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
   }
 
   @override
@@ -31,139 +34,107 @@ abstract class _ListsController extends State<ListsScreen> {
   }
 
   void _onSettingsChanged() {
-    if (_lastHymnalId != _settingsService.selectedHymnal?.id) {
-      setState(() {
-        _hymns = null;
-        _thematicList = null;
-        _alphabeticHymns = null;
-        _alphabeticIndexBarData = null;
-        _numericHymns = null;
-        _numericIndexBarData = null;
-      });
-      _loadData();
-    }
+    if (_lastHymnalId == _settingsService.selectedHymnal?.id) return;
+    setState(() {
+      _hymns = null;
+      _alphabeticHymns = null;
+      _thematicList = null;
+      _expandedThemes.clear();
+    });
+    _loadData();
   }
 
   Future<void> _loadData() async {
     final hymnal = _settingsService.selectedHymnal;
     if (hymnal == null) return;
-
     _lastHymnalId = hymnal.id;
 
     final hymns = await _repository.getHymns(hymnal.id);
     final thematic = await _repository.getThematicList(hymnal.id);
+    if (!mounted || _lastHymnalId != hymnal.id) return;
 
-    // Pre-calculate sorted list and index bar data for Alphabetic tab
-    final alphabeticHymns = List<Hymn>.from(hymns)
+    // Alfabético: por la primera letra (sin signos) y luego por título.
+    String normalizeTitle(String s) => StringUtils.normalize(
+      s.trim().replaceFirst(RegExp(r'^[^\p{L}\p{N}]+', unicode: true), ''),
+    );
+    final alphabetic = List<Hymn>.from(hymns)
       ..sort((a, b) {
-        final tagA = _getFirstLetter(a.title);
-        final tagB = _getFirstLetter(b.title);
-        final comparison = tagA.compareTo(tagB);
-        if (comparison != 0) return comparison;
-
-        String normalizeTitle(String s) {
-          var t = s.trim();
-          t = t.replaceFirst(RegExp(r'^[^A-Za-z0-9]+'), '');
-          return t.toLowerCase();
-        }
-
+        final byLetter = _firstLetter(a.title).compareTo(_firstLetter(b.title));
+        if (byLetter != 0) return byLetter;
         return normalizeTitle(a.title).compareTo(normalizeTitle(b.title));
       });
 
-    SuspensionUtil.setShowSuspensionStatus(alphabeticHymns);
-
-    final presentTags = <String>{};
-    for (final hymn in alphabeticHymns) {
-      presentTags.add(hymn.getSuspensionTag());
-    }
-    final List<String> alphabeticIndexBarData = presentTags.where((t) => t != '#').toList()
-      ..sort((a, b) {
-        final na = StringUtils.normalize(a);
-        final nb = StringUtils.normalize(b);
-        return na.compareTo(nb);
-      });
-    if (presentTags.contains('#')) alphabeticIndexBarData.add('#');
-
-    // Pre-calculate numeric list and index bar data
-    final interval = 50;
-    int itemCount = hymns.length;
-    final List<int> numericIndices = [];
-    int k = 0;
-    while (true) {
-      final int i = k == 0 ? 0 : k * interval - 1;
-      if (i >= itemCount) break;
-      numericIndices.add(i);
-      k++;
-    }
-    if (numericIndices.isEmpty || numericIndices.last < itemCount - 1) {
-      numericIndices.add(itemCount - 1);
-    }
-
-    final numericHymns = <NumericHymn>[];
-    int currentStep = 0;
-    for (int i = 0; i < itemCount; i++) {
-      if (currentStep < numericIndices.length - 1 && i >= numericIndices[currentStep + 1]) {
-        currentStep++;
-      }
-      final tagIndex = numericIndices[currentStep];
-      final tagLabel = (tagIndex + 1).toString();
-      numericHymns.add(NumericHymn(hymn: hymns[i], numericTag: tagLabel));
-    }
-
-    SuspensionUtil.setShowSuspensionStatus(numericHymns);
-    final numericIndexBarData = numericIndices.map((i) => (i + 1).toString()).toList();
-
-    if (mounted) {
-      setState(() {
-        _hymns = hymns;
-        _thematicList = thematic;
-        _alphabeticHymns = alphabeticHymns;
-        _alphabeticIndexBarData = alphabeticIndexBarData;
-        _numericHymns = numericHymns;
-        _numericIndexBarData = numericIndexBarData;
-      });
-    }
+    setState(() {
+      _hymns = hymns;
+      _alphabeticHymns = alphabetic;
+      _numericIndex = _buildNumericIndex(hymns);
+      _alphabeticIndex = _buildAlphabeticIndex(alphabetic);
+      _thematicList = thematic;
+    });
   }
 
-  String _getFirstLetter(String title) {
-    final norm = StringUtils.normalize(title);
-    if (norm.isEmpty) return '#';
-    for (int i = 0; i < norm.length; i++) {
-      final char = norm[i].toUpperCase();
-      if (RegExp(r'\p{L}', unicode: true).hasMatch(char)) {
-        return char;
+  /// Índice numérico del lienzo: 1, 100, 200 … (salta al primer himno con
+  /// ese número o mayor).
+  static List<GlassIndexEntry> _buildNumericIndex(List<Hymn> hymns) {
+    if (hymns.isEmpty) return const [];
+    final last = hymns.map((h) => h.number).reduce(math.max);
+    final entries = <GlassIndexEntry>[];
+    for (var n = 0; n <= last; n += 100) {
+      final target = math.max(n, 1);
+      final i = hymns.indexWhere((h) => h.number >= target);
+      if (i >= 0) entries.add((label: '$target', itemIndex: i));
+    }
+    return entries;
+  }
+
+  /// Índice alfabético: cada letra presente y su primer himno.
+  List<GlassIndexEntry> _buildAlphabeticIndex(List<Hymn> hymns) {
+    final entries = <GlassIndexEntry>[];
+    String? previous;
+    for (final (i, hymn) in hymns.indexed) {
+      final letter = _firstLetter(hymn.title);
+      if (letter != previous) {
+        entries.add((label: letter, itemIndex: i));
+        previous = letter;
       }
     }
+    return entries;
+  }
+
+  String _firstLetter(String title) {
+    final norm = StringUtils.normalize(title);
+    for (var i = 0; i < norm.length; i++) {
+      final char = norm[i].toUpperCase();
+      if (RegExp(r'\p{L}', unicode: true).hasMatch(char)) return char;
+    }
     return '#';
+  }
+
+  void _toggleTheme(int index) {
+    setState(() {
+      if (!_expandedThemes.remove(index)) _expandedThemes.add(index);
+    });
+  }
+
+  void _openAmbit(ThematicCategory category, Ambit ambit) {
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => AmbitScreen(
+          category: category.thematic,
+          ambit: ambit,
+          hymns: _hymns!
+              .where((h) => h.number >= ambit.start && h.number <= ambit.end)
+              .toList(),
+        ),
+      ),
+    );
   }
 
   Future<void> _openHymn(Hymn hymn) async {
     final hymnal = _settingsService.selectedHymnal!;
     await _historyService.addToHistory(hymnal.id, hymn.number, hymn.title);
-
-    if (mounted) {
-      HymnOpener.open(
-      context,
-      hymnalId: hymnal.id,
-      hymnNumber: hymn.number,
-    );
-    }
+    if (!mounted) return;
+    HymnOpener.open(context, hymnalId: hymnal.id, hymnNumber: hymn.number);
   }
-}
-
-class NumericHymn implements ISuspensionBean {
-  final Hymn hymn;
-  final String numericTag;
-  bool _isShowSuspension = false;
-
-  NumericHymn({required this.hymn, required this.numericTag});
-
-  @override
-  String getSuspensionTag() => numericTag;
-
-  @override
-  bool get isShowSuspension => _isShowSuspension;
-
-  @override
-  set isShowSuspension(bool value) => _isShowSuspension = value;
 }

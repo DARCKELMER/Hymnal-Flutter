@@ -474,4 +474,17 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get clearNumber => 'Очистить номер';
+
+  @override
+  String sectionsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count раздела',
+      many: '$count разделов',
+      few: '$count раздела',
+      one: '1 раздел',
+    );
+    return '$_temp0';
+  }
 }

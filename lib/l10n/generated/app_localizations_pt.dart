@@ -476,4 +476,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get clearNumber => 'Apagar número';
+
+  @override
+  String sectionsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count seções',
+      one: '1 seção',
+    );
+    return '$_temp0';
+  }
 }

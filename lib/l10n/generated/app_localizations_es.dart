@@ -478,4 +478,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clearNumber => 'Borrar número';
+
+  @override
+  String sectionsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count secciones',
+      one: '1 sección',
+    );
+    return '$_temp0';
+  }
 }

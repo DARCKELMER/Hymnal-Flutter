@@ -177,5 +177,13 @@
   "appFullName": "Адвентистский гимнарий",
   "hymnDoesNotExist": "Не существует",
   "deleteDigit": "Удалить последнюю цифру",
-  "clearNumber": "Очистить номер"
+  "clearNumber": "Очистить номер",
+  "sectionsCount": "{count, plural, =1{1 раздел} few{{count} раздела} many{{count} разделов} other{{count} раздела}}",
+  "@sectionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

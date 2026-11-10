@@ -1,20 +1,31 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
 import 'package:get_it/get_it.dart';
-import 'package:azlistview/azlistview.dart';
+import 'package:hymnal_app/core/utils/string_utils.dart';
+import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/data/repository/hymnal_repository.dart';
 import 'package:hymnal_app/layers/domain/model/hymn.dart';
 import 'package:hymnal_app/layers/domain/model/thematic_category.dart';
-import 'package:hymnal_app/services/settings_service.dart';
-import 'package:hymnal_app/services/history_service.dart';
+import 'package:hymnal_app/layers/screens/hymn/hymn_opener.dart';
 import 'package:hymnal_app/layers/screens/lists/ambit_screen.dart';
-import 'package:hymnal_app/widgets/hymn_list_tile.dart';
-
-import 'package:hymnal_app/l10n/generated/app_localizations.dart';
-import 'package:hymnal_app/core/utils/string_utils.dart';
+import 'package:hymnal_app/services/history_service.dart';
+import 'package:hymnal_app/services/settings_service.dart';
+import 'package:hymnal_app/styles/glass/glass_tokens.dart';
+import 'package:hymnal_app/styles/glass/glass_typography.dart';
+import 'package:hymnal_app/widgets/glass/glass_hymn_list.dart';
+import 'package:hymnal_app/widgets/glass/glass_segmented.dart';
+import 'package:hymnal_app/widgets/glass/glass_zone.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 part 'lists_controller.dart';
 
+/// Listas (lienzo, pantallas 2 y 9): encabezado con el himnario, control
+/// segmentado Numérico / Alfabético / Temático y:
+/// - Numérico y Alfabético: tarjeta de cristal con filas de 54 dp y un
+///   índice lateral en cápsula.
+/// - Temático: acordeones de cristal por tema con una grilla de secciones
+///   (2 columnas en tableta, 1 en celular).
 class ListsScreen extends StatefulWidget {
   const ListsScreen({super.key});
 
@@ -26,191 +37,284 @@ class _ListsScreenState extends _ListsController {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: AppBar(
-          toolbarHeight: 0,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          bottom: TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: l10n.numeric, icon: const Icon(Icons.format_list_numbered)),
-              Tab(text: l10n.alpha, icon: const Icon(Icons.sort_by_alpha)),
-              Tab(text: l10n.thematic, icon: const Icon(Icons.category)),
+    final tokens = GlassTokens.of(context);
+    final hymnal = _settingsService.selectedHymnal;
+
+    final Widget content;
+    if (_hymns == null) {
+      content = const Center(child: CircularProgressIndicator());
+    } else {
+      content = switch (_mode) {
+        _ListMode.numeric => _hymnList(_hymns!, _numericIndex),
+        _ListMode.alpha => _hymnList(_alphabeticHymns!, _alphabeticIndex),
+        _ListMode.thematic => _buildThematic(l10n),
+      };
+    }
+
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          GlassMetrics.screenMarginPhone,
+          12,
+          GlassMetrics.screenMarginPhone,
+          0,
+        ),
+        child: GlassZone(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                hymnal?.name ?? '',
+                style: GlassTypography.listRow(tokens.textSecondary)
+                    .copyWith(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                l10n.lists,
+                style: GlassTypography.screenTitle(tokens.textPrimary),
+              ),
+              const SizedBox(height: GlassMetrics.gapM),
+              GlassSegmented<_ListMode>(
+                segments: [
+                  GlassSegment(value: _ListMode.numeric, label: l10n.numeric),
+                  GlassSegment(value: _ListMode.alpha, label: l10n.alpha),
+                  GlassSegment(value: _ListMode.thematic, label: l10n.thematic),
+                ],
+                selected: _mode,
+                onChanged: (mode) => setState(() => _mode = mode),
+              ),
+              const SizedBox(height: GlassMetrics.gapM),
+              Expanded(child: content),
             ],
           ),
         ),
-        body: _hymns == null
-            ? const Center(child: CircularProgressIndicator())
-            : TabBarView(
-                children: [
-                  _buildNumericList(),
-                  _buildAlphabeticList(),
-                  _buildThematicList(),
-                ],
-              ),
       ),
     );
   }
 
-  Widget _buildNumericList() {
-    if (_numericHymns == null || _numericIndexBarData == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return AzListView(
-      data: _numericHymns!,
-      itemCount: _numericHymns!.length,
-      padding: const EdgeInsets.only(bottom: 80),
-      itemBuilder: (context, index) {
-        final hymn = _numericHymns![index].hymn;
-        return HymnListTile(
-          number: hymn.number,
-          title: hymn.title,
-          onTap: () => _openHymn(hymn),
-        );
-      },
-      indexBarData: _numericIndexBarData!,
-      indexBarItemHeight: 18,
-      indexBarMargin: const EdgeInsets.only(right: 4),
-      susItemBuilder: (context, index) {
-        final numericHymn = _numericHymns![index];
-        if (!numericHymn.isShowSuspension) {
-          return const SizedBox.shrink();
-        }
-        return Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            numericHymn.getSuspensionTag(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        );
-      },
-      susItemHeight: 32,
-      indexHintBuilder: (context, hint) {
-        return Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            hint,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
-      },
+  Widget _hymnList(List<Hymn> hymns, List<GlassIndexEntry> index) {
+    return GlassHymnList(
+      // Una lista por modo: cada una conserva su posición.
+      key: ValueKey(_mode),
+      items: [
+        for (final h in hymns) GlassHymnItem(number: h.number, title: h.title),
+      ],
+      hymnalId: _settingsService.selectedHymnal?.id,
+      index: index,
+      padding: const EdgeInsets.only(bottom: 8),
+      onTap: (i) => _openHymn(hymns[i]),
     );
   }
 
-  Widget _buildAlphabeticList() {
-    if (_alphabeticHymns == null || _alphabeticIndexBarData == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return AzListView(
-      data: _alphabeticHymns!,
-      itemCount: _alphabeticHymns!.length,
-      padding: const EdgeInsets.only(bottom: 80),
-      itemBuilder: (context, index) {
-        final hymn = _alphabeticHymns![index];
-        return HymnListTile(
-          number: hymn.number,
-          title: hymn.title,
-          onTap: () => _openHymn(hymn),
-        );
-      },
-      indexBarData: _alphabeticIndexBarData!,
-      indexBarItemHeight: 18,
-      indexBarMargin: const EdgeInsets.only(right: 4),
-      susItemBuilder: (context, index) {
-        final hymn = _alphabeticHymns![index];
-        if (!hymn.isShowSuspension) {
-          return const SizedBox.shrink();
-        }
-        return Container(
-          height: 32,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          alignment: Alignment.centerLeft,
-          child: Text(
-            hymn.getSuspensionTag(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        );
-      },
-      susItemHeight: 32,
-      indexHintBuilder: (context, hint) {
-        return Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary,
-            borderRadius: BorderRadius.circular(30),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            hint,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildThematicList() {
-    if (_thematicList == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
+  Widget _buildThematic(AppLocalizations l10n) {
+    final themes = _thematicList ?? const <ThematicCategory>[];
+    // 2 columnas en tableta y pantalla dividida, 1 en celular.
+    final columns = MediaQuery.sizeOf(context).shortestSide >= 600 ? 2 : 1;
     return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 80),
-      itemCount: _thematicList!.length,
-      itemBuilder: (context, index) {
-        final category = _thematicList![index];
-        return ExpansionTile(
-          title: Text(
-            category.thematic,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: themes.length,
+      itemBuilder: (context, i) {
+        final theme = themes[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: GlassMetrics.gapS),
+          child: _ThemeCard(
+            theme: theme,
+            expanded: _expandedThemes.contains(i),
+            columns: columns,
+            subtitle: [
+              l10n.sectionsCount(theme.ambits.length),
+              if (theme.ambits.isNotEmpty)
+                l10n
+                    .hymnRange(theme.ambits.first.start, theme.ambits.last.end)
+                    .toLowerCase(),
+            ].join(' · '),
+            rangeLabel: (a) => l10n.hymnRange(a.start, a.end),
+            onToggle: () => _toggleTheme(i),
+            onAmbit: (a) => _openAmbit(theme, a),
           ),
-          children: category.ambits.map((ambit) {
-            return ListTile(
-              dense: true,
-              title: Text(ambit.name),
-              subtitle: Text(AppLocalizations.of(context)!.hymnRange(ambit.start, ambit.end)),
-              trailing: const Icon(Icons.chevron_right, size: 20),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => AmbitScreen(
-                    category: category.thematic,
-                    ambit: ambit,
-                    hymns: _hymns!
-                        .where((h) => h.number >= ambit.start && h.number <= ambit.end)
-                        .toList(),
+        );
+      },
+    );
+  }
+}
+
+/// Acordeón de cristal de un tema: título, "5 secciones · himnos 1–52" y,
+/// abierto, la grilla de secciones.
+class _ThemeCard extends StatelessWidget {
+  const _ThemeCard({
+    required this.theme,
+    required this.expanded,
+    required this.columns,
+    required this.subtitle,
+    required this.rangeLabel,
+    required this.onToggle,
+    required this.onAmbit,
+  });
+
+  final ThematicCategory theme;
+  final bool expanded;
+  final int columns;
+  final String subtitle;
+  final String Function(Ambit ambit) rangeLabel;
+  final VoidCallback onToggle;
+  final ValueChanged<Ambit> onAmbit;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = GlassTokens.of(context);
+    return LiquidGlass(
+      shape: const LiquidRoundedSuperellipse(borderRadius: 24),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(
+              container: true,
+              button: true,
+              expanded: expanded,
+              label: '${theme.thematic}, $subtitle',
+              onTap: onToggle,
+              excludeSemantics: true,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: onToggle,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              theme.thematic,
+                              style: GlassTypography.listRow(
+                                tokens.textPrimary,
+                                selected: true,
+                              ).copyWith(fontSize: 17),
+                            ),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontFamily: GlassTypography.ui,
+                                fontSize: 12,
+                                color: tokens.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      AnimatedRotation(
+                        turns: expanded ? .5 : 0,
+                        duration: const Duration(milliseconds: 220),
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: tokens.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        );
-      },
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              alignment: Alignment.topCenter,
+              child: expanded
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          const gap = 10.0;
+                          final width =
+                              (constraints.maxWidth - gap * (columns - 1)) /
+                              columns;
+                          return Wrap(
+                            spacing: gap,
+                            runSpacing: gap,
+                            children: [
+                              for (final ambit in theme.ambits)
+                                SizedBox(
+                                  width: width,
+                                  child: _AmbitTile(
+                                    name: ambit.name,
+                                    range: rangeLabel(ambit),
+                                    onTap: () => onAmbit(ambit),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Sección de un tema: nombre y rango de himnos, en una tarjetita
+/// translúcida (sin cristal propio: va dentro del acordeón de cristal).
+class _AmbitTile extends StatelessWidget {
+  const _AmbitTile({
+    required this.name,
+    required this.range,
+    required this.onTap,
+  });
+
+  final String name;
+  final String range;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = GlassTokens.of(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Semantics(
+      container: true,
+      button: true,
+      label: '$name, $range',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: Material(
+        color: dark ? const Color(0x24FFFFFF) : const Color(0xB3FFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GlassTypography.listRow(
+                    tokens.textPrimary,
+                    selected: true,
+                  ).copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  range,
+                  style: TextStyle(
+                    fontFamily: GlassTypography.ui,
+                    fontSize: 12,
+                    color: tokens.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

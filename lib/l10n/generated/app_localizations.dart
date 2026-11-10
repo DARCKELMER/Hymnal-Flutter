@@ -959,6 +959,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear number'**
   String get clearNumber;
+
+  /// Number of sections of a thematic category
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 section} other{{count} sections}}'**
+  String sectionsCount(int count);
 }
 
 class _AppLocalizationsDelegate

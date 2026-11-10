@@ -177,5 +177,13 @@
   "appFullName": "Hinário Adventista",
   "hymnDoesNotExist": "Não existe",
   "deleteDigit": "Apagar último dígito",
-  "clearNumber": "Apagar número"
+  "clearNumber": "Apagar número",
+  "sectionsCount": "{count, plural, =1{1 seção} other{{count} seções}}",
+  "@sectionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }
