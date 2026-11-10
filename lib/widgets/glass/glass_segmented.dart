@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:hymnal_app/widgets/glass/glass_haptics.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
@@ -112,7 +112,7 @@ class _GlassSegmentedState<T> extends State<GlassSegmented<T>>
                             selected: i == _selectedIndex,
                             onTap: () {
                               if (i == _selectedIndex) return;
-                              HapticFeedback.selectionClick();
+                              GlassHaptics.tick(context);
                               widget.onChanged(segment.value);
                             },
                           ),

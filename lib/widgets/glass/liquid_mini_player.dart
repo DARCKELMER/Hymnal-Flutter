@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
+import 'package:hymnal_app/widgets/glass/glass_haptics.dart';
 import 'package:hymnal_app/widgets/glass/jelly_wobble.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
@@ -308,7 +308,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
 
   /// Cambia de himno con el título entrando por el lado contrario.
   void _switchHymn({required bool next}) {
-    HapticFeedback.selectionClick();
+    GlassHaptics.tick(context);
     if (next) {
       widget.onNext();
     } else {
@@ -319,7 +319,7 @@ class _LiquidMiniPlayerState extends State<LiquidMiniPlayer>
   }
 
   void _setExpanded(bool open, {double velocity = 0}) {
-    if (open != _expanded) HapticFeedback.selectionClick();
+    if (open != _expanded) GlassHaptics.tick(context);
     _expand.animateTo(
       open ? 1 : 0,
       withVelocity: -velocity / widget.effectivePanelHeight,
@@ -909,7 +909,7 @@ class MiniPlayerChip extends StatelessWidget {
         onTap: onTap == null
             ? null
             : () {
-                HapticFeedback.selectionClick();
+                GlassHaptics.tick(context);
                 onTap!();
               },
         child: AnimatedContainer(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:hymnal_app/widgets/glass/glass_haptics.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:motor/motor.dart';
 
@@ -57,7 +57,7 @@ class _GlassSwitchState extends State<GlassSwitch>
   void _toggle() {
     final onChanged = widget.onChanged;
     if (onChanged == null) return;
-    HapticFeedback.selectionClick();
+    GlassHaptics.tick(context);
     onChanged(!widget.value);
   }
 

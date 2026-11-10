@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
+import 'package:hymnal_app/widgets/glass/glass_haptics.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 
@@ -61,10 +61,10 @@ class GlassNavigationRail extends StatefulWidget {
     backdropShrink: .16,
   );
 
-  /// Ancho de la gota (cápsula vertical) y cuánto sobresale arriba y
-  /// abajo del destino.
-  static const double dropWidth = 66;
-  static const double dropOverhang = 6;
+  /// Tamaño de la gota: justa al ícono y la etiqueta, sin invadir los
+  /// destinos vecinos (más baja si los destinos se compactan).
+  static const double dropWidth = 60;
+  static const double dropHeight = 64;
 
   /// Alto reservado para [header].
   static const double headerHeight = 60;
@@ -138,7 +138,7 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
     final over = p.round().clamp(0, widget.destinations.length - 1);
     if (over != _hovered) {
       _hovered = over;
-      HapticFeedback.selectionClick(); // cruza un destino
+      GlassHaptics.tick(context); // cruza un destino
     }
   }
 
@@ -154,7 +154,7 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
       target.toDouble(),
       withVelocity: (d?.velocity.pixelsPerSecond.dy ?? 0) / widget.itemHeight,
     );
-    HapticFeedback.lightImpact();
+    GlassHaptics.settle(context);
     if (target != widget.selectedIndex) widget.onSelected(target);
   }
 
@@ -167,10 +167,13 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
     final height =
         headerHeight + itemHeight * widget.destinations.length + inset * 2;
     const dropWidth = GlassNavigationRail.dropWidth;
-    const overhang = GlassNavigationRail.dropOverhang;
+    final dropHeight = math.min(GlassNavigationRail.dropHeight, itemHeight - 4);
     const dropRadius = dropWidth / 2;
     double dropTop() =>
-        inset + headerHeight + itemHeight * _position.value - overhang;
+        inset +
+        headerHeight +
+        itemHeight * _position.value +
+        (itemHeight - dropHeight) / 2;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -224,7 +227,7 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
                               ),
                               onTap: () {
                                 if (i == widget.selectedIndex) return;
-                                HapticFeedback.selectionClick();
+                                GlassHaptics.tick(context);
                                 widget.onSelected(i);
                               },
                             ),
@@ -265,7 +268,7 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
                     left: (width - dropWidth) / 2,
                     width: dropWidth,
                     top: dropTop(),
-                    height: itemHeight + overhang * 2,
+                    height: dropHeight,
                     child: Transform(
                       alignment: Alignment.center,
                       transform: Matrix4.diagonal3Values(
