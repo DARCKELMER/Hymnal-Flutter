@@ -13,6 +13,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     required this.buttonTint,
     required this.favorite,
     required this.selected,
+    required this.vivid,
   });
 
   /// Texto principal.
@@ -33,6 +34,11 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
   /// Pestaña u opción seleccionada.
   final Color selected;
 
+  /// Acento **vivo** para lo que está bajo la gota de agua de las barras
+  /// (el azul del laboratorio): en tema oscuro, un azul brillante en vez del
+  /// lila pálido de [accent], para que la gota no se vea apagada.
+  final Color vivid;
+
   static const light = GlassTokens(
     textPrimary: Color(0xFF0E1A2B),
     textSecondary: Color(0xFF26344A),
@@ -40,6 +46,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     buttonTint: Color(0xD61F4FD1), // 84 %
     favorite: Color(0xFFC2410C),
     selected: Color(0x94FFFFFF), // blanco al 58 %
+    vivid: Color(0xFF1F4FD1),
   );
 
   static const dark = GlassTokens(
@@ -49,6 +56,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     buttonTint: Color(0xD14A72EC), // 82 %
     favorite: Color(0xFFFDBA74),
     selected: Color(0x29FFFFFF), // blanco al 16 %
+    vivid: Color(0xFF6B8EFF),
   );
 
   /// Tokens del tema actual (claros si el tema no los registró).
@@ -64,6 +72,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
     Color? buttonTint,
     Color? favorite,
     Color? selected,
+    Color? vivid,
   }) {
     return GlassTokens(
       textPrimary: textPrimary ?? this.textPrimary,
@@ -72,6 +81,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       buttonTint: buttonTint ?? this.buttonTint,
       favorite: favorite ?? this.favorite,
       selected: selected ?? this.selected,
+      vivid: vivid ?? this.vivid,
     );
   }
 
@@ -85,6 +95,7 @@ class GlassTokens extends ThemeExtension<GlassTokens> {
       buttonTint: Color.lerp(buttonTint, other.buttonTint, t)!,
       favorite: Color.lerp(favorite, other.favorite, t)!,
       selected: Color.lerp(selected, other.selected, t)!,
+      vivid: Color.lerp(vivid, other.vivid, t)!,
     );
   }
 }

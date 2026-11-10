@@ -277,7 +277,7 @@ void main() {
     // Arrastrar la gota (como en el laboratorio) hasta "Inicio".
     final rail = find.byType(GlassNavigationRail);
     final from = tester.getCenter(drop);
-    await tester.dragFrom(from, Offset(0, -2 * 72.0));
+    await tester.dragFrom(from, const Offset(0, -2 * 72.0));
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
     expect(index, 0);

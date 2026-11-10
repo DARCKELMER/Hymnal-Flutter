@@ -216,7 +216,7 @@ class _GlassTabBarState extends State<GlassTabBar>
       selectedIndex: widget.selectedIndex,
       onSelected: widget.onSelected,
       height: GlassTabBar.height,
-      tint: tokens.accent,
+      tint: tokens.vivid,
       restingDrop: true,
       restingIconScale: 1.06,
       collapse: collapse,

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
-import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 
@@ -48,6 +47,24 @@ class GlassNavigationRail extends StatefulWidget {
 
   /// Clave de la gota de agua (pruebas).
   static const dropKey = ValueKey('rail-drop');
+
+  /// Lente de la gota: la de la barra inferior con el borde más brillante
+  /// y más refracción, para que se note en 3D sobre la barra.
+  static const dropSettings = LiquidGlassSettings(
+    refractionHeight: 18,
+    refractionAmount: 16,
+    refractionFitsShape: false,
+    dispersion: -.35,
+    frost: 0,
+    contourStrength: .5,
+    highlight: .9,
+    backdropShrink: .16,
+  );
+
+  /// Ancho de la gota (cápsula vertical) y cuánto sobresale arriba y
+  /// abajo del destino.
+  static const double dropWidth = 66;
+  static const double dropOverhang = 6;
 
   /// Alto reservado para [header].
   static const double headerHeight = 60;
@@ -149,8 +166,11 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
     final headerHeight = _headerHeight;
     final height =
         headerHeight + itemHeight * widget.destinations.length + inset * 2;
-    final dropRadius = (width - inset * 2) / 2;
-    double dropTop() => inset + headerHeight + itemHeight * _position.value;
+    const dropWidth = GlassNavigationRail.dropWidth;
+    const overhang = GlassNavigationRail.dropOverhang;
+    const dropRadius = dropWidth / 2;
+    double dropTop() =>
+        inset + headerHeight + itemHeight * _position.value - overhang;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -226,13 +246,26 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
                 builder: (context, child) {
                   final speed = _position.velocity.abs();
                   final stretch = 1.0 + math.min(speed * .045, .22);
+                  // Se infla al presionar y también en el trayecto entre
+                  // destinos (y se desinfla al llegar), como en el
+                  // laboratorio.
+                  final travel = _dragging
+                      ? 0.0
+                      : (_position.value - widget.selectedIndex).abs().clamp(
+                          0.0,
+                          1.0,
+                        );
                   final swell =
-                      1 + .1 * Curves.easeOutBack.transform(_press.value);
+                      1 +
+                      math.max(
+                        .1 * Curves.easeOutBack.transform(_press.value),
+                        .14 * travel,
+                      );
                   return Positioned(
-                    left: inset,
-                    right: inset,
+                    left: (width - dropWidth) / 2,
+                    width: dropWidth,
                     top: dropTop(),
-                    height: itemHeight,
+                    height: itemHeight + overhang * 2,
                     child: Transform(
                       alignment: Alignment.center,
                       transform: Matrix4.diagonal3Values(
@@ -244,16 +277,16 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
                     ),
                   );
                 },
-                child: IgnorePointer(
+                child: const IgnorePointer(
                   child: CustomPaint(
-                    painter: const _DropShadowPainter(),
+                    painter: _DropShadowPainter(),
                     child: LiquidGlass.withOwnLayer(
                       key: GlassNavigationRail.dropKey,
-                      settings: LoupeTabBar.defaultLoupeSettings,
+                      settings: GlassNavigationRail.dropSettings,
                       shape: LiquidRoundedSuperellipse(
                         borderRadius: dropRadius,
                       ),
-                      child: const SizedBox.expand(),
+                      child: SizedBox.expand(),
                     ),
                   ),
                 ),
@@ -314,8 +347,8 @@ class _RailItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = GlassTokens.of(context);
-    final color = Color.lerp(tokens.textPrimary, tokens.accent, under)!;
-    final magnify = 1 + .12 * under;
+    final color = Color.lerp(tokens.textPrimary, tokens.vivid, under)!;
+    final magnify = 1 + .18 * under;
     return Semantics(
       container: true,
       button: true,
