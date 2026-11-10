@@ -273,6 +273,16 @@ void main() {
       tester.getCenter(drop).dy,
       closeTo(tester.getCenter(find.bySemanticsLabel('Favoritos')).dy, 1),
     );
+
+    // Arrastrar la gota (como en el laboratorio) hasta "Inicio".
+    final rail = find.byType(GlassNavigationRail);
+    final from = tester.getCenter(drop);
+    await tester.dragFrom(from, Offset(0, -2 * 72.0));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(index, 0);
+    expect(tester.getCenter(drop).dy, closeTo(start, 1));
+    expect(tester.getSize(rail).width, 84);
   });
 
   testWidgets('LyricsCard: tinte mínimo 0.85 aunque el cristal sea Clear', (
