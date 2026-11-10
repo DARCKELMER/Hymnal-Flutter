@@ -236,7 +236,10 @@ class _MainTabsScreenState extends _MainTabsController {
       right: false,
       child: Padding(
         padding: const EdgeInsets.all(GlassMetrics.gapS),
+        // Bisel más angosto: en una barra de 84 dp el de 26 dp ocuparía
+        // casi todo el interior y deformaría el paisaje en franjas.
         child: GlassZone(
+          refractionHeight: 12,
           child: Column(
             children: [
               GlassNavigationRail(
