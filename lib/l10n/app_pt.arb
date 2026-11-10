@@ -173,5 +173,9 @@
       }
     }
   },
-  "selectHymnPrompt": "Escolha um hino da lista"
+  "selectHymnPrompt": "Escolha um hino da lista",
+  "appFullName": "Hinário Adventista",
+  "hymnDoesNotExist": "Não existe",
+  "deleteDigit": "Apagar último dígito",
+  "clearNumber": "Apagar número"
 }

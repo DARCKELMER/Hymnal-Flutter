@@ -462,4 +462,16 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get selectHymnPrompt => 'Выберите гимн из списка';
+
+  @override
+  String get appFullName => 'Адвентистский гимнарий';
+
+  @override
+  String get hymnDoesNotExist => 'Не существует';
+
+  @override
+  String get deleteDigit => 'Удалить последнюю цифру';
+
+  @override
+  String get clearNumber => 'Очистить номер';
 }

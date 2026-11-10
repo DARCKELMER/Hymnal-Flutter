@@ -173,5 +173,9 @@
       }
     }
   },
-  "selectHymnPrompt": "Выберите гимн из списка"
+  "selectHymnPrompt": "Выберите гимн из списка",
+  "appFullName": "Адвентистский гимнарий",
+  "hymnDoesNotExist": "Не существует",
+  "deleteDigit": "Удалить последнюю цифру",
+  "clearNumber": "Очистить номер"
 }

@@ -464,4 +464,16 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get selectHymnPrompt => 'Escolha um hino da lista';
+
+  @override
+  String get appFullName => 'Hinário Adventista';
+
+  @override
+  String get hymnDoesNotExist => 'Não existe';
+
+  @override
+  String get deleteDigit => 'Apagar último dígito';
+
+  @override
+  String get clearNumber => 'Apagar número';
 }

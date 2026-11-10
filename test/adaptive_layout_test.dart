@@ -13,6 +13,7 @@ import 'package:hymnal_app/services/audio_service.dart';
 import 'package:hymnal_app/services/locator_service.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/styles/theme.dart';
+import 'package:hymnal_app/widgets/glass/glass_icon_button.dart';
 import 'package:hymnal_app/widgets/glass/glass_navigation_rail.dart';
 import 'package:hymnal_app/widgets/glass/glass_scope.dart';
 import 'package:hymnal_app/widgets/glass/glass_tab_bar.dart';
@@ -129,17 +130,12 @@ void main() {
     expect(find.byType(GlassNavigationRail), findsOneWidget);
     expect(find.text('Elige un himno de la lista'), findsOneWidget);
 
-    // Buscar "12" desde la barra lateral y abrir el resultado.
+    // Buscar "12" con la lupa de la barra lateral y abrir el resultado.
     await tester.tap(
-      find
-              .descendant(
-                of: find.byType(GlassNavigationRail).hitTestable(),
-                matching: find.bySemanticsLabel('Buscar'),
-              )
-              .evaluate()
-              .isEmpty
-          ? find.bySemanticsLabel('Buscar').first
-          : find.bySemanticsLabel('Buscar').first,
+      find.ancestor(
+        of: find.byIcon(Icons.search_rounded),
+        matching: find.byType(GlassIconButton),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));

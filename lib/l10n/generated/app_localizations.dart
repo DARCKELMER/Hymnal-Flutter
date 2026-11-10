@@ -935,6 +935,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose a hymn from the list'**
   String get selectHymnPrompt;
+
+  /// Small header above screen titles
+  ///
+  /// In en, this message translates to:
+  /// **'Adventist Hymnal'**
+  String get appFullName;
+
+  /// Live preview on the home number card when the typed hymn number does not exist
+  ///
+  /// In en, this message translates to:
+  /// **'Does not exist'**
+  String get hymnDoesNotExist;
+
+  /// Accessibility label of the backspace key of the home keypad
+  ///
+  /// In en, this message translates to:
+  /// **'Delete last digit'**
+  String get deleteDigit;
+
+  /// Accessibility label of the clear key of the home keypad
+  ///
+  /// In en, this message translates to:
+  /// **'Clear number'**
+  String get clearNumber;
 }
 
 class _AppLocalizationsDelegate

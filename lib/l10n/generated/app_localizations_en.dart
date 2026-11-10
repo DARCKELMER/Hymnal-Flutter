@@ -460,4 +460,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectHymnPrompt => 'Choose a hymn from the list';
+
+  @override
+  String get appFullName => 'Adventist Hymnal';
+
+  @override
+  String get hymnDoesNotExist => 'Does not exist';
+
+  @override
+  String get deleteDigit => 'Delete last digit';
+
+  @override
+  String get clearNumber => 'Clear number';
 }

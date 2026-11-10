@@ -177,6 +177,14 @@ class LiquidGlassButton extends StatelessWidget {
       button: wrapSemantics,
       enabled: wrapSemantics ? onTap != null : null,
       label: wrapSemantics ? semanticLabel : null,
+      // La acción va aquí: excludeSemantics oculta la del GestureDetector
+      // y sin ella TalkBack anunciaría el botón sin poder activarlo.
+      onTap: wrapSemantics && onTap != null
+          ? () {
+              if (haptics) HapticFeedback.lightImpact();
+              onTap!();
+            }
+          : null,
       excludeSemantics: wrapSemantics,
       child: button,
     );

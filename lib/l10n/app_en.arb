@@ -633,5 +633,21 @@
   "selectHymnPrompt": "Choose a hymn from the list",
   "@selectHymnPrompt": {
     "description": "Shown in the tablet detail pane when no hymn is selected"
+  },
+  "appFullName": "Adventist Hymnal",
+  "@appFullName": {
+    "description": "Small header above screen titles"
+  },
+  "hymnDoesNotExist": "Does not exist",
+  "@hymnDoesNotExist": {
+    "description": "Live preview on the home number card when the typed hymn number does not exist"
+  },
+  "deleteDigit": "Delete last digit",
+  "@deleteDigit": {
+    "description": "Accessibility label of the backspace key of the home keypad"
+  },
+  "clearNumber": "Clear number",
+  "@clearNumber": {
+    "description": "Accessibility label of the clear key of the home keypad"
   }
 }
