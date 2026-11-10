@@ -46,7 +46,7 @@ class GlassScope extends StatelessWidget {
   final double? tintAmount;
 
   /// Tinte por defecto si no hay ajustes ni un [GlassScope] arriba.
-  static const double defaultTint = .1;
+  static const double defaultTint = 0;
 
   static GlassScopeData of(BuildContext context) =>
       context

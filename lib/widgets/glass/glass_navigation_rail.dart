@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
+import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:motor/motor.dart';
 
@@ -43,6 +46,9 @@ class GlassNavigationRail extends StatefulWidget {
 
   static const double defaultItemHeight = 72;
 
+  /// Clave de la gota de agua (pruebas).
+  static const dropKey = ValueKey('rail-drop');
+
   /// Alto reservado para [header].
   static const double headerHeight = 60;
 
@@ -83,55 +89,101 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
         : GlassNavigationRail.headerHeight;
     final height =
         headerHeight + itemHeight * widget.destinations.length + inset * 2;
-    return LiquidGlass(
-      shape: const LiquidRoundedSuperellipse(borderRadius: width / 2),
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: Stack(
-          children: [
-            AnimatedBuilder(
-              animation: _position,
-              builder: (context, _) => Positioned(
-                left: inset,
-                right: inset,
-                top: inset + headerHeight + itemHeight * _position.value,
-                height: itemHeight,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: tokens.selected,
-                    borderRadius: BorderRadius.circular(
-                      (width - inset * 2) / 2,
+    final dropRadius = (width - inset * 2) / 2;
+    double dropTop() => inset + headerHeight + itemHeight * _position.value;
+
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        children: [
+          // La cápsula de cristal con los destinos.
+          LiquidGlass(
+            shape: const LiquidRoundedSuperellipse(borderRadius: width / 2),
+            child: SizedBox(
+              width: width,
+              height: height,
+              child: Stack(
+                children: [
+                  // Píldora suave bajo la gota (contraste del elegido).
+                  AnimatedBuilder(
+                    animation: _position,
+                    builder: (context, _) => Positioned(
+                      left: inset,
+                      right: inset,
+                      top: dropTop(),
+                      height: itemHeight,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: tokens.selected,
+                          borderRadius: BorderRadius.circular(dropRadius),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(inset),
-              child: Column(
-                children: [
-                  if (widget.header case final header?)
-                    SizedBox(
-                      height: headerHeight,
-                      child: Center(child: header),
+                  Padding(
+                    padding: const EdgeInsets.all(inset),
+                    child: Column(
+                      children: [
+                        if (widget.header case final header?)
+                          SizedBox(
+                            height: headerHeight,
+                            child: Center(child: header),
+                          ),
+                        for (final (i, d) in widget.destinations.indexed)
+                          _RailItem(
+                            height: itemHeight,
+                            destination: d,
+                            selected: i == widget.selectedIndex,
+                            onTap: () {
+                              if (i == widget.selectedIndex) return;
+                              HapticFeedback.selectionClick();
+                              widget.onSelected(i);
+                            },
+                          ),
+                      ],
                     ),
-                  for (final (i, d) in widget.destinations.indexed)
-                    _RailItem(
-                      height: itemHeight,
-                      destination: d,
-                      selected: i == widget.selectedIndex,
-                      onTap: () {
-                        if (i == widget.selectedIndex) return;
-                        HapticFeedback.selectionClick();
-                        widget.onSelected(i);
-                      },
-                    ),
+                  ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          // La gota de agua 3D (la misma lente que la barra inferior): en
+          // su propio layer, encima, para refractar y magnificar la cápsula
+          // y el ícono de abajo. Se desliza con rebote y se estira como
+          // gelatina con la velocidad. Solo se traslada: no cambia de
+          // tamaño (un layer propio que cambia de tamaño deja restos).
+          AnimatedBuilder(
+            animation: _position,
+            builder: (context, child) {
+              final speed = _position.velocity.abs();
+              final stretch = 1.0 + math.min(speed * .045, .22);
+              return Positioned(
+                left: inset,
+                right: inset,
+                top: dropTop(),
+                height: itemHeight,
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.diagonal3Values(
+                    1 / math.sqrt(stretch),
+                    stretch,
+                    1,
+                  ),
+                  child: child,
+                ),
+              );
+            },
+            child: IgnorePointer(
+              child: LiquidGlass.withOwnLayer(
+                key: GlassNavigationRail.dropKey,
+                settings: LoupeTabBar.defaultLoupeSettings,
+                shape: LiquidRoundedSuperellipse(borderRadius: dropRadius),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

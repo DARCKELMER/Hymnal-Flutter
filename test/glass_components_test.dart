@@ -259,9 +259,20 @@ void main() {
       ),
     );
     expect(tester.getSize(find.byType(GlassNavigationRail)).width, 84);
+    // La gota de agua 3D (lente propia) está sobre el destino elegido.
+    final drop = find.byKey(GlassNavigationRail.dropKey);
+    expect(drop, findsOneWidget);
+    final start = tester.getCenter(drop).dy;
     await tester.tap(find.bySemanticsLabel('Favoritos'));
+    await tester.pump(); // arranca el resorte
     await tester.pump(const Duration(seconds: 2));
     expect(index, 2);
+    // Se deslizó dos destinos hacia abajo y quedó sobre "Favoritos".
+    expect(tester.getCenter(drop).dy, closeTo(start + 2 * 72, 1));
+    expect(
+      tester.getCenter(drop).dy,
+      closeTo(tester.getCenter(find.bySemanticsLabel('Favoritos')).dy, 1),
+    );
   });
 
   testWidgets('LyricsCard: tinte mínimo 0.85 aunque el cristal sea Clear', (
@@ -330,8 +341,8 @@ void main() {
     expect(find.byType(GlassSwitch), findsOneWidget);
     expect(find.byType(GlassNavigationRail), findsOneWidget);
     expect(find.byType(LyricsCard), findsOneWidget);
-    // Una zona para los controles + la tarjeta de letra: 2 layers.
-    expect(find.byType(LiquidGlassLayer), findsNWidgets(2));
+    // Zona de controles + tarjeta de letra + gota de la barra lateral.
+    expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
     expect(tester.takeException(), isNull);
   });
 }

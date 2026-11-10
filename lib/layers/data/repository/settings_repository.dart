@@ -8,8 +8,10 @@ class SettingsRepository {
   static const String _showBackgroundImageKey = 'showBackgroundImage';
   static const String _glassTintKey = 'glassTint';
 
-  /// Tinte del cristal por defecto: casi transparente.
-  static const double defaultGlassTint = .1;
+  /// Tinte del cristal por defecto: 0, transparente como agua (el aprobado
+  /// en el laboratorio). Cualquier tinte mayor agrega un desenfoque mínimo
+  /// que lo vuelve mate.
+  static const double defaultGlassTint = 0;
 
   Future<String?> getSelectedHymnalId() async {
     final prefs = await SharedPreferences.getInstance();

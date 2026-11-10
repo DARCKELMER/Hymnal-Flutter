@@ -157,10 +157,10 @@ void main() {
   });
 
   group('Ajuste "Cristal"', () {
-    test('por defecto 0.1 y se guarda', () async {
+    test('por defecto 0 (transparente) y se guarda', () async {
       SharedPreferences.setMockInitialValues({});
       final repository = SettingsRepository();
-      expect(await repository.getGlassTint(), .1);
+      expect(await repository.getGlassTint(), 0);
       await repository.setGlassTint(.6);
       expect(await repository.getGlassTint(), .6);
     });
