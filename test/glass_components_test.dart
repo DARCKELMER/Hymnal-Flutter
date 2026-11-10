@@ -135,7 +135,7 @@ void main() {
     );
   });
 
-  testWidgets('GlassSegmented: cambia de opción y la píldora se desliza', (
+  testWidgets('GlassSegmented: la barra del menú con gota, de solo texto', (
     tester,
   ) async {
     var selected = 'a';
@@ -157,20 +157,18 @@ void main() {
         ),
       ),
     );
-    double pillLeft() => tester
-        .widget<Positioned>(
-          find.descendant(
-            of: find.byType(GlassSegmented<String>),
-            matching: find.byType(Positioned),
-          ),
-        )
-        .left!;
-    final start = pillLeft();
-    await tester.tap(find.bySemanticsLabel('Temático'));
-    await tester.pump(); // arranca el resorte
-    await tester.pump(const Duration(seconds: 2));
+    // Es la barra del menú con la gota (LoupeTabBar de solo texto).
+    final bar = find.descendant(
+      of: find.byType(GlassSegmented<String>),
+      matching: find.byType(LoupeTabBar),
+    );
+    expect(bar, findsOneWidget);
+    expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
+    expect(tester.widget<LoupeTabBar>(bar).selectedIndex, 0);
+    tester.semantics.tap(find.semantics.byLabel('Temático'));
+    await tester.pumpAndSettle();
     expect(selected, 'c');
-    expect(pillLeft(), greaterThan(start + 150));
+    expect(tester.widget<LoupeTabBar>(bar).selectedIndex, 2);
     // Grupo exclusivo: solo una opción seleccionada.
     expect(
       find.semantics.byPredicate(
@@ -359,9 +357,10 @@ void main() {
     expect(find.byType(GlassSwitch), findsOneWidget);
     expect(find.byType(GlassNavigationRail), findsOneWidget);
     expect(find.byType(LyricsCard), findsOneWidget);
-    // Zona de controles + tarjeta de letra + gota de la barra lateral.
-    expect(find.byType(LiquidGlassLayer), findsNWidgets(3));
-    expect(find.byKey(LoupeTabBar.loupeKey), findsOneWidget);
+    // Zona de controles + tarjeta de letra + la gota (lente propia) de la
+    // barra lateral y de cada uno de los 3 segmentados.
+    expect(find.byType(LiquidGlassLayer), findsNWidgets(6));
+    expect(find.byKey(LoupeTabBar.loupeKey), findsNWidgets(4));
     expect(tester.takeException(), isNull);
   });
 }

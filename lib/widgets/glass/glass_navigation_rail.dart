@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 /// Un destino de [GlassNavigationRail].
 @immutable
@@ -16,8 +17,8 @@ class GlassRailDestination {
 /// con efecto lupa, se infla al presionar, sigue al dedo y rebota), girada
 /// 90°, con los íconos y etiquetas girados de vuelta para leerse derechos.
 ///
-/// Debe ir dentro de un `LiquidGlassLayer` con `LiquidGlassBlendGroup`
-/// (p. ej. `GlassZone(blend: …)`), como la barra inferior.
+/// Debe ir dentro de una zona de cristal (`GlassZone`); trae su propio
+/// grupo de mezcla.
 class GlassNavigationRail extends StatelessWidget {
   const GlassNavigationRail({
     required this.destinations,
@@ -65,19 +66,22 @@ class GlassNavigationRail extends StatelessWidget {
           // La barra horizontal girada 90°: su comienzo queda arriba.
           child: RotatedBox(
             quarterTurns: 1,
-            child: LoupeTabBar(
-              tabs: [
-                for (final d in destinations)
-                  BottomBarTab(icon: d.icon, label: d.label),
-              ],
-              selectedIndex: selectedIndex,
-              onSelected: onSelected,
-              height: thickness,
-              tint: tokens.vivid,
-              restingDrop: true,
-              restingIconScale: 1.06,
-              // Íconos y etiquetas girados de vuelta, derechos.
-              contentQuarterTurns: 3,
+            // Trae su propio grupo de mezcla (la barra lo necesita).
+            child: LiquidGlassBlendGroup(
+              child: LoupeTabBar(
+                tabs: [
+                  for (final d in destinations)
+                    BottomBarTab(icon: d.icon, label: d.label),
+                ],
+                selectedIndex: selectedIndex,
+                onSelected: onSelected,
+                height: thickness,
+                tint: tokens.vivid,
+                restingDrop: true,
+                restingIconScale: 1.06,
+                // Íconos y etiquetas girados de vuelta, derechos.
+                contentQuarterTurns: 3,
+              ),
             ),
           ),
         ),

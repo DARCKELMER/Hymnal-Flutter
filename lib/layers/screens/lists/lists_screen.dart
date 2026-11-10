@@ -44,11 +44,20 @@ class _ListsScreenState extends _ListsController {
     if (_hymns == null) {
       content = const Center(child: CircularProgressIndicator());
     } else {
-      content = switch (_mode) {
-        _ListMode.numeric => _hymnList(_hymns!, _numericIndex),
-        _ListMode.alpha => _hymnList(_alphabeticHymns!, _alphabeticIndex),
-        _ListMode.thematic => _buildThematic(l10n),
-      };
+      // Las vistas quedan montadas: cambiar de vista no destruye ni vuelve
+      // a crear el cristal (eso parpadeaba).
+      final alpha = _mode == _ListMode.alpha;
+      content = IndexedStack(
+        index: _mode == _ListMode.thematic ? 1 : 0,
+        sizing: StackFit.expand,
+        children: [
+          _hymnList(
+            alpha ? _alphabeticHymns! : _hymns!,
+            alpha ? _alphabeticIndex : _numericIndex,
+          ),
+          _buildThematic(l10n),
+        ],
+      );
     }
 
     return SafeArea(
@@ -94,8 +103,6 @@ class _ListsScreenState extends _ListsController {
 
   Widget _hymnList(List<Hymn> hymns, List<GlassIndexEntry> index) {
     return GlassHymnList(
-      // Una lista por modo: cada una conserva su posición.
-      key: ValueKey(_mode),
       items: [
         for (final h in hymns) GlassHymnItem(number: h.number, title: h.title),
       ],

@@ -166,7 +166,14 @@ void main() {
     tester.view.physicalSize = const Size(390, 844) * 2;
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    expect(find.byType(LoupeTabBar, skipOffstage: false), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(GlassTabBar, skipOffstage: false),
+        matching: find.byType(LoupeTabBar, skipOffstage: false),
+        skipOffstage: false,
+      ),
+      findsOneWidget,
+    );
     // Se abrió como pantalla encima (puede seguir en su transición).
     expect(navigator.canPop(), isTrue);
     expect(find.byType(HymnScreen, skipOffstage: false), findsOneWidget);

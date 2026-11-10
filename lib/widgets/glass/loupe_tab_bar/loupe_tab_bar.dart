@@ -16,9 +16,11 @@ import 'package:motor/motor.dart';
 
 @immutable
 class BottomBarTab {
-  const BottomBarTab({required this.icon, required this.label});
+  const BottomBarTab({required this.label, this.icon});
 
-  final IconData icon;
+  /// MODIFICADO: opcional; sin ícono la pestaña es solo texto (índice 1–600
+  /// y control segmentado).
+  final IconData? icon;
   final String label;
 }
 
@@ -61,6 +63,8 @@ class LoupeTabBar extends StatefulWidget {
     this.collapsedLabel,
     this.onCollapsedTap,
     this.contentQuarterTurns = 0,
+    this.labelFontSize = 10,
+    this.onHover,
     super.key,
   }) : assert(tabs.length > 0, 'A tab bar needs at least one tab.');
 
@@ -137,6 +141,14 @@ class LoupeTabBar extends StatefulWidget {
   /// cuartos de vuelta. La barra lateral de tableta es esta misma barra
   /// girada 90° (`RotatedBox`); con `3` sus íconos vuelven a leerse derechos.
   final int contentQuarterTurns;
+
+  /// MODIFICADO: tamaño de las etiquetas (más grande en pestañas de solo
+  /// texto).
+  final double labelFontSize;
+
+  /// MODIFICADO: avisa la pestaña bajo el dedo **mientras se arrastra** la
+  /// gota (no solo al soltarla), p. ej. para que una lista avance con ella.
+  final ValueChanged<int>? onHover;
 
   /// A clear, unfrosted lens like the iOS 27 tab bar's: it shows the bar
   /// 14% smaller and bends and splits the colors only in a 3–4 pt band along
@@ -425,10 +437,18 @@ class _LoupeTabBarState extends State<LoupeTabBar>
     _updatePress();
   }
 
+  /// MODIFICADO: última pestaña avisada con [LoupeTabBar.onHover].
+  int _hoverTab = -1;
+
   void _onDragUpdate(Offset local) {
     if (!_held) return;
     _dragging = true;
     _finger = _positionAt(local);
+    final over = _finger.round().clamp(0, _lastTab);
+    if (over != _hoverTab) {
+      _hoverTab = over;
+      widget.onHover?.call(over);
+    }
     final scheduled = _pendingDrag != null;
     _pendingDrag = local;
     if (!scheduled) {
@@ -483,6 +503,7 @@ class _LoupeTabBarState extends State<LoupeTabBar>
   }
 
   void _release(int tab) {
+    _hoverTab = -1;
     _cancelPendingDrag();
     _held = false;
     _dragging = false;
@@ -692,7 +713,12 @@ class _LoupeTabBarState extends State<LoupeTabBar>
         // MODIFICADO: contenido girado (barra lateral).
         child: RotatedBox(
           quarterTurns: widget.contentQuarterTurns,
-          child: _TabItem(tab: tab, color: color, foregrounds: foregrounds),
+          child: _TabItem(
+            tab: tab,
+            color: color,
+            foregrounds: foregrounds,
+            labelFontSize: widget.labelFontSize,
+          ),
         ),
       );
       if (!magnify) return child;
@@ -801,7 +827,14 @@ class _LoupeShadowPainter extends CustomPainter {
 }
 
 class _TabItem extends StatelessWidget {
-  const _TabItem({required this.tab, required this.color, this.foregrounds});
+  const _TabItem({
+    required this.tab,
+    required this.color,
+    required this.labelFontSize,
+    this.foregrounds,
+  });
+
+  final double labelFontSize;
 
   final BottomBarTab tab;
   final Color color;
@@ -821,49 +854,58 @@ class _TabItem extends StatelessWidget {
             alignment: Alignment.center,
             children: [for (final paint in paints) glyph(paint)],
           );
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // An Icon cannot take a paint, so the glyph is laid out as Icon does.
-        SizedBox.square(
-          dimension: 24,
-          child: layered(
-            (foreground) => Center(
-              child: Text(
-                String.fromCharCode(icon.codePoint),
-                overflow: TextOverflow.visible,
-                style: TextStyle(
-                  inherit: false,
-                  color: foreground == null ? color : null,
-                  foreground: foreground,
-                  fontSize: 24,
-                  fontFamily: icon.fontFamily,
-                  package: icon.fontPackage,
-                  fontFamilyFallback: icon.fontFamilyFallback,
-                  height: 1,
-                  leadingDistribution: TextLeadingDistribution.even,
+    // MODIFICADO: se ajusta al espacio (segmentados de 48 dp con ícono,
+    // barra lateral compactada) sin desbordarse.
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // MODIFICADO: sin ícono, solo la etiqueta.
+          if (icon != null) ...[
+            // An Icon cannot take a paint, so the glyph is laid out as Icon does.
+            SizedBox.square(
+              dimension: 24,
+              child: layered(
+                (foreground) => Center(
+                  child: Text(
+                    String.fromCharCode(icon.codePoint),
+                    overflow: TextOverflow.visible,
+                    style: TextStyle(
+                      inherit: false,
+                      color: foreground == null ? color : null,
+                      foreground: foreground,
+                      fontSize: 24,
+                      fontFamily: icon.fontFamily,
+                      package: icon.fontPackage,
+                      fontFamilyFallback: icon.fontFamilyFallback,
+                      height: 1,
+                      leadingDistribution: TextLeadingDistribution.even,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 3),
-        layered(
-          (foreground) => Text(
-            tab.label,
-            maxLines: 1,
-            softWrap: false,
-            overflow: TextOverflow.visible,
-            style: TextStyle(
-              color: foreground == null ? color : null,
-              foreground: foreground,
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0,
+            const SizedBox(height: 3),
+          ],
+          layered(
+            (foreground) => Text(
+              tab.label,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              style: TextStyle(
+                color: foreground == null ? color : null,
+                foreground: foreground,
+                fontSize: labelFontSize,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

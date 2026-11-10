@@ -236,9 +236,7 @@ class _MainTabsScreenState extends _MainTabsController {
       right: false,
       child: Padding(
         padding: const EdgeInsets.all(GlassMetrics.gapS),
-        // Mismo cristal y blend group que la barra inferior del celular.
         child: GlassZone(
-          blend: 20,
           child: Column(
             children: [
               GlassNavigationRail(

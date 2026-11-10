@@ -90,12 +90,18 @@ void main() {
       );
     }
 
+    // El índice es la barra del menú con la gota (vertical).
+    expect(
+      find.descendant(
+        of: find.byType(GlassHymnList),
+        matching: find.byType(LoupeTabBar),
+      ),
+      findsOneWidget,
+    );
     // Tocar "300" en el índice salta a ese himno.
-    final indexLabel = find
-        .descendant(of: find.byType(GlassHymnList), matching: find.text('300'))
-        .last;
-    await tester.tap(indexLabel);
-    await tester.pump(const Duration(milliseconds: 300));
+    tester.semantics.tap(find.semantics.byLabel('300'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(find.bySemanticsLabel(RegExp(r'^300\. ')), findsOneWidget);
     expect(find.text('Cantad alegres al Señor'), findsNothing);
     expect(tester.takeException(), isNull);

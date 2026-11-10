@@ -4,6 +4,20 @@ import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
 
 class AppTheme {
+  /// Transición entre pantallas sin fondo de color ni captura estática:
+  /// la predeterminada de Android pintaba un fondo blanco (`surface`)
+  /// mientras entraba la pantalla y animaba una foto en la que el cristal
+  /// no se dibuja; ambas cosas se veían como un destello blanco.
+  static const PageTransitionsTheme _pageTransitions = PageTransitionsTheme(
+    builders: {
+      TargetPlatform.android: ZoomPageTransitionsBuilder(
+        allowSnapshotting: false,
+        allowEnterRouteSnapshotting: false,
+        backgroundColor: Colors.transparent,
+      ),
+    },
+  );
+
   static const Color primaryColor = Color(0xFF1565C0);
   static const Color secondaryColor = Color(0xFF1976D2);
   static const Color accentColor = Color(0xFF42A5F5);
@@ -19,6 +33,7 @@ class AppTheme {
       // Inter, empaquetada (funciona sin internet).
       fontFamily: GlassTypography.ui,
       extensions: const [GlassTokens.light],
+      pageTransitionsTheme: _pageTransitions,
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
@@ -64,6 +79,7 @@ class AppTheme {
       ),
       fontFamily: GlassTypography.ui,
       extensions: const [GlassTokens.dark],
+      pageTransitionsTheme: _pageTransitions,
       appBarTheme: AppBarTheme(
         centerTitle: true,
         elevation: 0,

@@ -6,7 +6,7 @@ import 'package:hymnal_app/services/audio_service.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
 import 'package:hymnal_app/widgets/glass/glass_card.dart';
-import 'package:hymnal_app/widgets/glass/glass_haptics.dart';
+import 'package:hymnal_app/widgets/glass/loupe_tab_bar/loupe_tab_bar.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 /// Un himno en una [GlassHymnList].
@@ -29,8 +29,9 @@ typedef GlassIndexEntry = ({String label, int itemIndex});
 /// Lista de himnos del lienzo (Listas, Favoritos, Historial, secciones):
 /// una tarjeta de cristal legible con filas de 54 dp (insignia circular de
 /// 36 dp con el número y el título). Si el himno está sonando, su insignia
-/// va tintada y aparece un ecualizador. Con [index], una cápsula de cristal
-/// de 34 dp a la derecha para saltar (tocar o arrastrar).
+/// va tintada y aparece un ecualizador. Con [index], a la derecha la misma
+/// barra del menú con la gota (34 dp, vertical): la lista avanza mientras
+/// se arrastra la gota.
 ///
 /// Debe ir dentro de una zona de cristal (`GlassZone`) si lleva índice.
 class GlassHymnList extends StatefulWidget {
@@ -61,38 +62,74 @@ class GlassHymnList extends StatefulWidget {
   /// Ancho del índice lateral.
   static const double indexWidth = 34;
 
+  /// Alto de cada entrada del índice.
+  static const double indexSlot = 30;
+
   @override
   State<GlassHymnList> createState() => _GlassHymnListState();
 }
 
 class _GlassHymnListState extends State<GlassHymnList> {
   final ScrollController _scroll = ScrollController();
-  int _lastIndexEntry = -1;
+
+  /// Entrada del índice del tramo visible (la gota del índice va ahí).
+  int _visibleEntry = 0;
+
+  /// Mientras se arrastra la gota del índice, el desplazamiento no la
+  /// mueve (la mueve el dedo).
+  bool _indexDriving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(GlassHymnList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Otra lista (p. ej. de Numérico a Alfabético): vuelve arriba sin
+    // recrear la tarjeta de cristal. (Las filas se reconstruyen en cada
+    // redibujado; el índice de cada vista es estable.)
+    final switched =
+        !identical(oldWidget.index, widget.index) ||
+        oldWidget.items.length != widget.items.length;
+    if (switched) {
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+      _visibleEntry = 0;
+    }
+  }
 
   @override
   void dispose() {
-    _scroll.dispose();
+    _scroll
+      ..removeListener(_onScroll)
+      ..dispose();
     super.dispose();
   }
 
-  /// Salta a la entrada del índice bajo [dy] (posición en el índice).
-  void _jumpTo(double dy, double height) {
-    final entries = widget.index!;
-    final i = (dy / height * entries.length).floor().clamp(
-      0,
-      entries.length - 1,
-    );
-    if (i == _lastIndexEntry) return;
-    _lastIndexEntry = i;
-    GlassHaptics.tick(context);
-    final offset = entries[i].itemIndex * GlassHymnList.rowHeight;
+  /// La gota del índice sigue al tramo visible al desplazar la lista.
+  void _onScroll() {
+    final index = widget.index;
+    if (_indexDriving || index == null || index.isEmpty) return;
+    final first = (_scroll.offset / GlassHymnList.rowHeight).floor();
+    var entry = 0;
+    for (final (i, e) in index.indexed) {
+      if (e.itemIndex <= first) entry = i;
+    }
+    if (entry != _visibleEntry) setState(() => _visibleEntry = entry);
+  }
+
+  /// Salta al tramo de la entrada [i] del índice.
+  void _jumpToEntry(int i) {
+    final index = widget.index!;
     if (!_scroll.hasClients) return;
+    final offset = index[i].itemIndex * GlassHymnList.rowHeight;
     _scroll.jumpTo(math.min(offset, _scroll.position.maxScrollExtent));
   }
 
   @override
   Widget build(BuildContext context) {
-    final tokens = GlassTokens.of(context);
     final audio = GetIt.I.isRegistered<AudioService>()
         ? GetIt.I<AudioService>()
         : null;
@@ -132,43 +169,40 @@ class _GlassHymnListState extends State<GlassHymnList> {
       children: [
         Expanded(child: list),
         const SizedBox(width: 8),
-        // Índice lateral: cápsula de cristal de 34 dp.
+        // Índice lateral: la misma barra del menú con la gota, girada, de
+        // 34 dp. La lista avanza mientras se arrastra la gota.
         LayoutBuilder(
           builder: (context, constraints) {
             final height = math.min(
               constraints.maxHeight,
-              index.length * 28.0 + 16,
+              index.length * GlassHymnList.indexSlot,
             );
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTapDown: (d) => _jumpTo(d.localPosition.dy - 8, height - 16),
-              onVerticalDragUpdate: (d) =>
-                  _jumpTo(d.localPosition.dy - 8, height - 16),
-              onVerticalDragEnd: (_) => _lastIndexEntry = -1,
-              onTapUp: (_) => _lastIndexEntry = -1,
-              child: SizedBox(
-                width: GlassHymnList.indexWidth,
-                height: height,
-                child: LiquidGlass(
-                  shape: const LiquidRoundedSuperellipse(
-                    borderRadius: GlassHymnList.indexWidth / 2,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        for (final entry in index)
-                          Text(
-                            entry.label,
-                            style: TextStyle(
-                              fontFamily: GlassTypography.ui,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: tokens.textPrimary,
-                            ),
-                          ),
+            return SizedBox(
+              width: GlassHymnList.indexWidth,
+              height: height,
+              child: Listener(
+                onPointerDown: (_) => _indexDriving = true,
+                onPointerUp: (_) => _indexDriving = false,
+                onPointerCancel: (_) => _indexDriving = false,
+                child: RotatedBox(
+                  quarterTurns: 1,
+                  child: LiquidGlassBlendGroup(
+                    child: LoupeTabBar(
+                      tabs: [
+                        for (final e in index) BottomBarTab(label: e.label),
                       ],
+                      selectedIndex: _visibleEntry.clamp(0, index.length - 1),
+                      onHover: _jumpToEntry,
+                      onSelected: (i) {
+                        _visibleEntry = i;
+                        _jumpToEntry(i);
+                      },
+                      height: GlassHymnList.indexWidth,
+                      tint: GlassTokens.of(context).vivid,
+                      restingDrop: true,
+                      restingIconScale: 1.04,
+                      labelFontSize: 10,
+                      contentQuarterTurns: 3,
                     ),
                   ),
                 ),
