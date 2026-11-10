@@ -56,9 +56,15 @@ class GlassNavigationRail extends StatefulWidget {
     refractionFitsShape: false,
     dispersion: -.35,
     frost: 0,
-    contourStrength: .5,
-    highlight: .9,
+    contourStrength: .65,
+    highlight: 1,
     backdropShrink: .16,
+  );
+
+  /// Tinte blanco luminoso de la gota: brillante y clara sobre la barra,
+  /// no oscura.
+  static const dropAppearance = LiquidGlassAppearance.ios27Clear(
+    tint: Color(0x73FFFFFF),
   );
 
   /// Tamaño de la gota: justa al ícono y la etiqueta, sin invadir los
@@ -286,10 +292,63 @@ class _GlassNavigationRailState extends State<GlassNavigationRail>
                     child: LiquidGlass.withOwnLayer(
                       key: GlassNavigationRail.dropKey,
                       settings: GlassNavigationRail.dropSettings,
+                      appearance: GlassNavigationRail.dropAppearance,
                       shape: LiquidRoundedSuperellipse(
                         borderRadius: dropRadius,
                       ),
-                      child: SizedBox.expand(),
+                      // Reflejo interior: más luz arriba, como una gota de
+                      // agua iluminada desde arriba.
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(dropRadius),
+                          ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Color(0x8CFFFFFF),
+                              Color(0x26FFFFFF),
+                              Color(0x0DFFFFFF),
+                            ],
+                            stops: [0, .45, 1],
+                          ),
+                        ),
+                        child: SizedBox.expand(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // El ícono teñido **encima** de la gota (como en la barra
+              // inferior): nítido y en azul vivo aunque la gota sea clara.
+              IgnorePointer(
+                child: ExcludeSemantics(
+                  child: Padding(
+                    padding: const EdgeInsets.all(inset),
+                    child: AnimatedBuilder(
+                      animation: _position,
+                      builder: (context, _) => Column(
+                        children: [
+                          if (widget.header != null)
+                            SizedBox(height: headerHeight),
+                          for (final (i, d) in widget.destinations.indexed)
+                            Opacity(
+                              opacity: (1 - (_position.value - i).abs()).clamp(
+                                0.0,
+                                1.0,
+                              ),
+                              child: _RailItemFace(
+                                height: itemHeight,
+                                destination: d,
+                                under: (1 - (_position.value - i).abs()).clamp(
+                                  0.0,
+                                  1.0,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -349,9 +408,6 @@ class _RailItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = GlassTokens.of(context);
-    final color = Color.lerp(tokens.textPrimary, tokens.vivid, under)!;
-    final magnify = 1 + .18 * under;
     return Semantics(
       container: true,
       button: true,
@@ -363,25 +419,51 @@ class _RailItem extends StatelessWidget {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: SizedBox(
+        child: _RailItemFace(
           height: height,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Transform.scale(
-                scale: magnify,
-                child: Icon(destination.icon, size: 26, color: color),
-              ),
-              SizedBox(height: 4 * magnify),
-              Text(
-                destination.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GlassTypography.tabLabel(color, selected: under > .5),
-              ),
-            ],
-          ),
+          destination: destination,
+          under: under,
         ),
+      ),
+    );
+  }
+}
+
+/// Ícono y etiqueta de un destino: se agranda y toma el azul vivo cuanto
+/// más encima está la gota ([under], 0–1).
+class _RailItemFace extends StatelessWidget {
+  const _RailItemFace({
+    required this.height,
+    required this.destination,
+    required this.under,
+  });
+
+  final double height;
+  final GlassRailDestination destination;
+  final double under;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = GlassTokens.of(context);
+    final color = Color.lerp(tokens.textPrimary, tokens.vivid, under)!;
+    final magnify = 1 + .18 * under;
+    return SizedBox(
+      height: height,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Transform.scale(
+            scale: magnify,
+            child: Icon(destination.icon, size: 26, color: color),
+          ),
+          SizedBox(height: 4 * magnify),
+          Text(
+            destination.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GlassTypography.tabLabel(color, selected: under > .5),
+          ),
+        ],
       ),
     );
   }
