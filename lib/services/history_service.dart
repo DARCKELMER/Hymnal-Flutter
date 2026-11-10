@@ -23,7 +23,10 @@ class HistoryService extends ChangeNotifier {
   }
 
   Future<void> addToHistory(
-      String hymnalId, int hymnNumber, String title) async {
+    String hymnalId,
+    int hymnNumber,
+    String title,
+  ) async {
     final entry = HymnHistoryEntry(
       hymnalId: hymnalId,
       hymnNumber: hymnNumber,

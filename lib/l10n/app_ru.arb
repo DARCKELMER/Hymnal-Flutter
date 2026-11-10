@@ -220,5 +220,12 @@
   },
   "lyricsShort": "Текст",
   "zoomIn": "Увеличить",
-  "zoomOut": "Уменьшить"
+  "zoomOut": "Уменьшить",
+  "backgroundAutoChange": "Менять фон автоматически",
+  "backgroundAutoChangeSubtitle": "Плавный переход между пейзажами",
+  "backgroundOnOpen": "При запуске",
+  "backgroundPerHymn": "Каждый гимн",
+  "backgroundEvery5Min": "5 мин",
+  "changeBackground": "Сменить пейзаж",
+  "photoCredits": "Фоновые фото"
 }

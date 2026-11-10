@@ -3,6 +3,12 @@ part of 'sheets_screen.dart';
 abstract class _SheetsController extends State<SheetsScreen> {
   final AudioService _audioService = GetIt.I<AudioService>();
 
+  /// Paisajes ("Cambiar paisaje"); puede faltar en pruebas.
+  final BackgroundService? _backgrounds =
+      GetIt.I.isRegistered<BackgroundService>()
+      ? GetIt.I<BackgroundService>()
+      : null;
+
   List<String> _sheetUrls = [];
   int _currentIndex = 0;
   bool _isLoading = true;

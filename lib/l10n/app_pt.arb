@@ -220,5 +220,12 @@
   },
   "lyricsShort": "Letra",
   "zoomIn": "Ampliar",
-  "zoomOut": "Reduzir"
+  "zoomOut": "Reduzir",
+  "backgroundAutoChange": "Mudar fundo automaticamente",
+  "backgroundAutoChangeSubtitle": "Transição suave entre paisagens",
+  "backgroundOnOpen": "Ao abrir",
+  "backgroundPerHymn": "Cada hino",
+  "backgroundEvery5Min": "5 min",
+  "changeBackground": "Mudar paisagem",
+  "photoCredits": "Fotos de fundo"
 }

@@ -537,4 +537,25 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get zoomOut => 'Уменьшить';
+
+  @override
+  String get backgroundAutoChange => 'Менять фон автоматически';
+
+  @override
+  String get backgroundAutoChangeSubtitle => 'Плавный переход между пейзажами';
+
+  @override
+  String get backgroundOnOpen => 'При запуске';
+
+  @override
+  String get backgroundPerHymn => 'Каждый гимн';
+
+  @override
+  String get backgroundEvery5Min => '5 мин';
+
+  @override
+  String get changeBackground => 'Сменить пейзаж';
+
+  @override
+  String get photoCredits => 'Фоновые фото';
 }

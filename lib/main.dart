@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:hymnal_app/layers/data/repository/remote_settings_repository.dart';
 import 'package:hymnal_app/services/locator_service.dart';
 import 'package:hymnal_app/services/background_accent_service.dart';
+import 'package:hymnal_app/services/background_service.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/styles/theme.dart';
 import 'package:hymnal_app/layers/screens/main_tabs_screen.dart';
@@ -37,6 +38,10 @@ Future<void> main() async {
   final settingsService = GetIt.I<SettingsService>();
   await settingsService.initialize();
 
+  // Catálogo de paisajes y preferencias del fondo.
+  final backgrounds = GetIt.I<BackgroundService>();
+  await backgrounds.initialize();
+
   // Initialize background audio service
   final audioHandler = await AudioService.init(
     builder: () => MyAudioHandler(),
@@ -51,8 +56,17 @@ Future<void> main() async {
 
   runApp(const HymnalApp());
 
-  // Color vivo del fondo para el mini reproductor (en segundo plano).
-  GetIt.I<BackgroundAccentService>().load().ignore();
+  // Color vivo del paisaje para el mini reproductor (en segundo plano);
+  // se recalcula al cambiar de paisaje.
+  final accent = GetIt.I<BackgroundAccentService>();
+  void updateAccent() {
+    final background = backgrounds.current;
+    if (background == null) return;
+    accent.load(image: background.image, key: background.id).ignore();
+  }
+
+  updateAccent();
+  backgrounds.addListener(updateAccent);
 }
 
 /// Licencias de las fuentes empaquetadas (aparecen en Ajustes > Licencias).

@@ -81,6 +81,8 @@ abstract class _HymnController extends State<HymnScreen> {
         : _hasVersion(_hymn!, instrumental: true) ||
               !_hasVersion(_hymn!, instrumental: false);
 
+    _notifyHymnShown();
+
     final initialPage = _allHymns!.indexWhere(
       (h) => h.number == widget.hymnNumber,
     );
@@ -106,8 +108,16 @@ abstract class _HymnController extends State<HymnScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Modo automático "cada himno": cambia el paisaje.
+  void _notifyHymnShown() {
+    if (GetIt.I.isRegistered<BackgroundService>()) {
+      GetIt.I<BackgroundService>().onHymnShown();
+    }
+  }
+
   Future<void> _onPageChanged(int index) async {
     final hymn = _allHymns![index];
+    _notifyHymnShown();
     setState(() {
       _hymn = hymn;
     });

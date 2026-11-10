@@ -10,6 +10,7 @@ import 'package:hymnal_app/core/constants/app_assets.dart';
 import 'package:hymnal_app/l10n/generated/app_localizations.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_catalog_screen.dart';
 import 'package:hymnal_app/layers/screens/glass_lab/glass_lab_screen.dart';
+import 'package:hymnal_app/services/background_service.dart';
 import 'package:hymnal_app/services/favorites_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
 import 'package:hymnal_app/services/settings_service.dart';
@@ -39,7 +40,7 @@ class _SettingsScreenState extends _SettingsController {
     final l10n = AppLocalizations.of(context)!;
     final tokens = GlassTokens.of(context);
     return ListenableBuilder(
-      listenable: _settingsService,
+      listenable: Listenable.merge([_settingsService, _backgrounds]),
       builder: (context, _) {
         final hymnal = _settingsService.selectedHymnal;
         return SafeArea(
@@ -62,10 +63,49 @@ class _SettingsScreenState extends _SettingsController {
                   ),
                   const SizedBox(height: GlassMetrics.gapM),
 
-                  // Fondo (la galería de paisajes llega con la fase 5).
+                  // Fondo: galería de paisajes y cambio automático.
                   _Section(
                     title: l10n.sectionBackground,
                     children: [
+                      if (_backgrounds.isReady &&
+                          _settingsService.showBackgroundImage) ...[
+                        _BackgroundGallery(
+                          backgrounds: _backgrounds.backgrounds,
+                          selectedId: _backgrounds.current?.id,
+                          language: Localizations.localeOf(context)
+                              .languageCode,
+                          onSelected: _backgrounds.select,
+                        ),
+                        const SizedBox(height: GlassMetrics.gapS),
+                        _SwitchRow(
+                          title: l10n.backgroundAutoChange,
+                          subtitle: l10n.backgroundAutoChangeSubtitle,
+                          value: _backgrounds.autoChange,
+                          onChanged: _backgrounds.setAutoChange,
+                        ),
+                        if (_backgrounds.autoChange) ...[
+                          const SizedBox(height: GlassMetrics.gapS),
+                          GlassSegmented<BackgroundFrequency>(
+                            segments: [
+                              GlassSegment(
+                                value: BackgroundFrequency.onOpen,
+                                label: l10n.backgroundOnOpen,
+                              ),
+                              GlassSegment(
+                                value: BackgroundFrequency.perHymn,
+                                label: l10n.backgroundPerHymn,
+                              ),
+                              GlassSegment(
+                                value: BackgroundFrequency.every5min,
+                                label: l10n.backgroundEvery5Min,
+                              ),
+                            ],
+                            selected: _backgrounds.frequency,
+                            onChanged: _backgrounds.setFrequency,
+                          ),
+                          const SizedBox(height: GlassMetrics.gapS),
+                        ],
+                      ],
                       _SwitchRow(
                         title: l10n.backgroundImage,
                         subtitle: l10n.backgroundImageSubtitle,
@@ -460,6 +500,144 @@ class _SwitchRow extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Galería de paisajes: miniaturas de 92 dp de alto con su nombre; la
+/// elegida lleva un anillo del color de acento y un check.
+class _BackgroundGallery extends StatefulWidget {
+  const _BackgroundGallery({
+    required this.backgrounds,
+    required this.selectedId,
+    required this.language,
+    required this.onSelected,
+  });
+
+  final List<Background> backgrounds;
+  final String? selectedId;
+  final String language;
+  final ValueChanged<String> onSelected;
+
+  static const double thumbHeight = 92;
+  static const double thumbWidth = 74;
+
+  @override
+  State<_BackgroundGallery> createState() => _BackgroundGalleryState();
+}
+
+class _BackgroundGalleryState extends State<_BackgroundGallery> {
+  late final ScrollController _scroll = ScrollController(
+    initialScrollOffset: _offsetFor(widget.selectedId),
+  );
+
+  /// Desplazamiento para que la elegida se vea al abrir.
+  double _offsetFor(String? id) {
+    final i = widget.backgrounds.indexWhere((b) => b.id == id);
+    return i <= 1 ? 0 : (i - 1) * (_BackgroundGallery.thumbWidth + 10);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = GlassTokens.of(context);
+    return SizedBox(
+      height: _BackgroundGallery.thumbHeight + 26,
+      child: ListView.separated(
+        controller: _scroll,
+        scrollDirection: Axis.horizontal,
+        itemCount: widget.backgrounds.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemBuilder: (context, i) {
+          final background = widget.backgrounds[i];
+          final selected = background.id == widget.selectedId;
+          final name = background.name(widget.language);
+          return Semantics(
+            button: true,
+            selected: selected,
+            label: name,
+            onTap: () => widget.onSelected(background.id),
+            excludeSemantics: true,
+            child: GestureDetector(
+              onTap: () => widget.onSelected(background.id),
+              child: SizedBox(
+                width: _BackgroundGallery.thumbWidth,
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      height: _BackgroundGallery.thumbHeight,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          width: 2.5,
+                          color: selected
+                              ? tokens.vivid
+                              : const Color(0x00000000),
+                        ),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(13),
+                            child: Image(
+                              image: background.thumb,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          if (selected)
+                            Positioned(
+                              right: 5,
+                              bottom: 5,
+                              child: Container(
+                                width: 22,
+                                height: 22,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: tokens.vivid,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.check_rounded,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: GlassTypography.ui,
+                        fontSize: 12,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: selected ? tokens.vivid : tokens.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

@@ -3,6 +3,7 @@ part of 'settings_screen.dart';
 abstract class _SettingsController extends State<SettingsScreen> {
   final SettingsService _settingsService = GetIt.I<SettingsService>();
   final FavoritesService _favoritesService = GetIt.I<FavoritesService>();
+  final BackgroundService _backgrounds = GetIt.I<BackgroundService>();
 
   String _appVersion = '';
   String _buildNumber = '';
@@ -13,6 +14,7 @@ abstract class _SettingsController extends State<SettingsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadAppInfo();
+      _backgrounds.initialize();
       _favoritesService.loadFavorites();
     });
   }
@@ -156,14 +158,29 @@ abstract class _SettingsController extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.credits),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(l10n.creditsBasedOn),
-            const SizedBox(height: 8),
-            Text(l10n.creditsRedesign),
-          ],
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.creditsBasedOn),
+              const SizedBox(height: 8),
+              Text(l10n.creditsRedesign),
+              const SizedBox(height: 16),
+              Text(
+                l10n.photoCredits,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 4),
+              for (final b in _backgrounds.backgrounds)
+                if (b.credit != null)
+                  Text(
+                    '${b.name(Localizations.localeOf(context).languageCode)}: '
+                    '${b.credit}',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

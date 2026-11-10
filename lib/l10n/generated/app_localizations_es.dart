@@ -539,4 +539,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get zoomOut => 'Alejar';
+
+  @override
+  String get backgroundAutoChange => 'Cambiar fondo automáticamente';
+
+  @override
+  String get backgroundAutoChangeSubtitle => 'Transición suave entre paisajes';
+
+  @override
+  String get backgroundOnOpen => 'Al abrir';
+
+  @override
+  String get backgroundPerHymn => 'Cada himno';
+
+  @override
+  String get backgroundEvery5Min => '5 min';
+
+  @override
+  String get changeBackground => 'Cambiar paisaje';
+
+  @override
+  String get photoCredits => 'Fotos de fondo';
 }

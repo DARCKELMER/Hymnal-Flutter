@@ -12,6 +12,7 @@ import 'package:hymnal_app/layers/domain/model/hymn.dart';
 import 'package:hymnal_app/layers/domain/model/hymnal.dart';
 import 'package:hymnal_app/layers/domain/model/music_settings.dart';
 import 'package:hymnal_app/services/audio_service.dart';
+import 'package:hymnal_app/services/background_service.dart';
 import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';
@@ -186,7 +187,10 @@ class _SheetsScreenState extends _SheetsController {
               onPressed: () => Navigator.of(context).maybePop(),
             ),
             const SizedBox(width: GlassMetrics.gapS),
+            // En celular la cápsula llena el espacio; en tableta, solo lo
+            // que ocupa su texto.
             Flexible(
+              fit: tablet ? FlexFit.loose : FlexFit.tight,
               child: GlassPill(
                 height: 56,
                 children: [
@@ -260,6 +264,15 @@ class _SheetsScreenState extends _SheetsController {
                     onPressed: _zoomPercent < 400 ? () => _zoomBy(1.25) : null,
                   ),
                 ],
+              ),
+            ],
+            // Cambiar paisaje (el siguiente de la galería).
+            if (_backgrounds?.isReady ?? false) ...[
+              const SizedBox(width: GlassMetrics.gapS),
+              GlassIconButton(
+                icon: Icons.image_outlined,
+                semanticLabel: l10n.changeBackground,
+                onPressed: _backgrounds!.showNext,
               ),
             ],
           ],

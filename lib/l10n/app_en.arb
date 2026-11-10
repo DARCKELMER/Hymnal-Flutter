@@ -734,5 +734,33 @@
   "zoomOut": "Zoom out",
   "@zoomOut": {
     "description": "Sheet music zoom out button"
+  },
+  "backgroundAutoChange": "Change background automatically",
+  "@backgroundAutoChange": {
+    "description": "Settings switch that rotates the landscapes"
+  },
+  "backgroundAutoChangeSubtitle": "Smooth transition between landscapes",
+  "@backgroundAutoChangeSubtitle": {
+    "description": "Subtitle of the automatic background switch"
+  },
+  "backgroundOnOpen": "On open",
+  "@backgroundOnOpen": {
+    "description": "Automatic background frequency: each time the app opens"
+  },
+  "backgroundPerHymn": "Each hymn",
+  "@backgroundPerHymn": {
+    "description": "Automatic background frequency: each hymn opened"
+  },
+  "backgroundEvery5Min": "5 min",
+  "@backgroundEvery5Min": {
+    "description": "Automatic background frequency: every 5 minutes"
+  },
+  "changeBackground": "Change landscape",
+  "@changeBackground": {
+    "description": "Button that shows the next landscape"
+  },
+  "photoCredits": "Background photos",
+  "@photoCredits": {
+    "description": "Heading of the photo credits list"
   }
 }

@@ -13,6 +13,7 @@ import 'package:hymnal_app/services/settings_service.dart';
 import 'package:hymnal_app/services/favorites_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
 import 'package:hymnal_app/services/audio_service.dart';
+import 'package:hymnal_app/services/background_service.dart';
 import 'package:hymnal_app/layers/screens/sheets/sheets_screen.dart';
 import 'package:hymnal_app/styles/glass/glass_tokens.dart';
 import 'package:hymnal_app/styles/glass/glass_typography.dart';

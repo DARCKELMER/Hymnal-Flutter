@@ -69,6 +69,8 @@ flutter:
     - assets/hymns/
     - assets/musicSheets/
     - assets/background_image.png
+    - assets/backgrounds/
+    - assets/backgrounds/thumbs/
     - assets/app_icon.png
     - assets/info_constants.json
     - assets/fonts/Inter-OFL.txt

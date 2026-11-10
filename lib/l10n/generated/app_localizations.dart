@@ -1055,6 +1055,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Zoom out'**
   String get zoomOut;
+
+  /// Settings switch that rotates the landscapes
+  ///
+  /// In en, this message translates to:
+  /// **'Change background automatically'**
+  String get backgroundAutoChange;
+
+  /// Subtitle of the automatic background switch
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth transition between landscapes'**
+  String get backgroundAutoChangeSubtitle;
+
+  /// Automatic background frequency: each time the app opens
+  ///
+  /// In en, this message translates to:
+  /// **'On open'**
+  String get backgroundOnOpen;
+
+  /// Automatic background frequency: each hymn opened
+  ///
+  /// In en, this message translates to:
+  /// **'Each hymn'**
+  String get backgroundPerHymn;
+
+  /// Automatic background frequency: every 5 minutes
+  ///
+  /// In en, this message translates to:
+  /// **'5 min'**
+  String get backgroundEvery5Min;
+
+  /// Button that shows the next landscape
+  ///
+  /// In en, this message translates to:
+  /// **'Change landscape'**
+  String get changeBackground;
+
+  /// Heading of the photo credits list
+  ///
+  /// In en, this message translates to:
+  /// **'Background photos'**
+  String get photoCredits;
 }
 
 class _AppLocalizationsDelegate

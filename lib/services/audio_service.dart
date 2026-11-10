@@ -8,7 +8,8 @@ import 'package:hymnal_app/layers/domain/model/hymnal.dart';
 import 'package:hymnal_app/services/audio_handler.dart';
 
 class AudioService extends ChangeNotifier {
-  final MyAudioHandler _handler = GetIt.I<audio.AudioHandler>() as MyAudioHandler;
+  final MyAudioHandler _handler =
+      GetIt.I<audio.AudioHandler>() as MyAudioHandler;
 
   Hymn? _currentHymn;
   Hymnal? _currentHymnal;
@@ -66,9 +67,11 @@ class AudioService extends ChangeNotifier {
 
     _handler.playbackState.listen((state) {
       debugPrint(
-          '[AudioService] Player state changed: playing=${state.playing}, processingState=${state.processingState}');
+        '[AudioService] Player state changed: playing=${state.playing}, processingState=${state.processingState}',
+      );
       _isPlaying = state.playing;
-      _isLoading = state.processingState == audio.AudioProcessingState.loading ||
+      _isLoading =
+          state.processingState == audio.AudioProcessingState.loading ||
           state.processingState == audio.AudioProcessingState.buffering;
 
       notifyListeners();
@@ -77,7 +80,8 @@ class AudioService extends ChangeNotifier {
       if (state.processingState == audio.AudioProcessingState.completed) {
         if (_continuousPlay) {
           debugPrint(
-              '[AudioService] Playback completed, continuous play is ON — advancing to next hymn');
+            '[AudioService] Playback completed, continuous play is ON — advancing to next hymn',
+          );
           skipNext();
         } else {
           debugPrint('[AudioService] Playback completed, stopping playback');
@@ -120,7 +124,9 @@ class AudioService extends ChangeNotifier {
     try {
       final repository = GetIt.I<HymnalRepository>();
       final hymns = await repository.getHymns(_currentHymnal!.id);
-      final currentIndex = hymns.indexWhere((h) => h.number == _currentHymn!.number);
+      final currentIndex = hymns.indexWhere(
+        (h) => h.number == _currentHymn!.number,
+      );
 
       if (currentIndex < 0) return null;
 
@@ -139,7 +145,9 @@ class AudioService extends ChangeNotifier {
 
     try {
       final repository = GetIt.I<HymnalRepository>();
-      final musicSettings = await repository.getMusicSettings(_currentHymnal!.id);
+      final musicSettings = await repository.getMusicSettings(
+        _currentHymnal!.id,
+      );
 
       String? url;
       if (_isInstrumental) {
@@ -149,25 +157,34 @@ class AudioService extends ChangeNotifier {
       }
 
       if (url != null) {
-        debugPrint('[AudioService] Playing adjacent hymn: ${hymn.number} "${hymn.title}"');
+        debugPrint(
+          '[AudioService] Playing adjacent hymn: ${hymn.number} "${hymn.title}"',
+        );
         // Reset _currentUrl so playHymn doesn't treat it as a toggle
         _currentUrl = null;
         await playHymn(_currentHymnal!, hymn, url);
       } else {
         debugPrint(
-            '[AudioService] No ${_isInstrumental ? "instrumental" : "sung"} URL for hymn ${hymn.number}');
+          '[AudioService] No ${_isInstrumental ? "instrumental" : "sung"} URL for hymn ${hymn.number}',
+        );
       }
     } catch (e) {
       debugPrint('[AudioService] Error playing adjacent hymn: $e');
     }
   }
 
-  Future<void> playHymn(Hymnal hymnal, Hymn hymn, String url, {bool? instrumental}) async {
+  Future<void> playHymn(
+    Hymnal hymnal,
+    Hymn hymn,
+    String url, {
+    bool? instrumental,
+  }) async {
     // Keep current instrumental setting if not explicitly provided
     final isInstrumental = instrumental ?? _isInstrumental;
 
     debugPrint(
-        '[AudioService] playHymn called: hymn=${hymn.number} "${hymn.title}", hymnal=${hymnal.id}, instrumental=$isInstrumental');
+      '[AudioService] playHymn called: hymn=${hymn.number} "${hymn.title}", hymnal=${hymnal.id}, instrumental=$isInstrumental',
+    );
     debugPrint('[AudioService] URL: $url');
 
     // Increment request ID to invalidate any previous pending requests
@@ -187,7 +204,9 @@ class AudioService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('[AudioService] Setting audio source... (Request ID: $requestId)');
+      debugPrint(
+        '[AudioService] Setting audio source... (Request ID: $requestId)',
+      );
 
       await _handler.setAudioSource(
         url,
@@ -202,7 +221,9 @@ class AudioService extends ChangeNotifier {
 
       // Check if this request is still the latest one
       if (requestId != _playRequestId) {
-        debugPrint('[AudioService] Request ID $requestId is stale, ignoring success');
+        debugPrint(
+          '[AudioService] Request ID $requestId is stale, ignoring success',
+        );
         return;
       }
 
@@ -225,7 +246,9 @@ class AudioService extends ChangeNotifier {
         notifyListeners();
         debugPrint('[AudioService] ERROR playing audio: $e');
       } else {
-        debugPrint('[AudioService] Ignoring error from stale request ID $requestId: $e');
+        debugPrint(
+          '[AudioService] Ignoring error from stale request ID $requestId: $e',
+        );
       }
       if (requestId == _playRequestId) {
         rethrow;
@@ -323,7 +346,9 @@ class AudioService extends ChangeNotifier {
   }
 
   Future<void> togglePlayPause() async {
-    debugPrint('[AudioService] togglePlayPause() — currently ${_isPlaying ? "playing" : "paused"}');
+    debugPrint(
+      '[AudioService] togglePlayPause() — currently ${_isPlaying ? "playing" : "paused"}',
+    );
     if (_isPlaying) {
       await pause();
     } else {

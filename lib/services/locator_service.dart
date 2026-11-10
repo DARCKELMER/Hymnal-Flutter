@@ -9,6 +9,7 @@ import 'package:hymnal_app/services/favorites_service.dart';
 import 'package:hymnal_app/services/history_service.dart';
 import 'package:hymnal_app/services/audio_service.dart';
 import 'package:hymnal_app/services/background_accent_service.dart';
+import 'package:hymnal_app/services/background_service.dart';
 import 'package:hymnal_app/services/recent_searches_service.dart';
 
 final GetIt getIt = GetIt.instance;
@@ -16,10 +17,14 @@ final GetIt getIt = GetIt.instance;
 void setupLocator() {
   // Repositories
   getIt.registerLazySingleton<HymnalRepository>(() => HymnalRepositoryImpl());
-  getIt.registerLazySingleton<FavoritesRepository>(() => FavoritesRepositoryImpl());
+  getIt.registerLazySingleton<FavoritesRepository>(
+    () => FavoritesRepositoryImpl(),
+  );
   getIt.registerLazySingleton<HistoryRepository>(() => HistoryRepositoryImpl());
   getIt.registerLazySingleton<SettingsRepository>(() => SettingsRepository());
-  getIt.registerLazySingleton<RemoteSettingsRepository>(() => RemoteSettingsRepository());
+  getIt.registerLazySingleton<RemoteSettingsRepository>(
+    () => RemoteSettingsRepository(),
+  );
 
   // Services
   getIt.registerLazySingleton<SettingsService>(() => SettingsService());
@@ -29,6 +34,7 @@ void setupLocator() {
   getIt.registerLazySingleton<BackgroundAccentService>(
     () => BackgroundAccentService(),
   );
+  getIt.registerLazySingleton<BackgroundService>(() => BackgroundService());
   getIt.registerLazySingleton<RecentSearchesService>(
     () => RecentSearchesService(),
   );
