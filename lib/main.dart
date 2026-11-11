@@ -111,6 +111,8 @@ class HymnalApp extends StatelessWidget {
           // tamaños cuadro a cuadro y las tarjetas de cristal (capa propia)
           // dejan restos corridos. El cambio queda en un solo cuadro.
           themeAnimationDuration: Duration.zero,
+          // Rebote en los bordes (no el estiramiento de Android).
+          scrollBehavior: const GlassScrollBehavior(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           // Configuración de cristal (ajuste "Cristal" y alto contraste)
@@ -121,4 +123,24 @@ class HymnalApp extends StatelessWidget {
       },
     );
   }
+}
+
+/// Desplazamiento de la app: rebote al llegar a los bordes, como en iOS.
+///
+/// El "estiramiento" de Android agranda el contenido, y el cristal que
+/// cambia de tamaño cuadro a cuadro deja copias grises corridas. El rebote
+/// solo traslada el contenido, y el cristal sí lo soporta.
+class GlassScrollBehavior extends MaterialScrollBehavior {
+  const GlassScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: RangeMaintainingScrollPhysics());
 }
