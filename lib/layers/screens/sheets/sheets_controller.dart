@@ -1,5 +1,35 @@
 part of 'sheets_screen.dart';
 
+/// Recursos empaquetados (se consulta una sola vez por ejecución).
+Future<Set<String>>? _assetsCache;
+
+Future<Set<String>> _bundledAssets() =>
+    _assetsCache ??= AssetManifest.loadFromAssetBundle(rootBundle)
+        .then((manifest) => manifest.listAssets().toSet());
+
+/// Tamaño en píxeles de una imagen (sin dibujarla).
+Future<Size> _imageSize(ImageProvider provider) {
+  final completer = Completer<Size>();
+  final stream = provider.resolve(ImageConfiguration.empty);
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (info, _) {
+      if (!completer.isCompleted) {
+        completer.complete(
+          Size(info.image.width.toDouble(), info.image.height.toDouble()),
+        );
+      }
+      stream.removeListener(listener);
+    },
+    onError: (error, _) {
+      if (!completer.isCompleted) completer.completeError(error);
+      stream.removeListener(listener);
+    },
+  );
+  stream.addListener(listener);
+  return completer.future;
+}
+
 abstract class _SheetsController extends State<SheetsScreen> {
   final AudioService _audioService = GetIt.I<AudioService>();
 
@@ -10,6 +40,9 @@ abstract class _SheetsController extends State<SheetsScreen> {
       : null;
 
   List<String> _sheetUrls = [];
+
+  /// Tamaño de cada página (en píxeles de la imagen).
+  List<Size> _sizes = [];
   int _currentIndex = 0;
   bool _isLoading = true;
   String? _errorMessage;
@@ -22,12 +55,17 @@ abstract class _SheetsController extends State<SheetsScreen> {
   Hymn? _hymn;
   MusicSettings? _musicSettings;
 
-  /// Zoom por página: controlador y escala "ajustada" (100 %).
-  final List<PhotoViewController> _zoom = [];
-  final Map<int, double> _baseScale = {};
-  final List<StreamSubscription<PhotoViewControllerValue>> _zoomSubs = [];
+  /// Zoom y desplazamiento de las páginas.
+  final TransformationController _transform = TransformationController();
 
-  late final PageController _pageController = PageController();
+  /// Tamaño del área visible y, de cada fila de páginas, su borde
+  /// superior (para saber qué página se está leyendo).
+  Size _viewport = Size.zero;
+  List<double> _rowTops = const [];
+  int _perRow = 1;
+
+  /// Punto del doble toque (para acercar ahí).
+  Offset? _doubleTapAt;
 
   void _toggleChrome() {
     if (mounted) setState(() => _chromeVisible = !_chromeVisible);
@@ -36,6 +74,7 @@ abstract class _SheetsController extends State<SheetsScreen> {
   @override
   void initState() {
     super.initState();
+    _transform.addListener(_onTransform);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSheets();
       _loadHymn();
@@ -44,13 +83,9 @@ abstract class _SheetsController extends State<SheetsScreen> {
 
   @override
   void dispose() {
-    for (final s in _zoomSubs) {
-      s.cancel();
-    }
-    for (final c in _zoom) {
-      c.dispose();
-    }
-    _pageController.dispose();
+    _transform
+      ..removeListener(_onTransform)
+      ..dispose();
     super.dispose();
   }
 
@@ -77,7 +112,8 @@ abstract class _SheetsController extends State<SheetsScreen> {
 
   Future<void> _loadSheets() async {
     final l10n = AppLocalizations.of(context)!;
-    if (widget.hymnal.hymnsSheetsFileName == null) {
+    final fileName = widget.hymnal.hymnsSheetsFileName;
+    if (fileName == null) {
       if (mounted) {
         setState(() {
           _errorMessage = l10n.noSheetMusicAvailable;
@@ -87,44 +123,37 @@ abstract class _SheetsController extends State<SheetsScreen> {
       return;
     }
 
-    final baseName = widget.hymnal.hymnsSheetsFileName!.replaceAll(
+    final baseName = fileName.replaceAll(
       '###',
       widget.hymnNumber.toString().padLeft(3, '0'),
     );
+    final extension = baseName.substring(baseName.lastIndexOf('.'));
+    final assets = await _bundledAssets();
 
-    final urls = <String>[];
+    // La página principal y las adicionales (_1, _2, …).
+    final urls = <String>[
+      for (final name in [
+        baseName,
+        for (var i = 1; i <= 6; i++)
+          baseName.replaceAll(extension, '_$i$extension'),
+      ])
+        if (assets.contains('assets/musicSheets/$name'))
+          'assets/musicSheets/$name',
+    ];
 
-    // Check for base sheet
-    final baseUrl = 'assets/musicSheets/$baseName';
-    if (await _assetExists(baseUrl)) {
-      urls.add(baseUrl);
-    }
-
-    // Check for additional pages
-    for (int i = 1; i <= 6; i++) {
-      final extraName = baseName.replaceAll('.png', '_$i.png');
-      final extraUrl = 'assets/musicSheets/$extraName';
-      if (await _assetExists(extraUrl)) {
-        urls.add(extraUrl);
+    final sizes = <Size>[];
+    for (final url in urls) {
+      try {
+        sizes.add(await _imageSize(AssetImage(url)));
+      } catch (_) {
+        sizes.add(const Size(1275, 1650));
       }
     }
 
     if (!mounted) return;
-    for (var i = 0; i < urls.length; i++) {
-      final controller = PhotoViewController();
-      _zoom.add(controller);
-      _zoomSubs.add(
-        controller.outputStateStream.listen((value) {
-          final scale = value.scale;
-          if (scale == null || !mounted) return;
-          // La primera escala que calcula PhotoView es la "ajustada".
-          _baseScale.putIfAbsent(i, () => scale);
-          if (i == _currentIndex) setState(() {});
-        }),
-      );
-    }
     setState(() {
       _sheetUrls = urls;
+      _sizes = sizes;
       _isLoading = false;
       if (urls.isEmpty) {
         _errorMessage = l10n.noSheetMusicFound(widget.hymnNumber);
@@ -132,41 +161,57 @@ abstract class _SheetsController extends State<SheetsScreen> {
     });
   }
 
-  Future<bool> _assetExists(String assetPath) async {
-    try {
-      await rootBundle.load(assetPath);
-      return true;
-    } catch (e) {
-      return false;
+  double get _scale => _transform.value.getMaxScaleOnAxis();
+
+  /// La página que se está leyendo: la fila cuyo borde superior está por
+  /// encima de un tercio de la pantalla. (El % del zoom también cambia, así
+  /// que siempre se redibuja.)
+  void _onTransform() {
+    if (!mounted) return;
+    var page = _currentIndex;
+    if (_rowTops.isNotEmpty) {
+      final scale = _scale;
+      final y = -_transform.value.getTranslation().y / scale;
+      final reading = y + _viewport.height / scale / 3;
+      var row = 0;
+      for (var i = 0; i < _rowTops.length; i++) {
+        if (_rowTops[i] <= reading) row = i;
+      }
+      page = (row * _perRow).clamp(0, _sheetUrls.length - 1);
     }
+    setState(() => _currentIndex = page);
   }
 
-  void _onPageChanged(int index) {
-    if (mounted) {
-      setState(() {
-        _currentIndex = index;
-      });
+  /// Zoom en % (100 = ajustada a la pantalla).
+  int get _zoomPercent => (_scale * 100).round();
+
+  /// Acercar (factor > 1) o alejar (< 1) alrededor de [focus] (por
+  /// defecto, el centro), entre 100 % y 400 %.
+  void _zoomBy(double factor, {Offset? focus}) {
+    final scale = _scale;
+    final target = (scale * factor).clamp(1.0, 4.0);
+    if (target <= 1.0001) {
+      // Al 100 % vuelve a la columna (sin desplazamiento lateral).
+      final y = _transform.value.getTranslation().y / scale;
+      _transform.value = Matrix4.identity()..translateByDouble(0, y, 0, 1);
+      return;
     }
+    final ratio = target / scale;
+    final c = focus ?? _viewport.center(Offset.zero);
+    _transform.value = Matrix4.identity()
+      ..translateByDouble(c.dx, c.dy, 0, 1)
+      ..scaleByDouble(ratio, ratio, 1, 1)
+      ..translateByDouble(-c.dx, -c.dy, 0, 1)
+      ..multiply(_transform.value);
   }
 
-  /// Zoom de la página actual en % (100 = ajustada a la pantalla).
-  int get _zoomPercent {
-    if (_currentIndex >= _zoom.length) return 100;
-    final base = _baseScale[_currentIndex];
-    final scale = _zoom[_currentIndex].scale;
-    if (base == null || scale == null || base == 0) return 100;
-    return (scale / base * 100).round();
-  }
-
-  /// Acercar (factor > 1) o alejar (< 1), entre 100 % y 400 %.
-  void _zoomBy(double factor) {
-    if (_currentIndex >= _zoom.length) return;
-    final base = _baseScale[_currentIndex];
-    final controller = _zoom[_currentIndex];
-    final scale = controller.scale;
-    if (base == null || scale == null) return;
-    controller.scale = (scale * factor).clamp(base, base * 4);
-    if (controller.scale == base) controller.position = Offset.zero;
+  /// Doble toque: acerca al 200 % donde se tocó, o vuelve al 100 %.
+  void _onDoubleTap() {
+    if (_scale > 1.05) {
+      _zoomBy(1 / _scale);
+    } else {
+      _zoomBy(2, focus: _doubleTapAt);
+    }
   }
 
   /// URL del audio de este himno en la versión pedida.
