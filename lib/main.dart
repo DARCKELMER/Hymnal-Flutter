@@ -107,6 +107,10 @@ class HymnalApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: themeMode,
+          // Sin transición de tema: al interpolar durante 200 ms cambian los
+          // tamaños cuadro a cuadro y las tarjetas de cristal (capa propia)
+          // dejan restos corridos. El cambio queda en un solo cuadro.
+          themeAnimationDuration: Duration.zero,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           // Configuración de cristal (ajuste "Cristal" y alto contraste)
